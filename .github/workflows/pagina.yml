@@ -9,19 +9,29 @@ on:
 permissions:
   contents: write
 
+# si una corrida manual se cruza con la programada, la segunda espera a la primera
+concurrency:
+  group: pagina-sp500
+  cancel-in-progress: false
+
 jobs:
   generar:
-    runs-on: ubuntu-latest
+    # version fija: ubuntu-latest pasa a Ubuntu 26 el 19/10/2026
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
+          cache: pip
 
       - name: Instalar dependencias
-        run: pip install yfinance pandas lxml requests
+        run: pip install -r requirements.txt
 
+      # si faltan demasiadas empresas el script sale con error, este paso falla
+      # y no se publica nada: queda online la ultima pagina buena
       - name: Generar pagina
         run: python generar_pagina.py
 
@@ -31,4 +41,5 @@ jobs:
           git config user.email "bot@users.noreply.github.com"
           git add index.html
           git diff --staged --quiet || git commit -m "actualizar datos"
+          git pull --rebase
           git push

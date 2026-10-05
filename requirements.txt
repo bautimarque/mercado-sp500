@@ -1,0 +1,7 @@
+# Rangos y no versiones exactas: cuando Yahoo cambia algo, el arreglo llega en
+# una version nueva de yfinance. Si una version nueva rompe la descarga, el
+# minimo de empresas de generar_pagina.py evita publicar una pagina rota.
+yfinance>=1.7,<2
+pandas>=3.0,<4
+lxml>=6,<7
+requests>=2.32,<3
