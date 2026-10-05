@@ -109,32 +109,38 @@ PLANTILLA = r"""<!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>S&amp;P 500 — cuanto les falta para volver a su maximo</title>
+<title>S&amp;P 500 — cuánto les falta para volver a su máximo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --papel:#FBFBF9; --tinta:#16181D; --suave:#6B6F76; --linea:#E4E4DF;
-  --caida:#A4303F; --suba:#2F6B4F; --barra:#EFE6E7; --marca:#F3F2EE;
+  --caida:#A4303F; --suba:#2F6B4F; --marca:#EEEDE8;
   --foco:#1F5FA8;
 }
 @media (prefers-color-scheme: dark){
-  :root{--papel:#14161A; --tinta:#E8E9E6; --suave:#9196A0; --linea:#262A31;
-        --caida:#E06C78; --suba:#5FB58C; --barra:#2A2024; --marca:#1B1E24;}
+  :root:not([data-tema="claro"]){--papel:#14161A; --tinta:#E8E9E6; --suave:#9196A0;
+        --linea:#262A31; --caida:#E06C78; --suba:#5FB58C; --marca:#1B1E24;}
 }
+:root[data-tema="oscuro"]{--papel:#14161A; --tinta:#E8E9E6; --suave:#9196A0;
+  --linea:#262A31; --caida:#E06C78; --suba:#5FB58C; --marca:#1B1E24;}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--papel);color:var(--tinta);
  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
  font-size:15px;line-height:1.5;padding:28px 20px 60px}
 .wrap{max-width:1060px;margin:0 auto}
-h1{font-size:28px;font-weight:600;letter-spacing:-.02em;margin:0 0 6px}
+h1{font-size:28px;font-weight:600;letter-spacing:-.02em;margin:0}
+.cab{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:6px}
+#tema{font:inherit;font-size:13px;padding:6px 12px;border-radius:999px;cursor:pointer;
+ border:1px solid var(--linea);background:transparent;color:var(--suave)}
+#tema:hover{background:var(--marca);color:var(--tinta)}
 .intro{color:var(--suave);font-size:14px;max-width:62ch;margin:0 0 22px}
 .intro b{color:var(--tinta);font-weight:600}
 
 .tira{display:flex;align-items:flex-end;gap:2px;height:46px;margin:0 0 6px}
-.tira div{flex:1;background:var(--barra);border-radius:2px 2px 0 0;min-height:2px;
+.tira div{flex:1;background:var(--marca);border-radius:2px 2px 0 0;min-height:2px;
  position:relative;cursor:pointer}
 .tira div:hover,.tira div.on{background:var(--caida)}
 .tira-pie{display:flex;justify-content:space-between;color:var(--suave);
@@ -148,17 +154,11 @@ input,select{font:inherit;font-size:14px;padding:7px 9px;border:1px solid var(--
  border-radius:6px;background:transparent;color:var(--tinta);width:100%}
 input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--foco);outline-offset:1px}
 input[type=number]{width:96px}
-.presets{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px}
+.presets{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:22px}
 .presets button{font:inherit;font-size:13px;padding:6px 11px;border-radius:999px;
  border:1px solid var(--linea);background:transparent;color:var(--tinta);cursor:pointer}
 .presets button:hover{background:var(--marca)}
 .presets button.on{background:var(--tinta);color:var(--papel);border-color:var(--tinta)}
-
-.mios{margin-bottom:18px;display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
-.mios .campo{flex:1;min-width:240px}
-.chk{display:flex;align-items:center;gap:7px;font-size:13.5px;color:var(--suave);
- white-space:nowrap;padding-bottom:7px}
-.chk input{width:auto}
 
 .cuenta{font-size:13px;color:var(--suave);margin-bottom:8px}
 .tabla{overflow-x:auto}
@@ -174,13 +174,8 @@ td{padding:9px 10px;border-bottom:1px solid var(--linea);text-align:right;
 td:first-child{text-align:left;font-weight:600;letter-spacing:-.01em}
 td.emp,td.sec{text-align:left;color:var(--suave);font-size:13.5px}
 tbody tr:hover td{background:var(--marca)}
-.prof{position:relative;padding-right:12px}
-.prof i{position:absolute;right:0;top:50%;transform:translateY(-50%);height:17px;
- background:var(--barra);border-radius:2px;z-index:0}
-.prof b{position:relative;z-index:1;font-weight:500;color:var(--caida)}
-.prof b.arriba{color:var(--suba)}
-.ma{font-weight:500}
-.ma.bajo{color:var(--caida)}
+.val{font-weight:500;color:var(--caida)}
+.val.arriba{color:var(--suba)}
 .nd{color:var(--suave)}
 .anio{color:var(--suave);font-size:13px}
 .vacio{padding:36px 0;text-align:center;color:var(--suave)}
@@ -196,12 +191,15 @@ tbody tr:hover td{background:var(--marca)}
 <body>
 <div class="wrap">
 
-<h1>S&amp;P 500</h1>
+<div class="cab">
+  <h1>S&amp;P 500</h1>
+  <button id="tema" type="button">Modo noche</button>
+</div>
 <p class="intro" id="resumen"></p>
 
 <div class="tira" id="tira"></div>
 <div class="tira-pie">
-  <span>cayeron mas de 60%</span><span>a mitad de camino</span><span>en su maximo</span>
+  <span>cayeron más de 60%</span><span>a mitad de camino</span><span>en su máximo</span>
 </div>
 
 <div class="ctrl">
@@ -214,7 +212,7 @@ tbody tr:hover td{background:var(--marca)}
     <select id="sec"><option value="">Todos</option></select>
   </div>
   <div class="campo">
-    <label for="mincaida">Cayo al menos</label>
+    <label for="mincaida">Cayó al menos</label>
     <input id="mincaida" type="number" placeholder="%">
   </div>
   <div class="campo">
@@ -222,24 +220,16 @@ tbody tr:hover td{background:var(--marca)}
     <input id="maxma" type="number" placeholder="%">
   </div>
   <div class="campo">
-    <label for="maxanios">Maximo hace menos de</label>
-    <input id="maxanios" type="number" placeholder="anios">
+    <label for="maxanios">Máximo hace menos de</label>
+    <input id="maxanios" type="number" placeholder="años">
   </div>
 </div>
 
 <div class="presets">
   <button data-p="recientes">Cayeron fuerte hace poco</button>
-  <button data-p="apoyadas">Apoyadas en su promedio de 4 anios</button>
-  <button data-p="maximos">En zona de maximos</button>
+  <button data-p="apoyadas">Apoyadas en su promedio de 4 años</button>
+  <button data-p="maximos">En zona de máximos</button>
   <button data-p="limpiar">Limpiar</button>
-</div>
-
-<div class="mios">
-  <div class="campo">
-    <label for="mios">Mis tickers (se guardan solo en este navegador)</label>
-    <input id="mios" placeholder="NVDA, GOOGL, MCD">
-  </div>
-  <label class="chk"><input type="checkbox" id="ocultar" checked> Ocultar las que ya tengo</label>
 </div>
 
 <div class="cuenta" id="cuenta"></div>
@@ -250,23 +240,23 @@ tbody tr:hover td{background:var(--marca)}
 <th data-k="n">Empresa <span>&#9662;</span></th>
 <th data-k="s">Sector <span>&#9662;</span></th>
 <th data-k="p">Precio <span>&#9662;</span></th>
-<th data-k="da">Desde su maximo <span>&#9662;</span></th>
+<th data-k="da">Desde su máximo <span>&#9662;</span></th>
 <th data-k="dm">vs 200 sem <span>&#9662;</span></th>
-<th data-k="fa">Maximo <span>&#9662;</span></th>
+<th data-k="fa">Máximo <span>&#9662;</span></th>
 </tr></thead>
 <tbody id="cuerpo"></tbody>
 </table>
 </div>
 
 <p class="pie">
-<b>Desde su maximo</b>: cuanto le falta al precio para volver al mayor valor que
-alcanzo esa accion. La barra muestra esa distancia.<br>
-<b>vs 200 sem</b>: distancia al precio promedio de las ultimas 200 semanas, casi
-cuatro anios. En rojo, las que cotizan por debajo de ese promedio.<br>
-<b>Maximo</b>: cuando lo marco. Una caida del 80% contra un maximo del 2000 no es
-una oportunidad, es una empresa que nunca volvio.<br>
+<b>Desde su máximo</b>: cuánto le falta al precio para volver al mayor valor que
+alcanzó esa acción.<br>
+<b>vs 200 sem</b>: distancia al precio promedio de las últimas 200 semanas, casi
+cuatro años. En rojo, las que cotizan por debajo de ese promedio.<br>
+<b>Máximo</b>: cuándo lo marcó. Una caída del 80% contra un máximo del 2000 no es
+una oportunidad, es una empresa que nunca volvió.<br>
 Precios semanales de Yahoo Finance, sin ajustar por dividendos. Esto ordena
-precios, no mide calidad: una accion barata puede estar barata con razon.
+precios, no mide calidad: una acción barata puede estar barata con razón.
 </p>
 
 </div>
@@ -284,15 +274,13 @@ const sel = $("sec");
   o.value = s; o.textContent = s; sel.appendChild(o);
 });
 
-try { $("mios").value = localStorage.getItem("misTickers") || ""; } catch (e) {}
-
 const bajoMA = D.filter(r => r.dm !== null && r.dm < 0).length;
 const medios = D.map(r => r.da).sort((a, b) => a - b);
 const mediana = medios[Math.floor(medios.length / 2)];
-$("resumen").innerHTML = "De las <b>" + D.length + "</b> empresas del indice, " +
-  "la del medio esta <b>" + Math.abs(mediana).toFixed(0) + "%</b> debajo de su maximo " +
-  "historico y <b>" + bajoMA + "</b> cotizan por debajo de su promedio de cuatro anios. " +
-  "Ordenado de la mas castigada a la que esta en maximos.";
+$("resumen").innerHTML = "De las <b>" + D.length + "</b> empresas del índice, " +
+  "la del medio está <b>" + Math.abs(mediana).toFixed(0) + "%</b> debajo de su máximo " +
+  "histórico y <b>" + bajoMA + "</b> cotizan por debajo de su promedio de cuatro años. " +
+  "Ordenado de la más castigada a la que está en máximos.";
 
 const BUCKETS = 20;
 const tira = $("tira");
@@ -326,8 +314,6 @@ function pintar() {
   const minc = parseFloat($("mincaida").value);
   const maxm = parseFloat($("maxma").value);
   const maxa = parseFloat($("maxanios").value);
-  const ocultar = $("ocultar").checked;
-  const propios = $("mios").value.toUpperCase().split(/[\s,;]+/).filter(Boolean);
 
   const f = D.filter(r => {
     if (q && !(r.t.includes(q) || r.n.toUpperCase().includes(q))) return false;
@@ -338,7 +324,6 @@ function pintar() {
       if (r.dm === null) return false;
       if (Math.abs(r.dm) > Math.abs(maxm)) return false;
     }
-    if (ocultar && propios.includes(r.t)) return false;
     return true;
   });
 
@@ -355,25 +340,21 @@ function pintar() {
     : f.length + " de " + D.length + " empresas";
 
   $("cuerpo").innerHTML = f.length === 0
-    ? "<tr><td colspan='7' class='vacio'>Ningun papel cumple con esos filtros. Afloja alguno.</td></tr>"
+    ? "<tr><td colspan='7' class='vacio'>Ningún papel cumple con esos filtros. Aflojá alguno.</td></tr>"
     : f.map(r => {
-        const ancho = Math.min(100, Math.abs(r.da));
-        const bar = r.da < 0
-          ? "<i style='width:" + ancho + "%'></i>"
-          : "";
         const ma = r.dm === null
           ? "<span class='nd'>sin dato</span>"
-          : "<span class='ma" + (r.dm < 0 ? " bajo" : "") + "'>" +
+          : "<span class='val" + (r.dm >= 0 ? " arriba" : "") + "'>" +
             (r.dm > 0 ? "+" : "") + num(r.dm, 0) + "%</span>";
         return "<tr><td>" + r.t + "</td>" +
           "<td class='emp'>" + r.n + "</td>" +
           "<td class='sec'>" + r.s + "</td>" +
           "<td>" + num(r.p, 2) + "</td>" +
-          "<td class='prof'>" + bar + "<b" + (r.da >= 0 ? " class='arriba'" : "") + ">" +
-            num(r.da, 1) + "%</b></td>" +
+          "<td><span class='val" + (r.da >= 0 ? " arriba" : "") + "'>" +
+            (r.da > 0 ? "+" : "") + num(r.da, 1) + "%</span></td>" +
           "<td>" + ma + "</td>" +
           "<td class='anio'>" + r.fa.slice(0, 4) +
-            (r.an >= 1 ? " · hace " + r.an + (r.an === 1 ? " anio" : " anios") : " · este anio") +
+            (r.an >= 1 ? " · hace " + r.an + (r.an === 1 ? " año" : " años") : " · este año") +
           "</td></tr>";
       }).join("");
 }
@@ -411,16 +392,32 @@ document.querySelectorAll(".presets button").forEach(b => {
   };
 });
 
-["q", "sec", "mincaida", "maxma", "maxanios", "ocultar"].forEach(id => {
+["q", "sec", "mincaida", "maxma", "maxanios"].forEach(id => {
   $(id).addEventListener("input", pintar);
   $(id).addEventListener("change", pintar);
 });
-$("mios").addEventListener("input", () => {
-  try { localStorage.setItem("misTickers", $("mios").value); } catch (e) {}
-  pintar();
-});
 
 pintar();
+
+const btn = $("tema");
+function aplicarTema(t) {
+  if (t) document.documentElement.setAttribute("data-tema", t);
+  else document.documentElement.removeAttribute("data-tema");
+  const oscuroAhora = t === "oscuro" ||
+    (!t && matchMedia("(prefers-color-scheme: dark)").matches);
+  btn.textContent = oscuroAhora ? "Modo día" : "Modo noche";
+}
+let tema = null;
+try { tema = localStorage.getItem("tema"); } catch (e) {}
+aplicarTema(tema);
+btn.onclick = () => {
+  const oscuroAhora = document.documentElement.getAttribute("data-tema") === "oscuro" ||
+    (!document.documentElement.getAttribute("data-tema") &&
+     matchMedia("(prefers-color-scheme: dark)").matches);
+  const nuevo = oscuroAhora ? "claro" : "oscuro";
+  try { localStorage.setItem("tema", nuevo); } catch (e) {}
+  aplicarTema(nuevo);
+};
 </script>
 </body>
 </html>
