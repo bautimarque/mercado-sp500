@@ -269,7 +269,12 @@ def texto_fecha(fecha_datos):
         texto = f"Precios del {dia} a las {ahora_ny:%H:%M} de Nueva York, con el mercado abierto"
     else:
         texto = f"Precios al cierre del {dia}"
-    return texto + " · actualizado el " + datetime.now(ARG).strftime("%d/%m/%Y %H:%M") + " hs ARG"
+    ahora_arg = datetime.now(ARG)
+    if f"{ahora_arg:%d/%m/%Y}" == f"{fecha_datos:%d/%m/%Y}":
+        sello = f"{ahora_arg:%H:%M}"
+    else:
+        sello = f"{ahora_arg:%d/%m/%Y %H:%M}"
+    return texto + " · actualizado " + sello + " hs ARG"
 
 
 def a_json(x):
@@ -389,6 +394,12 @@ rect.off{opacity:.14}
 .franja-eje>span{position:absolute;top:10px;white-space:nowrap}
 #eje-izq{left:0} #eje-der{right:0}
 #eje-prom{transform:translateX(-50%);color:var(--tinta);font-weight:600}
+.plegable{margin:0 0 6px}
+.plegable>summary{cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--tinta-2);padding:4px 0;user-select:none}
+.plegable>summary::-webkit-details-marker{display:none}
+.plegable>summary::before{content:"▸";display:inline-block;transition:transform .15s}
+.plegable[open]>summary::before{transform:rotate(90deg)}
+.plegable>summary:hover{color:var(--tinta)}
 .leyenda{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:4px;font-size:12.5px;color:var(--tinta-2)}
 .leyenda li{display:flex;align-items:center;gap:6px;white-space:nowrap}
 .leyenda small{color:var(--tinta-3);font-size:12px;font-variant-numeric:tabular-nums}
@@ -681,6 +692,8 @@ h3{font-size:15px;font-weight:700;margin:14px 0 8px}
 <main>
 <section class="hoy" aria-labelledby="t-hoy">
   <h2 id="t-hoy" class="oculto">Cómo está el mercado</h2>
+  <details class="plegable" id="dfranja" open>
+    <summary class="plegable-tit">Termómetro del índice</summary>
   <figure class="franja">
     <div class="franja-lectura" aria-hidden="true"><span id="lectura">Pasar el dedo o el mouse por la franja para ver cada empresa</span></div>
     <div class="franja-zona" id="franja" tabindex="0" role="slider" aria-valuemin="1" aria-valuenow="1"
@@ -696,6 +709,7 @@ h3{font-size:15px;font-weight:700;margin:14px 0 8px}
     </figcaption>
   </figure>
   <ul class="leyenda" id="leyenda" aria-label="Escala de temperatura según la distancia al promedio de 200 semanas"></ul>
+  </details>
 
   <div class="lecturas">
     <div class="temp">
@@ -1027,6 +1041,7 @@ function acomodarEje() {
 }
 acomodarEje();
 addEventListener("resize", acomodarEje);
+$("dfranja").addEventListener("toggle", acomodarEje);
 if (document.fonts) document.fonts.ready.then(acomodarEje);
 zona.setAttribute("aria-valuemax", N);
 
