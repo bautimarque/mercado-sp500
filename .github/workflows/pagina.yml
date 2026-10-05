@@ -1,0 +1,34 @@
+name: pagina-sp500
+
+on:
+  schedule:
+    # martes y viernes, 18:30 ARG (despues del cierre de Nueva York)
+    - cron: "30 21 * * 2,5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: pip install yfinance pandas lxml requests
+
+      - name: Generar pagina
+        run: python generar_pagina.py
+
+      - name: Publicar
+        run: |
+          git config user.name "bot-mercado"
+          git config user.email "bot@users.noreply.github.com"
+          git add index.html
+          git diff --staged --quiet || git commit -m "actualizar datos"
+          git push
