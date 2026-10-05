@@ -136,7 +136,8 @@ h1{font-size:28px;font-weight:600;letter-spacing:-.02em;margin:0}
 #tema{font:inherit;font-size:13px;padding:6px 12px;border-radius:999px;cursor:pointer;
  border:1px solid var(--linea);background:transparent;color:var(--suave)}
 #tema:hover{background:var(--marca);color:var(--tinta)}
-.intro{color:var(--suave);font-size:14px;max-width:62ch;margin:0 0 22px}
+.intro{color:var(--suave);font-size:14px;max-width:62ch;margin:0 0 10px}
+.fecha{color:var(--suave);font-size:12px;margin:0 0 20px;opacity:.8}
 .intro b{color:var(--tinta);font-weight:600}
 
 .tira{display:flex;align-items:flex-end;gap:2px;height:46px;margin:0 0 6px}
@@ -196,6 +197,7 @@ tbody tr:hover td{background:var(--marca)}
   <button id="tema" type="button">Modo noche</button>
 </div>
 <p class="intro" id="resumen"></p>
+<p class="fecha">Actualizado el __FECHA__</p>
 
 <div class="tira" id="tira"></div>
 <div class="tira-pie">
