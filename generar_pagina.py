@@ -39,10 +39,11 @@ DIAS_VIEJO = 5
 # y los cierres vecinos.
 SALTO_MAXIMO = 1.5
 
-# Senal "Posible compra": el precio esta apoyado en su promedio de 200 semanas,
+# Senal "Posible compra": el precio no esta mas de 5% arriba de su promedio de
+# 200 semanas (puede estar por debajo),
 # el maximo es reciente (la caida es de ahora, no una empresa que nunca volvio)
 # y el promedio viene subiendo (la tendencia larga sigue para arriba).
-COMPRA_BANDA = 5        # % de distancia a la 200 semanal, para los dos lados
+COMPRA_BANDA = 5        # tope: hasta +5% arriba de la 200 semanal (o por debajo)
 COMPRA_ANIOS = 2        # antiguedad maxima del maximo historico
 COMPRA_PENDIENTE = 26   # semanas hacia atras para ver si la 200 semanal sube
 
@@ -221,7 +222,7 @@ def medir(df, fecha_datos):
     senal = None
     if rend is not None and rend >= GANANCIA_12M and dist_ath >= -GANANCIA_CERCA:
         senal = "g"
-    elif (dist_ma is not None and abs(dist_ma) <= COMPRA_BANDA and sube
+    elif (dist_ma is not None and dist_ma <= COMPRA_BANDA and sube
           and (fecha_datos - fecha_ath).days / 365.25 <= COMPRA_ANIOS):
         senal = "c"
 
@@ -954,12 +955,13 @@ function fechaLarga(iso) {
 }
 
 /* ---------- reglas ---------- */
-const reglaC = "a ±" + R.cb + "% de su promedio de 200 semanas, con máximo hace " + R.ca +
-  " años o menos y el promedio subiendo";
+const reglaC = "hasta " + R.cb + "% arriba de su promedio de 200 semanas o por debajo, con máximo hace " +
+  R.ca + " años o menos y el promedio subiendo";
 const reglaG = "subió " + R.g12 + "% o más en 12 meses y sigue a menos de " + R.gc + "% de su máximo";
-$("def-c").textContent = "El precio está a ±" + R.cb + "% de su promedio de 200 semanas, marcó su " +
-  "máximo hace " + R.ca + " años o menos (la caída es reciente) y el promedio de 200 semanas viene " +
-  "subiendo en los últimos " + Math.round(R.cs / 4.345) + " meses (la tendencia larga sigue para arriba).";
+$("def-c").textContent = "El precio no está más de " + R.cb + "% arriba de su promedio de 200 semanas " +
+  "(puede estar por debajo, sin límite), marcó su máximo hace " + R.ca + " años o menos (la caída es " +
+  "reciente) y el promedio de 200 semanas viene subiendo en los últimos " + Math.round(R.cs / 4.345) +
+  " meses (la tendencia larga sigue para arriba).";
 $("def-g").textContent = "Subió " + R.g12 + "% o más en los últimos 12 meses y sigue a menos de " + R.gc +
   "% de su máximo. Quien la tenga desde hace un año gana al menos eso; si cae más de " + R.gc +
   "% desde el pico, deja de marcarse.";
