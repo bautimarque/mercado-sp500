@@ -26,7 +26,7 @@ SECCIONES = [
     ("gastos", "Gastos en US$", "gastos/"),
     ("tasas", "Tasas", "tasas/"),
     ("merval", "Merval", "merval/"),
-    ("sp500", "S&P 500", "sp500/"),
+    ("sp500", "CEDEARs", "sp500/"),
     ("bonos", "Bonos", "bonos/"),
 ]
 CARPETAS = {clave: carpeta for clave, _, carpeta in SECCIONES}
@@ -149,7 +149,7 @@ def pagina(clave, titulo, descripcion, cuerpo, *, css="", js="", fuentes=""):
 <meta name="description" content="{html.escape(descripcion)}">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#111317" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#050607" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#050505" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="{ICONO}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

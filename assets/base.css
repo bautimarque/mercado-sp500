@@ -8,7 +8,7 @@
   --tinta:#111317; --tinta-2:#4A4F57; --tinta-3:#646A73;
   --linea:#DFE0DC; --linea-2:#BCBFC3;
   --cabezal:#111317; --cabezal-tinta:#F7F7F5; --cabezal-2:#A7ACB3; --cabezal-linea:#3A3E45;
-  --celeste:#74ACDF; --activo:#111317; --activo-tinta:#F7F7F5;
+  --celeste:#74ACDF;
   --t0:#1E4D8F; --t1:#3F7DC9; --t2:#86AEDD; --t3:#D3D2CD; --t4:#E89650; --t5:#CF6420; --t6:#9E3F0F;
   --sin:#E4E6EA;
   --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; --s7:#4a3aa7;
@@ -20,7 +20,7 @@
     --tinta:#EDEDEB; --tinta-2:#B9B9B6; --tinta-3:#8F8F8C;
     --linea:#2A2A2A; --linea-2:#3E3E3D;
     --cabezal:#050505; --cabezal-tinta:#EDEDEB; --cabezal-2:#8F8F8C; --cabezal-linea:#2E2E2E;
-    --celeste:#8EC0EC; --activo:#EDEDEB; --activo-tinta:#101010;
+    --celeste:#8EC0EC;
     --t0:#93BEF5; --t1:#4F8BD8; --t2:#2F5C93; --t3:#3A3A37; --t4:#8E4A17; --t5:#D9762D; --t6:#FFA466;
     --sin:#2E2E2E;
     --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9;
@@ -32,7 +32,7 @@
   --tinta:#EDEDEB; --tinta-2:#B9B9B6; --tinta-3:#8F8F8C;
   --linea:#2A2A2A; --linea-2:#3E3E3D;
   --cabezal:#050505; --cabezal-tinta:#EDEDEB; --cabezal-2:#8F8F8C; --cabezal-linea:#2E2E2E;
-  --celeste:#8EC0EC; --activo:#EDEDEB; --activo-tinta:#101010;
+  --celeste:#8EC0EC;
   --t0:#93BEF5; --t1:#4F8BD8; --t2:#2F5C93; --t3:#3A3A37; --t4:#8E4A17; --t5:#D9762D; --t6:#FFA466;
   --sin:#2E2E2E;
   --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9;
@@ -80,47 +80,45 @@ a:hover{text-decoration-thickness:2px}
 /* ---------- menú ---------- */
 .menu{border-bottom:1px solid var(--linea-2);background:var(--fondo)}
 .menu ul{max-width:1200px;margin:0 auto;padding:0 32px;display:flex}
-.menu a{display:flex;align-items:center;height:46px;padding:0 16px;font-size:14.5px;font-weight:650;font-stretch:92%;
-  color:var(--tinta-2);text-decoration:none;white-space:nowrap;border-right:1px solid var(--linea);
-  transition:background-color .15s,color .15s}
-.menu li:first-child a{border-left:1px solid var(--linea)}
+.menu a{display:flex;align-items:center;height:46px;padding:0 14px;font-size:14.5px;font-weight:600;font-stretch:92%;
+  color:var(--tinta-2);text-decoration:none;white-space:nowrap;transition:color .15s,box-shadow .15s}
+.menu li:first-child a{padding-left:0}
 .menu li:last-child{margin-left:auto}
-.menu li:last-child a{border-left:1px solid var(--linea);font-weight:550}
-.menu a:hover{color:var(--tinta);background:var(--hundido)}
-.menu a[aria-current="page"]{background:var(--activo);color:var(--activo-tinta);box-shadow:inset 0 -3px 0 var(--celeste)}
+.menu li:last-child a{padding-right:0;font-weight:500}
+.menu a:hover{color:var(--tinta)}
+.menu a[aria-current="page"]{color:var(--tinta);font-weight:750;box-shadow:inset 0 -3px 0 var(--celeste)}
 .menu a:focus-visible{outline-offset:-3px}
 
 /* ---------- título de cada página ---------- */
 .titulo{padding:30px 0 0}
 .titulo h1{font-size:46px;font-weight:850;font-stretch:68%;letter-spacing:-.01em;line-height:.95;text-wrap:balance}
 .bajada{font-size:16px;color:var(--tinta-2);max-width:60ch;margin-top:10px;line-height:1.45;text-wrap:pretty}
-.fecha{font-size:13px;color:var(--tinta-2);margin:10px 0 0;line-height:1.45}
-.bloque{margin-top:52px}
-/* filete doble de diario: grueso arriba, fino debajo */
-.bloque>h2,.sec-tit{font-size:24px;font-weight:850;font-stretch:72%;line-height:1.1;letter-spacing:-.005em;
-  padding-top:13px;border-top:3px solid var(--tinta);
-  background:linear-gradient(var(--tinta),var(--tinta)) 0 3px / 100% 1px no-repeat}
-.bloque>.nota{margin-top:6px}
-.nota{font-size:14px;color:var(--tinta-2);max-width:72ch;line-height:1.5}
+/* fechas, fuentes y aclaraciones: presentes, en segundo plano */
+.fecha{font-size:12.5px;color:var(--tinta-3);margin:12px 0 0;line-height:1.45}
+.bloque{margin-top:80px}
+.bloque>h2{font-size:26px;font-weight:850;font-stretch:72%;line-height:1.1;letter-spacing:-.005em}
+.bloque>.nota{margin-top:8px}
+.nota{font-size:14px;color:var(--tinta-2);max-width:68ch;line-height:1.5}
 h3{font-size:15px;font-weight:700;margin:14px 0 8px}
 
 /* ---------- cifras de tapa ----------
    La primera cifra es la de tapa: más grande y a lo ancho de dos columnas.
    Con .cifras-parejas todas pesan lo mismo (Dólar). */
-.cifras{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));margin-top:26px;padding-top:4px;
-  border-top:3px solid var(--tinta);border-bottom:1px solid var(--linea-2);
-  background:linear-gradient(var(--tinta),var(--tinta)) 0 3px / 100% 1px no-repeat}
-.cifra{padding:14px 20px 18px;border-left:1px solid var(--linea);min-width:0}
-.cifra:first-child{grid-column:span 2;border-left:0;padding-left:0}
-.cifra-et{font-size:14px;font-weight:650;line-height:1.3}
-.cifra-val{font-size:44px;font-weight:800;font-stretch:70%;line-height:1;letter-spacing:-.01em;margin-top:8px;
+.cifras{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:28px 40px;margin-top:36px;align-items:start}
+.cifra{min-width:0}
+.cifra:first-child{grid-column:span 2}
+.cifra-et{font-size:13.5px;font-weight:600;color:var(--tinta-2);line-height:1.3}
+.cifra:first-child .cifra-et{font-size:15px;color:var(--tinta)}
+.cifras:not(.cifras-parejas) .cifra:not(:first-child) .cifra-et{min-height:2.6em;display:flex;align-items:flex-end}
+.cifra-val{font-size:36px;font-weight:800;font-stretch:70%;line-height:1;letter-spacing:-.01em;margin-top:6px;
   font-variant-numeric:normal}
-.cifra:first-child .cifra-val{font-size:76px;font-stretch:66%;line-height:.92}
-.cifra-sub{font-size:13px;color:var(--tinta-2);margin-top:9px;line-height:1.4}
+.cifra:first-child .cifra-val{font-size:80px;font-stretch:64%;line-height:.9}
+.cifra-sub{font-size:12.5px;color:var(--tinta-3);margin-top:8px;line-height:1.4}
 .cifras-parejas{grid-template-columns:repeat(4,minmax(0,1fr))}
 .cifras-parejas .cifra:first-child{grid-column:auto}
-.cifras-parejas .cifra-val,.cifras-parejas .cifra:first-child .cifra-val{font-size:52px;font-stretch:68%;line-height:.95}
-.cifras+.fecha,section:has(>.cifras)+.fecha{margin-top:10px}
+.cifras-parejas .cifra-et,.cifras-parejas .cifra:first-child .cifra-et{font-size:14px;color:var(--tinta)}
+.cifras-parejas .cifra-val,.cifras-parejas .cifra:first-child .cifra-val{font-size:50px;font-stretch:68%;line-height:.95}
+.cifras+.fecha,section:has(>.cifras)+.fecha{margin-top:14px}
 
 /* ---------- botones y controles ---------- */
 .boton{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:40px;padding:0 14px;border-radius:4px;
@@ -154,9 +152,9 @@ h3{font-size:15px;font-weight:700;margin:14px 0 8px}
 .check input{width:18px;height:18px;margin:0}
 
 /* ---------- tablas ----------
-   Sobre el papel, con filete grueso arriba y filetes finos entre filas.
-   En el celular cada fila pasa a ser un listado de dos líneas (ver más abajo). */
-.caja-tabla{margin-top:16px;overflow-x:auto;border-top:2px solid var(--tinta)}
+   Sobre el papel, con un filete fino bajo los encabezados y entre filas.
+   En el celular cada fila pasa a ser un listado corto; el resto se ve al tocarla (ver más abajo). */
+.caja-tabla{margin-top:20px;overflow-x:auto}
 .tabla-datos{width:100%;border-collapse:collapse;font-size:14.5px}
 .tabla-datos th{font-size:12.5px;font-weight:650;color:var(--tinta-2);text-align:left;padding:10px 12px 8px;
   border-bottom:1px solid var(--linea-2);white-space:nowrap;vertical-align:bottom}
@@ -193,21 +191,31 @@ h3{font-size:15px;font-weight:700;margin:14px 0 8px}
 .leyenda-graf i{width:16px;height:3px;border-radius:2px;display:inline-block}
 
 /* ---------- glosario ---------- */
-.glosario{margin-top:8px}
-.glosario>div{padding:12px 0;border-bottom:1px solid var(--linea)}
+.glosario{margin-top:4px}
+.glosario>div{padding:10px 0}
 .glosario dt{font-weight:700}
-.glosario dd{color:var(--tinta-2);font-size:14.5px;margin-top:3px;max-width:70ch}
+.glosario dd{color:var(--tinta-2);font-size:14.5px;margin-top:2px;max-width:68ch}
+
+/* ---------- bloques plegados (glosarios y datos de consulta) ---------- */
+.plegado>summary{display:flex;align-items:center;gap:12px;width:fit-content;cursor:pointer;list-style:none;border-radius:4px}
+.plegado>summary::-webkit-details-marker{display:none}
+.plegado>summary h2{font-size:20px;font-weight:800;font-stretch:76%;line-height:1.2;color:var(--tinta-2);transition:color .15s}
+.plegado>summary:hover h2,.plegado[open]>summary h2{color:var(--tinta)}
+.plegado>summary::after{content:"";width:8px;height:8px;margin-top:-4px;flex:none;border-right:1.7px solid var(--tinta-3);
+  border-bottom:1.7px solid var(--tinta-3);transform:rotate(45deg);transition:transform .2s ease-out}
+.plegado[open]>summary::after{transform:rotate(-135deg);margin-top:4px}
+.plegado[open]>summary{margin-bottom:8px}
 
 /* ---------- pie del sitio ---------- */
-.sitio-pie{margin-top:72px;padding-top:14px;border-top:3px solid var(--tinta);font-size:14px;color:var(--tinta-2)}
+.sitio-pie{margin-top:96px;padding-top:24px;border-top:1px solid var(--linea);font-size:13px;line-height:1.55;color:var(--tinta-3)}
 .pie-fuentes{max-width:90ch}
-.pie-fuentes b{color:var(--tinta);font-weight:700}
-.pie-aviso{max-width:90ch;margin-top:16px;padding:14px 16px;border:2px solid var(--tinta);color:var(--tinta);font-size:14.5px;line-height:1.55}
-.pie-aviso strong{font-weight:750}
-.pie-sumario{margin-top:20px;padding-top:12px;border-top:1px solid var(--linea)}
+.pie-fuentes b{color:var(--tinta-2);font-weight:650}
+.pie-aviso{max-width:90ch;margin-top:12px;color:var(--tinta-2)}
+.pie-aviso strong{color:var(--tinta);font-weight:700}
+.pie-sumario{margin-top:18px}
 .pie-sumario ul{display:flex;flex-wrap:wrap;gap:4px 0}
-.pie-sumario li:not(:last-child)::after{content:"·";margin:0 10px;color:var(--tinta-3)}
-.pie-sumario a{color:var(--tinta);font-weight:600}
+.pie-sumario li:not(:last-child)::after{content:"·";margin:0 9px;color:var(--tinta-3)}
+.pie-sumario a{color:var(--tinta-2);font-weight:600}
 
 /* ---------- celular y tablet ---------- */
 @media (max-width:899px){
@@ -219,38 +227,34 @@ h3{font-size:15px;font-weight:700;margin:14px 0 8px}
   .boton-tema{grid-area:tema}
   .menu ul{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding:0}
   .menu li:last-child{margin-left:0}
-  .menu a,.menu li:first-child a,.menu li:last-child a{justify-content:center;height:46px;padding:0 4px;font-size:13.5px;
-    font-stretch:86%;text-align:center;line-height:1.15;white-space:normal;border-left:0;border-right:1px solid var(--linea)}
-  .menu li:nth-child(4n) a{border-right:0}
-  .menu li:nth-child(-n+4) a{border-bottom:1px solid var(--linea)}
+  .menu a,.menu li:first-child a,.menu li:last-child a{justify-content:center;height:44px;padding:0 4px;font-size:13.5px;
+    font-stretch:86%;text-align:center;line-height:1.15;white-space:normal}
+  .menu li:last-child a{font-stretch:76%}
   .titulo{padding-top:22px}
   .titulo h1{font-size:40px}
   .bajada{font-size:15px}
-  .bloque{margin-top:44px}
-  .bloque>h2,.sec-tit{font-size:22px}
-  .cifras{grid-template-columns:1fr;margin-top:20px}
-  .cifra{padding:12px 0 14px;border-left:0}
-  .cifra:first-child{grid-column:auto}
-  .cifra:first-child .cifra-val{font-size:64px}
-  /* las cifras que siguen a la de tapa, como renglones */
+  .bloque{margin-top:64px}
+  .bloque>h2{font-size:23px}
+  .plegado>summary h2{font-size:18px}
+  .cifras{grid-template-columns:1fr;gap:0;margin-top:24px}
+  .cifra:first-child{grid-column:auto;padding-bottom:16px}
+  .cifra:first-child .cifra-val{font-size:66px}
+  /* las cifras que siguen a la de tapa, como renglones chicos */
   .cifras:not(.cifras-parejas) .cifra:not(:first-child){display:grid;grid-template-columns:minmax(0,1fr) auto;
-    gap:2px 14px;align-items:baseline;border-top:1px solid var(--linea);padding:11px 0 12px}
-  .cifras:not(.cifras-parejas) .cifra:not(:first-child) .cifra-val{font-size:30px;margin-top:0;text-align:right;grid-row:span 2}
+    gap:1px 14px;align-items:baseline;padding:7px 0}
+  .cifras:not(.cifras-parejas) .cifra:not(:first-child) .cifra-val{font-size:24px;margin-top:0;text-align:right;grid-row:span 2}
   .cifras:not(.cifras-parejas) .cifra:not(:first-child) .cifra-sub{margin-top:0}
-  .cifras-parejas{grid-template-columns:1fr 1fr}
-  .cifras-parejas .cifra{padding:12px 14px 14px}
-  .cifras-parejas .cifra:nth-child(odd){padding-left:0}
-  .cifras-parejas .cifra:nth-child(even){border-left:1px solid var(--linea);padding-right:0}
-  .cifras-parejas .cifra:nth-child(n+3){border-top:1px solid var(--linea)}
+  .cifras:not(.cifras-parejas) .cifra:not(:first-child) .cifra-et{min-height:0;display:block}
+  .cifras-parejas{grid-template-columns:1fr 1fr;gap:22px 18px}
   .cifras-parejas .cifra-val,.cifras-parejas .cifra:first-child .cifra-val{font-size:38px}
   .controles>.campo{flex:1 1 150px}
-  .sitio-pie{margin-top:56px}
+  .sitio-pie{margin-top:72px}
 }
 
-/* tablas como listados: nombre y dato principal arriba, el resto en una línea con su etiqueta.
+/* tablas como listados (celular y tablet): nombre y dato principal arriba, el resto en una línea con su etiqueta.
    Cada sección pone su columna principal arriba a la derecha (order:2, margin-left:auto, sin separador)
    y las etiquetas de las demás con ::before; el resto va en una línea corrida, separado por espacio. Los encabezados ordenables quedan como una fila de botones. */
-@media (max-width:640px){
+@media (max-width:899px){
   .caja-tabla{overflow:visible}
   .tabla-datos,.tabla-datos tbody{display:block}
   .tabla-datos thead{display:block}
@@ -273,6 +277,14 @@ h3{font-size:15px;font-weight:700;margin:14px 0 8px}
   .tabla-datos tbody tr:hover td{background:transparent}
   .tabla-datos td .sub{font-size:12.5px}
   .tabla-datos td::before{color:var(--tinta-3);font-weight:400}
+  /* ficha: las filas con datos plegados muestran una flecha y se abren al tocarlas */
+  .tabla-datos tbody tr[aria-expanded]{cursor:pointer}
+  .tabla-datos tbody tr[aria-expanded]:focus-visible{outline-offset:-2px}
+  .tabla-datos tbody tr[aria-expanded]::before{content:"";order:5;margin-left:auto;align-self:center;width:7px;height:7px;
+    border-right:1.6px solid var(--tinta-3);border-bottom:1.6px solid var(--tinta-3);transform:rotate(45deg) translate(-2px,-2px);
+    transition:transform .2s}
+  .tabla-datos tbody tr.abierta::before{transform:rotate(-135deg)}
+  .tabla-datos tr.abierta{background:color-mix(in srgb,var(--hundido) 55%,transparent)}
 }
 @media (max-width:420px){
   .boton-tema span{display:none}

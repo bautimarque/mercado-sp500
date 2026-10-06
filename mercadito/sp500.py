@@ -4,6 +4,8 @@ distancia al maximo historico, al promedio de 200 semanas y su variacion en
 12 meses. Se baja todo con yfinance y queda embebido en la pagina.
 """
 
+import json
+import os
 import time
 from io import StringIO
 from datetime import datetime
@@ -51,6 +53,15 @@ WIKI = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
 # armar el simbolo de TradingView (NYSE:F y no F, que existe en otras bolsas).
 NASDAQ_DIR = "https://www.nasdaqtrader.com/dynamic/SymDir/"
 PREFIJOS = {"N": "NYSE", "A": "AMEX", "P": "AMEX", "Z": "CBOE"}
+
+# CEDEARs que cotizan en BYMA (data912.com). El simbolo suele ser el mismo que en
+# EE.UU.; estas son las excepciones conocidas. La variante en dolares MEP suele
+# terminar en D (AAPLD), a veces con punto (C.D) o abreviada (GOGLD).
+CEDEARS = "https://data912.com/live/arg_cedears"
+CEDEAR_SIMBOLO = {"DIS": "DISN"}
+CEDEAR_DOLARES = {"GOOGL": "GOGLD"}
+# Ultima lista buena, por si data912 no responde
+CEDEARS_RESPALDO = os.path.join(comun.RAIZ, "datos", "cedears_lista.json")
 
 # Buscador de nasdaq.com: capitalizacion de todas las acciones de EE.UU. en un
 # solo pedido. Ordena la tabla de la empresa mas grande a la mas chica.
@@ -110,6 +121,52 @@ def bolsas():
             if prefijo:
                 mapa[c[0]] = prefijo
     return mapa
+
+
+def cedears(tickers):
+    """{ticker del S&P: {"s": simbolo en BYMA, "p": precio en pesos, "u": en dolares MEP,
+    "var": variacion del dia}} de las empresas que tienen CEDEAR. Sin precios si se usa
+    la lista de respaldo."""
+    try:
+        filas = {c["symbol"]: c for c in comun.pedir_json(CEDEARS)}
+    except Exception as e:
+        print(f"  Sin CEDEARs de data912 ({e}): uso la ultima lista guardada")
+        try:
+            with open(CEDEARS_RESPALDO, encoding="utf-8") as f:
+                return {t: {"s": s, "p": None, "u": None, "var": None} for t, s in json.load(f)["simbolos"].items()}
+        except (OSError, ValueError, KeyError):
+            return {}
+
+    # Precio en pesos / precio en dolares de cada CEDEAR = un dolar MEP implicito.
+    # Una variante en dolares que se aleja mucho de la mediana no es de esa especie.
+    def en_dolares(simbolo, ticker):
+        for cand in (CEDEAR_DOLARES.get(ticker), simbolo + "D", simbolo + ".D"):
+            if cand and filas.get(cand, {}).get("c"):
+                return filas[cand]["c"]
+        return None
+
+    pares = []
+    resultado = {}
+    for t in tickers:
+        simbolo = CEDEAR_SIMBOLO.get(t, t.replace("-", ""))
+        c = filas.get(simbolo)
+        if not c or not c.get("c"):
+            continue
+        u = en_dolares(simbolo, t)
+        resultado[t] = {"s": simbolo, "p": c["c"], "u": u, "var": c.get("pct_change")}
+        if u:
+            pares.append(c["c"] / u)
+    if pares:
+        mep = sorted(pares)[len(pares) // 2]
+        for r in resultado.values():
+            if r["u"] and not 0.85 <= (r["p"] / r["u"]) / mep <= 1.15:
+                r["u"] = None
+    try:
+        with open(CEDEARS_RESPALDO, "w", encoding="utf-8") as f:
+            json.dump({"actualizado": comun.sello(), "simbolos": {t: r["s"] for t, r in resultado.items()}}, f, ensure_ascii=False)
+    except OSError:
+        pass
+    return resultado
 
 
 def tamanos():
@@ -272,7 +329,7 @@ CSS = r"""
 /* hoy: cifra de tapa arriba, termómetro plegable debajo */
 .hoy{display:flex;flex-direction:column}
 .hoy>.lecturas,.hoy>.fecha{order:-1}
-.hoy>.fecha{padding-top:10px;border-top:1px solid var(--linea-2)}
+.hoy>.fecha{margin-top:4px}
 .lecturas{padding-bottom:16px}
 .franja:not(.leyendo-ya) .franja-lectura span{white-space:normal;right:0;overflow:visible}
 .franja{position:relative}
@@ -282,8 +339,8 @@ CSS = r"""
 .leyendo-ya .franja-lectura span{color:var(--tinta);background:var(--superficie);padding:3px 8px;
   border-radius:4px;bottom:4px;box-shadow:0 1px 2px rgba(10,14,20,.08),0 3px 12px rgba(10,14,20,.10)}
 .franja-zona{position:relative;height:96px;cursor:crosshair;touch-action:pan-y;
-  -webkit-user-select:none;user-select:none;border-radius:6px}
-.franja-zona:focus-visible{outline-offset:4px;border-radius:8px}
+  -webkit-user-select:none;user-select:none;border-radius:4px}
+.franja-zona:focus-visible{outline-offset:4px;border-radius:4px}
 .franja-zona svg{display:block;width:100%;height:100%;clip-path:inset(0 round 3px)}
 .franja-zona rect,.sector-franja rect{transition:opacity .2s ease-out}
 rect.off{opacity:.14}
@@ -297,16 +354,17 @@ rect.off{opacity:.14}
 #eje-prom{transform:translateX(-50%);color:var(--tinta);font-weight:600}
 .plegable{margin:30px 0 10px}
 .plegable>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700;color:var(--tinta);
-  padding:10px 0 8px;border-top:1px solid var(--linea-2);user-select:none}
+  padding:10px 0 8px;user-select:none}
 .plegable>summary::-webkit-details-marker{display:none}
 .plegable>summary::before{content:"";width:7px;height:7px;margin:0 2px 3px 2px;border-right:1.6px solid currentColor;border-bottom:1.6px solid currentColor;
   transform:rotate(-45deg);transition:transform .15s;color:var(--tinta-2)}
 .plegable[open]>summary::before{transform:rotate(45deg)}
-.plegable>summary::after{content:"Mostrar";margin-left:auto;font-size:13px;font-weight:600;color:var(--tinta);background:var(--superficie);border:1px solid var(--linea-2);border-radius:4px;padding:5px 12px}
+.plegable>summary::after{content:"Mostrar";margin-left:auto;font-size:13px;font-weight:600;color:var(--tinta-2);
+  text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
 .plegable[open]>summary::after{content:"Ocultar"}
 .plegable>summary:hover{color:var(--tinta)}
-.plegable>summary:hover::after{color:var(--tinta);background:var(--hundido)}
-.plegable>summary:focus-visible{outline:2px solid var(--tinta-3);outline-offset:3px;border-radius:6px}
+.plegable>summary:hover::after{color:var(--tinta);text-decoration-thickness:2px}
+.plegable>summary:focus-visible{outline:2px solid var(--tinta);outline-offset:3px;border-radius:4px}
 .leyenda{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:4px;font-size:12.5px;color:var(--tinta-2)}
 .leyenda li{display:flex;align-items:center;gap:6px;white-space:nowrap}
 .leyenda small{color:var(--tinta-3);font-size:12px;font-variant-numeric:tabular-nums}
@@ -314,18 +372,15 @@ rect.off{opacity:.14}
 
 /* hoy: lecturas */
 .lecturas{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);grid-template-areas:"temp lect" "res lect";
-  grid-template-rows:auto 1fr;gap:0 56px;margin-top:26px;align-items:start;border-top:3px solid var(--tinta);padding-top:18px;
-  background:linear-gradient(var(--tinta),var(--tinta)) 0 3px / 100% 1px no-repeat}
-.panel,.emp-cab,.pie{background:linear-gradient(var(--tinta),var(--tinta)) 0 3px / 100% 1px no-repeat}
-.panel,.emp-cab,.pie{padding-top:12px}
+  grid-template-rows:auto 1fr;gap:0 56px;margin-top:36px;align-items:start}
 .temp{grid-area:temp} .lect-col{grid-area:lect}
-.temp-val{font-size:76px;font-weight:800;font-stretch:66%;line-height:.92;letter-spacing:-.01em}
+.temp-val{font-size:80px;font-weight:800;font-stretch:64%;line-height:.9;letter-spacing:-.01em}
 .temp-et{font-size:19px;font-weight:550;line-height:1.3;max-width:20ch;margin-top:12px}
 .temp-sub{font-size:13.5px;color:var(--tinta-2);margin-top:6px}
-.resumen{grid-area:res;font-size:15px;color:var(--tinta-2);max-width:42ch;margin-top:18px;padding-top:14px;border-top:1px solid var(--linea)}
+.resumen{grid-area:res;font-size:14.5px;color:var(--tinta-2);max-width:42ch;margin-top:20px}
 .resumen b{color:var(--tinta);font-weight:650}
 .lect{border-top:0}
-.lect>li{border-bottom:1px solid var(--linea)}
+.lect>li+li{margin-top:4px}
 .lect-fila{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 20px;align-items:center;
   width:100%;padding:15px 10px;text-align:left}
 .lect-boton{grid-template-columns:minmax(0,1fr) auto 16px;border:0;background:transparent;border-radius:4px;cursor:pointer;
@@ -348,8 +403,8 @@ rect.off{opacity:.14}
 
 /* paneles */
 .paneles{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px 56px;margin-top:48px}
-.panel{position:relative;display:flex;flex-direction:column;border-top:3px solid var(--tinta);padding-top:10px}
-.panel>h2,.emp-cab h2,.pie>h2{font-size:24px;font-weight:850;font-stretch:72%;line-height:1.1;letter-spacing:-.005em}
+.panel{position:relative;display:flex;flex-direction:column}
+.panel>h2,.emp-cab h2,.pie>h2{font-size:26px;font-weight:850;font-stretch:72%;line-height:1.1;letter-spacing:-.005em}
 .panel-nota{font-size:13.5px;color:var(--tinta-2);margin:5px 0 16px;max-width:60ch}
 .sectores-cab,.sector{display:grid;grid-template-columns:minmax(0,10.5em) minmax(0,1fr) 3.4em;gap:14px;align-items:center}
 .sectores-cab{font-size:12px;color:var(--tinta-3);padding:0 8px 6px}
@@ -384,7 +439,7 @@ rect.off{opacity:.14}
 
 /* empresas */
 .empresas{margin-top:52px;scroll-margin-top:12px}
-.emp-cab{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;border-top:3px solid var(--tinta);padding-top:10px}
+.emp-cab{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .cuenta{font-size:14px;color:var(--tinta-2);font-variant-numeric:tabular-nums}
 .cuenta b{color:var(--tinta);font-weight:650}
 .filtros{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1.2fr);gap:12px;margin-top:16px}
@@ -410,11 +465,11 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 .atajos .ico{margin-left:-2px}
 .mas{margin-top:12px}
 .mas summary{display:inline-flex;align-items:center;gap:8px;padding:8px 2px;font-size:14px;font-weight:550;
-  cursor:pointer;list-style:none;border-radius:6px}
+  cursor:pointer;list-style:none;border-radius:4px}
 .mas summary::-webkit-details-marker{display:none}
 .mas summary .ico{transition:transform .2s ease-out;color:var(--tinta-3)}
 .mas[open] summary .ico{transform:rotate(180deg)}
-.mas-n{font-size:12px;font-weight:650;background:var(--tinta);color:var(--fondo);border-radius:9px;
+.mas-n{font-size:12px;font-weight:650;background:var(--tinta);color:var(--fondo);border-radius:4px;
   min-width:18px;height:18px;line-height:18px;text-align:center;padding:0 5px}
 .mas-n:empty{display:none}
 .numeros{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:6px 0 4px}
@@ -424,7 +479,7 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 .regla-activa b{color:var(--tinta);font-weight:650}
 .regla-activa .ico{margin-top:2px;color:var(--tinta)}
 
-.tabla-caja{margin-top:16px;border-top:2px solid var(--tinta);overflow:clip}
+.tabla-caja{margin-top:20px;overflow:clip}
 .tabla-caja.desborda{overflow-x:auto}
 .ver-mas{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;margin-top:14px}
 .ver-mas[hidden]{display:none}
@@ -436,7 +491,7 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 .tabla th button{display:flex;align-items:flex-end;gap:5px;width:100%;padding:12px 12px 10px;border:0;background:transparent;
   font:inherit;color:inherit;cursor:pointer;text-align:inherit;border-radius:0}
 .tabla th button:hover{color:var(--tinta)}
-.tabla th button:focus-visible{outline-offset:-3px;border-radius:6px}
+.tabla th button:focus-visible{outline-offset:-3px;border-radius:4px}
 .tabla th.c-num{white-space:normal}
 .tabla th.c-num button{justify-content:flex-end;text-align:right}
 .flecha{width:12px;height:12px;flex:none;margin-bottom:1px;opacity:0;transition:transform .15s}
@@ -462,6 +517,8 @@ td.c-emp{max-width:270px}
 .fa-hace{color:var(--tinta-3)}
 .patron{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;white-space:nowrap}
 .nd{color:var(--tinta-3);font-size:13px}
+.ced-p{display:block;font-size:12px;font-weight:400;color:var(--tinta-3)}
+.sin-ced{flex:none;font-size:12px;color:var(--tinta-3);white-space:nowrap}
 .m-et{display:none}
 .tabla .detalle td{background:var(--hundido);padding:14px 18px 16px}
 .detalle p{max-width:78ch;font-size:14.5px;color:var(--tinta-2);line-height:1.55}
@@ -472,7 +529,7 @@ td.c-emp{max-width:270px}
 
 /* gráfico de TradingView */
 .grafico{width:min(1120px,calc(100vw - 32px));height:min(800px,calc(100vh - 32px));max-width:none;max-height:none;
-  padding:0;border:1px solid var(--linea-2);border-top:3px solid var(--tinta);border-radius:4px;background:var(--superficie);color:var(--tinta)}
+  padding:0;border:1px solid var(--linea-2);border-radius:4px;background:var(--superficie);color:var(--tinta)}
 .grafico[open]{display:flex;flex-direction:column}
 .grafico::backdrop{background:rgba(10,12,16,.6)}
 .graf-cab{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;padding:12px 14px 12px 18px;border-bottom:1px solid var(--linea)}
@@ -488,14 +545,14 @@ td.c-emp{max-width:270px}
 .vacio .boton{margin-top:12px}
 
 /* pie */
-.pie{margin-top:64px;padding-top:10px;border-top:3px solid var(--tinta)}
+.pie{margin-top:80px}
 .pie-grilla{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:24px 56px;margin-top:10px}
-.glosario>div{padding:12px 0;border-bottom:1px solid var(--linea)}
+.glosario>div{padding:10px 0}
 .glosario dt{font-weight:650}
 .glosario dd{color:var(--tinta-2);font-size:14.5px;margin-top:2px;max-width:65ch}
 h3{font-size:15px;font-weight:700;margin:14px 0 8px}
 .escala li{display:grid;grid-template-columns:10px minmax(0,7.5em) minmax(0,1fr) auto;gap:10px;align-items:center;
-  padding:6px 0;border-bottom:1px solid var(--linea);font-size:14px}
+  padding:5px 0;font-size:14px}
 .escala small{color:var(--tinta-2);font-size:13px;font-variant-numeric:tabular-nums}
 .escala .n{color:var(--tinta-3);font-size:13px;font-variant-numeric:tabular-nums;text-align:right}
 .fuente{font-size:14px;color:var(--tinta-2);max-width:65ch}
@@ -516,13 +573,14 @@ h3{font-size:15px;font-weight:700;margin:14px 0 8px}
   .sector-arr{display:inline}
   .lect-cond{font-size:26px}
   .temp{display:block}
-  .temp-val{font-size:64px}
+  .temp-val{font-size:66px}
   .temp-et{font-size:16.5px;margin-top:10px;max-width:none}
   .franja-lectura{height:44px}
   .temp-sub{margin-top:4px}
   .resumen{max-width:none;margin-top:0}
   .lect-fila{padding:13px 6px}
   .lect-val{font-size:30px}
+  .panel>h2,.emp-cab h2{font-size:23px}
   .paneles{grid-template-columns:1fr;margin-top:36px;gap:36px}
   .panel{padding-top:16px}
   .empresas{margin-top:40px}
@@ -542,6 +600,7 @@ h3{font-size:15px;font-weight:700;margin:14px 0 8px}
   .c-emp{grid-area:emp} .c-da{grid-area:da;font-weight:650;font-size:15px}
   .c-dm{grid-area:dm} .c-r{grid-area:r} .c-fa{grid-area:fa} .c-sg{grid-area:sg}
   .c-dm,.c-r,.c-fa{font-size:13px;color:var(--tinta-2);text-align:left}
+  .tabla tr.fila td.c-fa{display:none}
   .tabla tr.fila td.c-pre,.tabla tr.fila td.c-sec{display:none}
   td.c-emp{max-width:none;min-width:0}
   .tk{min-width:0;font-size:15px}
@@ -562,7 +621,7 @@ h3{font-size:15px;font-weight:700;margin:14px 0 8px}
   .graf-int{order:2}
   .graf-cab a.boton{order:3}
   .graf-ind{padding:8px 16px;font-size:13px}
-  .pie{margin-top:48px}
+  .pie{margin-top:64px}
   .pie-grilla{grid-template-columns:1fr}
   }
 @media (max-width:520px){
@@ -578,8 +637,8 @@ h3{font-size:15px;font-weight:700;margin:14px 0 8px}
 
 CUERPO = r"""
 <div class="titulo">
-  <h1>S&amp;P 500</h1>
-  <p class="bajada">Las 500 empresas más grandes de Estados Unidos: cuánto les falta para volver a su máximo, qué tan lejos están de su promedio de 200 semanas y cuánto cambiaron en 12 meses.</p>
+  <h1>CEDEARs</h1>
+  <p class="bajada">Las empresas del S&amp;P 500 y cuáles se pueden comprar en Argentina como CEDEAR: cuánto les falta para volver a su máximo, qué tan lejos están de su promedio de 200 semanas y cuánto cambiaron en 12 meses.</p>
 </div>
 <section class="hoy" aria-labelledby="t-hoy">
   <h2 id="t-hoy" class="oculto">Cómo está el mercado</h2>
@@ -674,6 +733,17 @@ CUERPO = r"""
         <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>
       </span>
     </div>
+    <div class="campo">
+      <label for="ced">En Argentina</label>
+      <span class="control control-select">
+        <select id="ced">
+          <option value="si">Con CEDEAR</option>
+          <option value="">Todas las del S&amp;P 500</option>
+          <option value="no">Sin CEDEAR</option>
+        </select>
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>
+      </span>
+    </div>
     <div class="campo campo-orden">
       <label for="orden">Ordenar</label>
       <span class="control control-select">
@@ -735,10 +805,11 @@ CUERPO = r"""
   </div>
 </section>
 
-<section class="pie" aria-labelledby="t-pie">
-  <h2 id="t-pie">Cómo leer esta página</h2>
+<details class="pie plegado">
+  <summary><h2 id="t-pie">Cómo leer esta página</h2></summary>
   <div class="pie-grilla">
     <dl class="glosario">
+      <div><dt>CEDEAR</dt><dd>Certificado que cotiza en BYMA, en pesos o en dólares, y representa una parte de una acción del exterior. Es la forma de comprar acciones de Estados Unidos desde Argentina. No todas las empresas del S&amp;P 500 tienen uno.</dd></div>
       <div><dt>Desde su máximo</dt><dd>Cuánto le falta al precio para volver al mayor valor que alcanzó esa acción.</dd></div>
       <div><dt>Promedio de 200 semanas</dt><dd>El precio promedio de las últimas 200 semanas, casi cuatro años. La distancia del precio a ese promedio es lo que esta página llama temperatura: debajo del promedio, fría; muy por arriba, caliente.</dd></div>
       <div><dt>12 meses</dt><dd>Cuánto subió o bajó el precio en el último año.</dd></div>
@@ -750,10 +821,10 @@ CUERPO = r"""
       <h3>Escala de temperatura</h3>
       <ul class="escala" id="escala"></ul>
       <h3>De dónde salen los datos</h3>
-      <p class="fuente">Precios diarios de Yahoo Finance, sin ajustar por dividendos, en dólares. La lista de empresas del índice sale de Wikipedia y el tamaño de cada una (su valor en bolsa), de nasdaq.com. Los datos se actualizan de lunes a viernes, después del cierre de Nueva York. El gráfico de cada empresa es de TradingView y se carga solo cuando lo abrís.</p>
+      <p class="fuente">Precios diarios de Yahoo Finance, sin ajustar por dividendos, en dólares. La lista de empresas del índice sale de Wikipedia y el tamaño de cada una (su valor en bolsa), de nasdaq.com. Qué empresas tienen CEDEAR y su precio en BYMA salen de data912.com. Los datos se actualizan de lunes a viernes, después del cierre de Nueva York. El gráfico de cada empresa es de TradingView y se carga solo cuando lo abrís.</p>
     </div>
   </div>
-</section>
+</details>
 
 <dialog class="grafico" id="grafico" aria-labelledby="graf-tit">
   <div class="graf-cab">
@@ -773,6 +844,9 @@ CUERPO = r"""
 
 JS = r"""
 const D = __DATOS__;
+// Empresas con CEDEAR en BYMA (si la lista no llego, todo funciona como antes, sin filtro)
+const HAY_CEDEAR = D.some(r => r.ce);
+const CED_INICIAL = HAY_CEDEAR ? "si" : "";
 const IDX = __INDICE__;
 const R = __REGLAS__;
 const HOY = new Date();
@@ -879,8 +953,10 @@ function prueba(filas) {
   const tk = filas.slice(0, 3).map(r => r.t).join(", ");
   return filas.length > 3 ? tk + " y " + (filas.length - 3) + " más" : tk;
 }
-const listaC = D.filter(r => r.sg === "c").sort((a, b) => a.da - b.da);
-const listaG = D.filter(r => r.sg === "g").sort((a, b) => b.r - a.r);
+const BASE = HAY_CEDEAR ? D.filter(r => r.ce) : D;
+const listaC = BASE.filter(r => r.sg === "c").sort((a, b) => a.da - b.da);
+const listaG = BASE.filter(r => r.sg === "g").sort((a, b) => b.r - a.r);
+if (HAY_CEDEAR) ["k-c-val", "k-g-val"].forEach(id => { $(id).nextElementSibling.textContent = "con CEDEAR"; });
 $("k-c-nom").insertAdjacentHTML("afterbegin", ICO.c);
 $("k-g-nom").insertAdjacentHTML("afterbegin", ICO.g);
 $("k-c-val").textContent = listaC.length;
@@ -985,6 +1061,10 @@ zona.addEventListener("keydown", e => {
 
 /* ---------- sectores ---------- */
 const sel = $("sec");
+// Filtro de CEDEARs: arranca mostrando solo las que se pueden comprar en Argentina
+const selCed = $("ced");
+selCed.value = CED_INICIAL;
+if (!HAY_CEDEAR) selCed.closest(".campo").hidden = true;
 const sectores = [...new Set(D.map(r => r.s))].sort((a, b) => a.localeCompare(b, "es"));
 const infoSec = sectores.map(s => {
   const filas = D.filter(r => r.s === s);
@@ -1096,8 +1176,11 @@ function filtrar() {
   const minc = parseFloat($("mincaida").value);
   const maxm = parseFloat($("maxma").value);
   const maxa = parseFloat($("maxanios").value);
+  const cv = selCed.value;
   return D.filter(r => {
-    if (q && !(r.t.includes(q) || r.n.toUpperCase().includes(q))) return false;
+    if (cv === "si" && !r.ce) return false;
+    if (cv === "no" && r.ce) return false;
+    if (q && !(r.t.includes(q) || r.n.toUpperCase().includes(q) || (r.ce && r.ce.includes(q)))) return false;
     if (s && r.s !== s) return false;
     if (patron && r.sg !== patron) return false;
     if (!isNaN(minc) && r.da > -Math.abs(minc)) return false;
@@ -1130,6 +1213,14 @@ function detalle(r) {
       num(r.m, 2) + "): " + BANDAS[r.b].toLowerCase() + ".";
   u += r.r === null ? " No tiene un año de historia." : " En 12 meses " + (r.r >= 0 ? "subió " : "bajó ") + abs(r.r, 1) + ".";
   p.push(u);
+  if (r.ce) {
+    let c = "Se puede comprar en Argentina como CEDEAR, con el símbolo <b>" + esc(r.ce) + "</b> en BYMA";
+    if (r.cp) c += ": cotiza $ " + num(r.cp, 2) + (r.cu ? " o US$ " + num(r.cu, 2) + " en dólares MEP" : "") +
+      (r.cv !== null && r.cv !== undefined ? " (" + pct(r.cv, 2) + " en el día)" : "");
+    p.push(c + ". Cada CEDEAR representa una parte de la acción, por eso su precio no es el mismo que en Estados Unidos.");
+  } else if (HAY_CEDEAR) {
+    p.push("No tiene CEDEAR en BYMA: no se puede comprar en Argentina como CEDEAR.");
+  }
   if (r.sg) p.push("Cumple el patrón <b>" + PATRON[r.sg] + "</b>: " + (r.sg === "c" ? reglaC : reglaG) +
     ". Es un dato sobre el precio, no una recomendación.");
   const acc = "<div class='det-acc'>" +
@@ -1191,9 +1282,10 @@ function fila(r) {
   const abierta = abiertas.has(r.t);
   return "<tr class='fila' data-t='" + esc(r.t) + "'>" +
     "<td class='c-emp'><button type='button' class='abrir' aria-expanded='" + abierta + "'>" +
-      "<span class='tk'>" + esc(r.t) + "</span><span class='nom'>" + esc(r.n) + "</span></button></td>" +
+      "<span class='tk'>" + esc(r.t) + "</span><span class='nom'>" + esc(r.n) + "</span>" +
+      (HAY_CEDEAR && !r.ce ? "<span class='sin-ced'>sin CEDEAR</span>" : "") + "</button></td>" +
     "<td class='c-sec'>" + esc(r.s) + "</td>" +
-    "<td class='c-num c-pre'>" + num(r.p, 2) + "</td>" +
+    "<td class='c-num c-pre'>" + num(r.p, 2) + (r.cp ? "<span class='ced-p'>CEDEAR $ " + num(r.cp, 0) + "</span>" : "") + "</td>" +
     "<td class='c-num c-da'>" + pct(r.da, 1) + "</td>" +
     "<td class='c-num c-dm'>" + (r.dm === null ? "<span class='nd'>sin dato</span>"
       : "<span class='sw b" + r.b + "' aria-hidden='true'></span><span class='m-et'>prom. </span>" + pct(r.dm, 0) + "<span class='oculto'>, " + BANDAS[r.b].toLowerCase() + "</span>") + "</td>" +
@@ -1204,7 +1296,7 @@ function fila(r) {
 }
 
 function hayFiltros() {
-  return !!($("q").value.trim() || sel.value || patron || preset ||
+  return !!($("q").value.trim() || sel.value || patron || preset || selCed.value !== CED_INICIAL ||
     $("mincaida").value || $("maxma").value || $("maxanios").value);
 }
 
@@ -1224,7 +1316,7 @@ function pintar() {
     : "<b>" + f.length + "</b> de " + D.length + " empresas") +
     (nombreOrden ? " · " + nombreOrden[2].toLowerCase() : "");
 
-  const firma = [$("q").value.trim().toUpperCase(), sel.value, patron, $("mincaida").value,
+  const firma = [$("q").value.trim().toUpperCase(), sel.value, selCed.value, patron, $("mincaida").value,
     $("maxma").value, $("maxanios").value, orden, asc].join("|");
   if (firma !== firmaLista) {
     firmaLista = firma;
@@ -1245,7 +1337,7 @@ function pintar() {
   if (lv) lv.addEventListener("click", () => aplicarPreset("limpiar"));
 
   // la franja, los sectores y el histograma muestran qué parte del mercado queda en la lista
-  const filtrando = hayFiltros();
+  const filtrando = hayFiltros() || selCed.value !== "";
   const dentro = new Uint8Array(D.length);
   f.forEach(r => { dentro[r.i] = 1; });
   conMA.forEach(r => {
@@ -1265,7 +1357,7 @@ function pintar() {
   document.querySelectorAll(".sector").forEach(b => b.setAttribute("aria-pressed", b.dataset.s === sel.value));
   const nNum = ["mincaida", "maxma", "maxanios"].filter(id => $(id).value !== "").length;
   $("mas-n").textContent = nNum || "";
-  $("limpiar").disabled = !filtrando;
+  $("limpiar").disabled = !hayFiltros();
   selOrden.value = orden + ":" + (asc ? "a" : "d");
 
   const ra = $("regla-activa");
@@ -1329,7 +1421,7 @@ function aplicarPreset(p) {
   $("mincaida").value = ""; $("maxma").value = ""; $("maxanios").value = "";
   preset = ""; patron = ""; [orden, asc] = ORDEN_INICIAL;
   if (quitar) {
-    $("q").value = ""; sel.value = "";
+    $("q").value = ""; sel.value = ""; selCed.value = CED_INICIAL;
   } else {
     const c = PRESETS[p];
     preset = p;
@@ -1345,6 +1437,8 @@ function aplicarPreset(p) {
 
 document.querySelectorAll("[data-p]").forEach(b => {
   b.addEventListener("click", () => {
+    // los recuadros de arriba cuentan empresas con CEDEAR: la lista tiene que coincidir
+    if (b.classList.contains("lect-boton")) selCed.value = CED_INICIAL;
     aplicarPreset(b.dataset.p);
     if (b.classList.contains("lect-boton") && preset) {
       $("empresas").scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start"});
@@ -1364,7 +1458,7 @@ function mostrarMas(todas) {
 $("ver-mas-btn").addEventListener("click", () => mostrarMas(false));
 $("ver-todas").addEventListener("click", () => mostrarMas(true));
 
-["q", "sec", "mincaida", "maxma", "maxanios"].forEach(id => {
+["q", "sec", "ced", "mincaida", "maxma", "maxanios"].forEach(id => {
   $(id).addEventListener("input", pintar);
   $(id).addEventListener("change", pintar);
 });
@@ -1414,6 +1508,15 @@ def generar():
     if sin_tamano:
         print(f"Sin capitalizacion {len(sin_tamano)}: " + ", ".join(sin_tamano[:20]))
 
+    ceds = cedears([f["t"] for f in filas])
+    for f in filas:
+        c = ceds.get(f["t"])
+        f["ce"] = c["s"] if c else None      # simbolo del CEDEAR en BYMA, o None si no tiene
+        f["cp"] = c and c["p"]               # precio del CEDEAR en pesos
+        f["cu"] = c and c["u"]               # en dolares MEP
+        f["cv"] = c and c["var"]             # variacion del dia
+    print(f"Con CEDEAR en BYMA: {len(ceds)} de {len(filas)}")
+
     indice = medir(datos[INDICE], fecha_datos) if INDICE in datos else None
     if indice is None:
         print(f"Sin datos de {INDICE}: la pagina sale sin el recuadro del indice")
@@ -1430,11 +1533,12 @@ def generar():
     js = js.replace("__REGLAS__", a_json(reglas))
     js = js.replace("__DATOS__", a_json(filas))
     comun.escribir("sp500", comun.pagina(
-        "sp500", "S&P 500",
-        "Las empresas del S&P 500 según cuánto les falta para volver a su máximo, qué tan lejos están de su "
-        "promedio de 200 semanas y cuánto cambiaron en 12 meses. Datos sobre el precio, no recomendaciones.",
+        "sp500", "CEDEARs",
+        "Las empresas del S&P 500 que se pueden comprar en Argentina como CEDEAR: cuánto les falta para volver a su "
+        "máximo, qué tan lejos están de su promedio de 200 semanas y cuánto cambiaron en 12 meses. Datos, no recomendaciones.",
         cuerpo, css=CSS, js=js,
-        fuentes="Precios: Yahoo Finance. Lista del índice: Wikipedia. Tamaño de cada empresa: nasdaq.com. Gráficos: TradingView.",
+        fuentes="Precios: Yahoo Finance. CEDEARs en BYMA: data912.com. Lista del índice: Wikipedia. "
+                "Tamaño de cada empresa: nasdaq.com. Gráficos: TradingView.",
     ))
 
     con_ma = [f for f in filas if f["dm"] is not None]
@@ -1446,4 +1550,7 @@ def generar():
         "arriba_200s": round(100 * sum(f["dm"] >= 0 for f in con_ma) / len(con_ma)) if con_ma else None,
         "en_promedio": sum(f["sg"] == "c" for f in filas),
         "subio_fuerte": sum(f["sg"] == "g" for f in filas),
+        "con_cedear": sum(bool(f["ce"]) for f in filas),
+        "en_promedio_cedear": sum(f["sg"] == "c" and bool(f["ce"]) for f in filas),
+        "subio_fuerte_cedear": sum(f["sg"] == "g" and bool(f["ce"]) for f in filas),
     }

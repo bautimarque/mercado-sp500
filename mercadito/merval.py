@@ -147,7 +147,10 @@ def generar():
 CSS = r"""
 .tv{font-size:12.5px;color:var(--tinta-2)}
 #tabla td:first-child b{margin-right:4px}
-@media (max-width:640px){
+@media (max-width:899px){
+  /* a la vista: acción, precio en pesos y variación del día; lo demás, al tocar la fila */
+  #tabla tr:not(.abierta) td:nth-child(n+4),
+  #tabla tr:not(.abierta) td:first-child .sub{display:none}
   #tabla td:nth-child(2){order:2;margin-left:auto;font-size:16px;font-weight:700;color:var(--tinta);text-align:right}
   #tabla td:nth-child(2)::before{content:"$ "}
   #tabla td:nth-child(3)::before{content:"Día "}
@@ -181,7 +184,7 @@ CUERPO = r"""
 <section class="bloque" aria-labelledby="t-acc">
   <h2 id="t-acc">Principales acciones</h2>
   <p class="nota">Lista de componentes publicada en Wikipedia; puede no coincidir exactamente con la composición vigente del índice. Máximo, promedio de 200 semanas y 12 meses en dólares CCL.</p>
-  <div class="caja-tabla"><table class="tabla-datos" id="tabla">
+  <div class="caja-tabla"><table class="tabla-datos" id="tabla" data-ficha>
     <thead><tr>
       <th data-k="t" data-asc="1"><button type="button">Empresa</button></th>
       <th class="der" data-k="p"><button type="button">Precio ($)</button></th>
@@ -196,15 +199,15 @@ CUERPO = r"""
   </table></div>
 </section>
 
-<section class="bloque" aria-labelledby="t-glos">
-  <h2 id="t-glos">Cómo leer esta página</h2>
+<details class="bloque plegado">
+  <summary><h2 id="t-glos">Cómo leer esta página</h2></summary>
   <dl class="glosario">
     <div><dt>En dólares CCL</dt><dd>Precio en pesos dividido por el dólar contado con liqui del mismo día. Permite comparar precios de distintos años sin el efecto de la inflación y las devaluaciones.</dd></div>
     <div><dt>Desde su máximo</dt><dd>Cuánto le falta al precio en dólares para volver al mayor valor que tuvo desde 2013, cuando empieza la serie del contado con liqui.</dd></div>
     <div><dt>Vs. 200 semanas</dt><dd>Distancia del precio en dólares a su promedio de las últimas 200 semanas, casi cuatro años.</dd></div>
     <div><dt>12 meses</dt><dd>Variación del precio en el último año, en dólares y en pesos.</dd></div>
   </dl>
-</section>
+</details>
 """
 
 

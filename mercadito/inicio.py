@@ -29,10 +29,6 @@ def pct(v, dec=1):
     return ("+" if round(v, dec) > 0 else "") + n(v, dec) + "%"
 
 
-def fecha(iso):
-    return "—" if not iso else f"{iso[8:10]}/{iso[5:7]}/{iso[0:4]}"
-
-
 def viejo(resumen):
     try:
         momento = datetime.strptime(resumen["actualizado"], "%d/%m/%Y %H:%M").replace(tzinfo=comun.ARG)
@@ -41,132 +37,133 @@ def viejo(resumen):
         return True
 
 
-def fila(etiqueta, valor, detalle=""):
-    return (f'<li><span class="et">{etiqueta}</span><span class="val num">{valor}</span>'
-            f'{f"<span class=det>{detalle}</span>" if detalle else ""}</li>')
+def cuando(resumen):
+    """«Actualizado a las 15:02» si es de hoy; si no, «Actualizado el 05/10»."""
+    txt = resumen.get("actualizado", "")
+    try:
+        momento = datetime.strptime(txt, "%d/%m/%Y %H:%M")
+    except ValueError:
+        return "Actualizado el " + html.escape(txt)
+    if momento.date() == comun.ahora().date():
+        return "Actualizado a las " + momento.strftime("%H:%M")
+    return "Actualizado el " + momento.strftime("%d/%m")
 
 
-def panel(clave, titulo, resumen, filas, link):
+def tarjeta(clave, titulo, resumen, principal, secundario):
+    """Un panel del inicio: la sección, su número principal grande y como mucho uno
+    secundario. principal y secundario son (etiqueta, valor). Toda la tarjeta lleva
+    a la sección: el detalle está allá."""
     carpeta = comun.CARPETAS[clave]
-    if not resumen:
-        cuerpo = '<p class="nota">Todavía no hay datos de esta sección.</p>'
-        pie = ""
-    else:
-        cuerpo = f'<ul class="filas">{"".join(filas)}</ul>'
-        aviso = ' · <b>desactualizado</b>' if viejo(resumen) else ""
-        pie = f'<p class="act">Actualizado el {html.escape(resumen.get("actualizado", "—"))} hs{aviso}</p>'
     flecha = '<svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg>'
-    return (f'<section class="panel-sec" aria-labelledby="p-{clave}"><h2 id="p-{clave}"><a href="{carpeta}">{titulo}</a></h2>'
-            f'{cuerpo}{pie}<a class="ir" href="{carpeta}">{link}{flecha}</a></section>')
+    if not resumen or not principal:
+        cuerpo = '<span class="t-vacio">Todavía no hay datos de esta sección.</span>'
+    else:
+        et, val = principal
+        cuerpo = f'<span class="t-et">{et}</span><span class="t-val">{val}</span>'
+        if secundario:
+            cuerpo += f'<span class="t-sec">{secundario[0]} <b class="num">{secundario[1]}</b></span>'
+        aviso = ' · <b>desactualizado</b>' if viejo(resumen) else ""
+        cuerpo += f'<span class="t-act">{cuando(resumen)}{aviso}</span>'
+    return f'<li><a class="tarjeta" href="{carpeta}"><h2 class="t-tit">{titulo}{flecha}</h2>{cuerpo}</a></li>'
 
 
-def filas_dolar(d):
-    filas = []
-    for casa in ("oficial", "bolsa", "contadoconliqui", "blue"):
-        x = d["tipos"].get(casa)
-        if x:
-            det = pct(x["var"], 2) + " en el día" if x.get("var") is not None else ""
-            filas.append(fila(html.escape(x["n"]), "$ " + n(x["v"]), det))
-    return filas
+# Cada sección elige su número principal y, como mucho, uno secundario.
+# El resto de sus datos está en su página.
+
+def datos_dolar(d):
+    t = d["tipos"]
+    mep, oficial = t.get("bolsa"), t.get("oficial")
+    if mep:
+        return ("Dólar MEP", "$ " + n(mep["v"])), (("Oficial", "$ " + n(oficial["v"])) if oficial else None)
+    return (("Dólar oficial", "$ " + n(oficial["v"])) if oficial else None), None
 
 
-def filas_gastos(g):
+def datos_gastos(g):
     e = g["efectivo"]
-    return [
-        fila("Juego digital", "$ " + n(e["juego"]), "por dólar, con IVA e Ingresos Brutos"),
-        fila("Servicio digital", "$ " + n(e["servicio"]), "por dólar, con IVA, percepción e Ingresos Brutos"),
-        fila("Gasto en el exterior", "$ " + n(e["exterior"]), "por dólar, con la percepción del 30% (dólar tarjeta)"),
-    ]
+    return ("Dólar tarjeta, gastos en el exterior", "$ " + n(e["exterior"])), ("Servicio digital", "$ " + n(e["servicio"]))
 
 
-def filas_tasas(t):
-    filas = []
-    if t.get("plazo_fijo_nacion") is not None:
-        filas.append(fila("Plazo fijo Banco Nación", n(t["plazo_fijo_nacion"]) + "%", "TNA a 30 días"))
+def datos_tasas(t):
+    principal = None
     if t.get("plazo_fijo_max"):
-        filas.append(fila("Plazo fijo más alto", n(t["plazo_fijo_max"]["tna"]) + "%", html.escape(t["plazo_fijo_max"]["n"])))
+        principal = ("Plazo fijo más alto, TNA", n(t["plazo_fijo_max"]["tna"]) + "%")
+    elif t.get("plazo_fijo_nacion") is not None:
+        principal = ("Plazo fijo Banco Nación, TNA", n(t["plazo_fijo_nacion"]) + "%")
+    secundario = None
     if t.get("inflacion_mensual"):
-        det = f'interanual {n(t["inflacion_interanual"]["v"], 1)}%' if t.get("inflacion_interanual") else ""
         mes = MESES[int(t["inflacion_mensual"]["f"][5:7]) - 1]
-        filas.append(fila(f"Inflación de {mes}", n(t["inflacion_mensual"]["v"], 1) + "%", det))
-    if t.get("tamar"):
-        filas.append(fila("TAMAR", n(t["tamar"]["v"]) + "%", "TNA de bancos privados"))
-    return filas
+        secundario = (f"Inflación de {mes}", n(t["inflacion_mensual"]["v"], 1) + "%")
+    return principal, secundario
 
 
-def filas_merval(m):
-    return [
-        fila("S&amp;P Merval", n(m["p"], 0), pct(m["var"], 2) + " en el día"),
-        fila("En dólares CCL", "US$ " + n(m["pu"], 0), pct(m["ru"]) + " en 12 meses" if m.get("ru") is not None else ""),
-        fila("Desde su máximo en dólares", pct(m["da"]), "máximo del " + fecha(m["fa"]) if m.get("fa") else ""),
-    ]
+def datos_merval(m):
+    if m.get("pu") is not None:
+        principal = ("S&amp;P Merval en dólares CCL", "US$ " + n(m["pu"], 0))
+    else:
+        principal = ("S&amp;P Merval", n(m["p"], 0))
+    secundario = ("Desde su máximo", pct(m["da"])) if m.get("da") is not None else None
+    return principal, secundario
 
 
-def filas_sp500(s):
-    filas = []
+def datos_sp500(s):
     i = s.get("indice")
-    if i:
-        filas.append(fila("Índice S&amp;P 500", pct(i["da"]), "desde su máximo · " + n(i["p"], 0) + " puntos"))
-        if i.get("dm") is not None:
-            filas.append(fila("Vs. su promedio de 200 semanas", pct(i["dm"], 0)))
-    if s.get("arriba_200s") is not None:
-        filas.append(fila("Empresas arriba de su promedio de 200 semanas", f'{s["arriba_200s"]}%', f'de {s["empresas"]}'))
-    # "volvio_promedio" es el nombre anterior del patron, en resumenes viejos
-    en_promedio = s.get("en_promedio", s.get("volvio_promedio"))
-    filas.append(fila("Patrones de precio", f'{en_promedio} · {s["subio_fuerte"]}', "en su promedio o debajo · subió fuerte"))
-    return filas
+    principal = ("S&amp;P 500 desde su máximo", pct(i["da"])) if i else None
+    if s.get("con_cedear"):
+        secundario = ("Con CEDEAR", f'{s["con_cedear"]} de {s["empresas"]} empresas')
+    elif s.get("arriba_200s") is not None:
+        secundario = ("Arriba de su promedio de 200 semanas", f'{s["arriba_200s"]}%')
+    else:
+        secundario = None
+    return principal, secundario
 
 
-def filas_bonos(b):
-    filas = []
-    if b.get("riesgo"):
-        r = b["riesgo"]
-        det = (("+" if r["dif"] > 0 else "") + n(r["dif"], 0) + " vs. el día anterior · ") if r.get("dif") is not None else ""
-        filas.append(fila("Riesgo país", n(r["v"], 0) + " puntos", det + fecha(r["f"])))
-    if b.get("al30"):
-        filas.append(fila("AL30 en dólares MEP", "US$ " + n(b["al30"]["d"]), pct(b["al30"]["var"], 2) + " en el día"))
-    if b.get("gd30"):
-        filas.append(fila("GD30 en dólares MEP", "US$ " + n(b["gd30"]["d"]), pct(b["gd30"]["var"], 2) + " en el día"))
-    return filas
+def datos_bonos(b):
+    r = b.get("riesgo")
+    if not r:
+        return None, None
+    secundario = None
+    if r.get("dif") is not None:
+        secundario = ("Vs. el día anterior", ("+" if r["dif"] > 0 else "") + n(r["dif"], 0))
+    return ("Riesgo país", n(r["v"], 0) + " puntos"), secundario
 
 
-# (clave, titulo, armador de filas, texto del link)
+# (clave, titulo, elige el número principal y el secundario)
 PANELES = [
-    ("dolar", "Dólar", filas_dolar, "Todos los tipos, bancos y calculadora"),
-    ("gastos", "Gastos en dólares", filas_gastos, "Calculadora de juegos, suscripciones y viajes"),
-    ("tasas", "Tasas", filas_tasas, "Plazo fijo por entidad, fondos e inflación"),
-    ("merval", "Merval", filas_merval, "Las principales acciones argentinas"),
-    ("sp500", "S&amp;P 500", filas_sp500, "Las 500 empresas, una por una"),
-    ("bonos", "Bonos", filas_bonos, "Soberanos, letras y obligaciones negociables"),
+    ("dolar", "Dólar", datos_dolar),
+    ("gastos", "Gastos en dólares", datos_gastos),
+    ("tasas", "Tasas", datos_tasas),
+    ("merval", "Merval", datos_merval),
+    ("sp500", "CEDEARs", datos_sp500),
+    ("bonos", "Bonos", datos_bonos),
 ]
 
 
 def generar(resumenes):
     paneles = []
-    for clave, titulo, armar, link in PANELES:
+    for clave, titulo, elegir in PANELES:
         r = resumenes.get(clave)
-        filas = []
+        principal = secundario = None
         if r:
             # Un resumen viejo o incompleto no rompe el inicio: ese panel sale sin datos
             try:
-                filas = armar(r)
+                principal, secundario = elegir(r)
             except Exception as e:
                 print(f"  Resumen de {clave} ilegible ({e!r}): se muestra sin datos")
                 r = None
-        paneles.append(panel(clave, titulo, r, filas, link))
+        paneles.append(tarjeta(clave, titulo, r, principal, secundario))
 
     cuerpo = f"""
 <div class="titulo">
   <h1>Mercadito</h1>
   <p class="bajada">Dólar, tasas, acciones y bonos de Argentina y Estados Unidos en un solo lugar. Datos para mirar el mercado, no recomendaciones.</p>
 </div>
-<div class="tablero">
+<ul class="tablero">
 {"".join(paneles)}
-</div>
+</ul>
 """
     comun.escribir("inicio", comun.pagina(
         "inicio", "Mercadito",
-        "Dólar, tasas, Merval, S&P 500 y bonos: los datos del mercado argentino y de Estados Unidos en un solo lugar.",
+        "Dólar, tasas, Merval, CEDEARs y bonos: los datos del mercado argentino y de Estados Unidos en un solo lugar.",
         cuerpo, css=CSS,
         fuentes="Cada panel resume su sección con su fecha. Fuentes: dolarapi.com, comparadolar.ar, argentinadatos.com, BCRA, "
                 "Yahoo Finance, Wikipedia, nasdaq.com y data912.com; el detalle de cada dato está en "
@@ -175,50 +172,34 @@ def generar(resumenes):
 
 
 CSS = r"""
-/* el cabezal ya dice Mercadito: el título queda para lectores de pantalla y la bajada abre la tapa */
+/* el cabezal ya dice Mercadito: el título queda para lectores de pantalla y la bajada abre la página */
 .titulo h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.titulo .bajada{margin-top:0;font-size:19px;font-weight:550;color:var(--tinta);max-width:52ch;line-height:1.35}
-/* La tapa: el dólar al frente, a todo el ancho, y un sumario de módulos con filetes */
-.tablero{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));margin-top:26px;padding-top:4px;border-top:3px solid var(--tinta);
-  background:linear-gradient(var(--tinta),var(--tinta)) 0 3px / 100% 1px no-repeat}
-.panel-sec{display:flex;flex-direction:column;grid-column:span 2;padding:14px 24px 20px;border-left:1px solid var(--linea);border-bottom:1px solid var(--linea-2)}
-.panel-sec:nth-child(5),.panel-sec:nth-child(6){grid-column:span 3}
-.panel-sec:nth-child(2),.panel-sec:nth-child(5){border-left:0;padding-left:0}
-.panel-sec:nth-child(4),.panel-sec:nth-child(6){padding-right:0}
-.panel-sec h2{font-size:24px;font-weight:850;font-stretch:72%;line-height:1.1}
-.panel-sec h2 a{text-decoration:none}
-.panel-sec h2 a:hover{text-decoration:underline}
-.filas{margin-top:8px}
-.filas li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:1px 14px;padding:9px 0;border-bottom:1px solid var(--linea)}
-.filas li:last-child{border-bottom:0}
-.filas .et{font-size:14.5px;font-weight:550}
-.filas .val{font-size:22px;font-weight:800;font-stretch:76%;line-height:1.1;text-align:right}
-.filas .det{grid-column:1 / -1;font-size:12.5px;color:var(--tinta-3)}
-.act{font-size:12.5px;color:var(--tinta-3);margin-top:8px}
-.ir{display:inline-flex;align-items:center;gap:6px;margin-top:auto;padding-top:12px;font-size:14px;font-weight:650}
-.ir .ico{transition:transform .15s}
-.ir:hover .ico{transform:translateX(3px)}
-/* el dólar, como cifra de tapa */
-.panel-sec:first-child{grid-column:1 / -1;border-left:0;padding:14px 0 20px}
-.panel-sec:first-child .filas{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin-top:10px}
-.panel-sec:first-child .filas li{display:flex;flex-direction:column;padding:4px 20px 6px;border-bottom:0;border-left:1px solid var(--linea)}
-.panel-sec:first-child .filas li:first-child{border-left:0;padding-left:0}
-.panel-sec:first-child .et{font-size:15px;font-weight:700}
-.panel-sec:first-child .val{order:2;font-size:56px;font-stretch:66%;line-height:.95;text-align:left;margin-top:6px;font-variant-numeric:normal}
-.panel-sec:first-child .det{order:3;font-size:13px;margin-top:6px}
-@media (max-width:1023px){
-  .tablero{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .panel-sec,.panel-sec:nth-child(n){grid-column:auto;padding:14px 0 20px 24px;border-left:1px solid var(--linea)}
-  .panel-sec:nth-child(2n){border-left:0;padding-left:0;padding-right:24px}
-  .panel-sec:nth-child(6){grid-column:1 / -1;border-left:0;padding-left:0;padding-right:0}
-}
+.titulo .bajada{margin-top:0;font-size:17px;color:var(--tinta-2);max-width:48ch;line-height:1.4}
+/* seis tarjetas: la sección, un número grande y como mucho uno chico. Sin cajas ni filetes */
+.tablero{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:48px 40px;margin-top:40px}
+.tarjeta{display:flex;flex-direction:column;min-width:0;text-decoration:none;color:inherit;border-radius:4px}
+.tarjeta:focus-visible{outline-offset:6px}
+.t-tit{display:flex;align-items:center;gap:6px;font-size:15px;font-weight:700;line-height:1.2}
+.t-tit .ico{width:14px;height:14px;color:var(--tinta-3);transition:transform .15s,color .15s}
+.tarjeta:hover .t-tit{text-decoration:underline;text-underline-offset:3px}
+.tarjeta:hover .t-tit .ico{transform:translateX(3px);color:var(--tinta)}
+.t-et{font-size:13.5px;color:var(--tinta-2);margin-top:14px;line-height:1.3}
+.t-val{font-size:58px;font-weight:800;font-stretch:66%;line-height:.95;letter-spacing:-.01em;margin-top:4px;white-space:nowrap}
+.t-sec{font-size:14px;color:var(--tinta-2);margin-top:10px;line-height:1.35}
+.t-sec b{color:var(--tinta);font-weight:650}
+.t-act{font-size:12px;color:var(--tinta-3);margin-top:10px}
+.t-act b{font-weight:650;color:var(--tinta-2)}
+.t-vacio{font-size:14px;color:var(--tinta-3);margin-top:12px}
 @media (max-width:899px){
-  .tablero{grid-template-columns:1fr;margin-top:20px}
-  .panel-sec,.panel-sec:nth-child(n){grid-column:auto;border-left:0;padding:14px 0 18px}
-  .panel-sec:first-child .filas{grid-template-columns:1fr 1fr}
-  .panel-sec:first-child .filas li{padding:10px 14px 12px}
-  .panel-sec:first-child .filas li:nth-child(odd){border-left:0;padding-left:0}
-  .panel-sec:first-child .filas li:nth-child(n+3){border-top:1px solid var(--linea)}
-  .panel-sec:first-child .val{font-size:38px}
+  .titulo .bajada{font-size:15px}
+  .tablero{grid-template-columns:repeat(2,minmax(0,1fr));gap:30px 18px;margin-top:26px}
+  .t-tit{font-size:14px}
+  .t-et{font-size:12.5px;margin-top:8px;min-height:2.6em;display:flex;align-items:flex-end}
+  .t-val{font-size:36px;margin-top:3px}
+  .t-sec{font-size:12.5px;margin-top:6px}
+  .t-act{font-size:11.5px;margin-top:6px}
+}
+@media (max-width:360px){
+  .t-val{font-size:31px}
 }
 """

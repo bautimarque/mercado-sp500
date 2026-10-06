@@ -14,14 +14,14 @@ Datos para mirar el mercado, no recomendaciones.
 | **Gastos en US$** | Calculadora de cuánto se paga en pesos un juego, una suscripción o un gasto en el exterior, en pesos o con dólares propios, con los impuestos vigentes | Cada 30 min |
 | **Tasas** | Plazo fijo en cada entidad (con calculadora y comparación con la inflación), fondos money market, inflación y referencias del BCRA | Cada 30 min |
 | **Merval** | El índice y sus principales acciones en pesos y en dólares contado con liqui | Cada 30 min |
-| **S&P 500** | Las ~500 empresas: distancia al máximo, al promedio de 200 semanas, 12 meses, patrones de precio y gráfico de TradingView | 18:30 |
+| **CEDEARs** (`sp500/`) | Las ~500 empresas del S&P 500, con filtro de cuáles tienen CEDEAR en Argentina y su precio en BYMA; distancia al máximo, al promedio de 200 semanas, 12 meses, patrones de precio y gráfico de TradingView | 18:30 |
 | **Bonos** | Riesgo país, soberanos en dólares, letras del Tesoro y obligaciones negociables | Cada 30 min |
 
 "Cada 30 min" es de lunes a viernes entre las 10 y las 17:30 de Argentina. A las
 18:30 se actualiza todo. **Cómo se calcula** (`metodologia/`) explica cada dato y
 su fuente; **Aviso legal** (`legal/`) aclara qué es y qué no es el sitio.
 
-## Patrones de precio (S&P 500)
+## Patrones de precio (CEDEARs)
 
 Son descripciones del precio calculadas con reglas fijas. No son
 recomendaciones ni sugieren operar.

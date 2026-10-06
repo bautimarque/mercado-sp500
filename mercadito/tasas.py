@@ -141,7 +141,11 @@ def generar():
 CSS = r"""
 .calc-pf{margin-top:12px}
 #pf-monto{height:56px;font-size:30px;font-weight:750;font-stretch:76%;width:min(100%,280px)}
-@media (max-width:640px){
+@media (max-width:899px){
+  /* a la vista: entidad, TNA e interés del monto (plazo fijo) o TNA (fondos); lo demás, al tocar la fila */
+  #tabla-pf tr:not(.abierta) td:is(:nth-child(3),:nth-child(4)),
+  #tabla-pf tr:not(.abierta) td:first-child .sub,
+  #tabla-fci tr:not(.abierta) td:is(:nth-child(3),:nth-child(4)){display:none}
   #tabla-pf td:nth-child(2),#tabla-fci td:nth-child(2),#tabla-ref td:nth-child(2){order:2;margin-left:auto;font-size:16px;font-weight:700;color:var(--tinta);text-align:right}
   #tabla-pf td:nth-child(3)::before{content:"TEA "}
   #tabla-pf td:nth-child(4)::before{content:"En 30 días "}
@@ -166,7 +170,7 @@ CUERPO = r"""
   <div class="controles">
     <label class="campo">Monto a invertir <input id="pf-monto" type="number" inputmode="decimal" min="0" step="any" value="1000000"></label>
   </div>
-  <div class="caja-tabla"><table class="tabla-datos" id="tabla-pf">
+  <div class="caja-tabla"><table class="tabla-datos" id="tabla-pf" data-ficha>
     <thead><tr>
       <th data-k="n" data-asc="1"><button type="button">Entidad</button></th>
       <th class="der" data-k="tna"><button type="button">TNA</button></th>
@@ -181,7 +185,7 @@ CUERPO = r"""
 <section class="bloque" aria-labelledby="t-fci" id="bloque-fci">
   <h2 id="t-fci">Fondos money market</h2>
   <p class="nota">Fondos de liquidez inmediata en pesos con al menos $ 1.000 millones de patrimonio. La TNA es el rendimiento del último día hábil llevado a un año: cambia todos los días.</p>
-  <div class="caja-tabla"><table class="tabla-datos" id="tabla-fci">
+  <div class="caja-tabla"><table class="tabla-datos" id="tabla-fci" data-ficha>
     <thead><tr>
       <th data-k="n" data-asc="1"><button type="button">Fondo</button></th>
       <th class="der" data-k="tna"><button type="button">TNA del último día</button></th>
@@ -199,23 +203,23 @@ CUERPO = r"""
   <div id="grafico"></div>
 </section>
 
-<section class="bloque" aria-labelledby="t-ref" id="bloque-ref">
-  <h2 id="t-ref">Referencias del BCRA</h2>
+<details class="bloque plegado" id="bloque-ref">
+  <summary><h2 id="t-ref">Referencias del BCRA</h2></summary>
   <div class="caja-tabla"><table class="tabla-datos" id="tabla-ref">
     <thead><tr><th>Dato</th><th class="der">Valor</th><th class="der">Fecha</th></tr></thead>
     <tbody></tbody>
   </table></div>
-</section>
+</details>
 
-<section class="bloque" aria-labelledby="t-glos">
-  <h2 id="t-glos">Cómo leer esta página</h2>
+<details class="bloque plegado">
+  <summary><h2 id="t-glos">Cómo leer esta página</h2></summary>
   <dl class="glosario">
     <div><dt>TNA</dt><dd>Tasa nominal anual: la que publica cada entidad. Para un plazo fijo a 30 días, el interés del mes es TNA × 30 / 365.</dd></div>
     <div><dt>TEA</dt><dd>Tasa efectiva anual: lo que rendiría en un año si se renovara cada 30 días con la misma TNA, sumando los intereses.</dd></div>
     <div><dt>Frente a la inflación</dt><dd>Diferencia entre lo que rinde el plazo fijo en 30 días y la inflación del último mes publicado. Es una comparación con el pasado: la inflación de los próximos meses puede ser distinta.</dd></div>
     <div><dt>Money market</dt><dd>Fondos comunes de inversión que invierten en instrumentos de muy corto plazo y permiten retirar el dinero en el día. El rendimiento no está garantizado.</dd></div>
   </dl>
-</section>
+</details>
 """
 
 

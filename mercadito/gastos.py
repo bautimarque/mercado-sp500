@@ -66,12 +66,12 @@ def generar():
 CSS = r"""
 #precio{height:60px;font-size:34px;font-weight:800;font-stretch:72%;width:min(100%,240px)}
 #iibb{width:min(100%,140px)}
-.tipos-gasto{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
-.tipos-gasto label:nth-of-type(-n+3){border-top:1px solid var(--linea-2)}
+.tipos-gasto{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;border:0;padding:0;margin:14px 0 0}
+.tipos-gasto legend{padding:0;margin-bottom:6px}
+#nota-res{margin-top:12px}
 .tipos-gasto label{position:relative;display:flex;flex-direction:column;gap:3px;padding:12px 14px 13px;cursor:pointer;
-  border-bottom:1px solid var(--linea-2);border-left:1px solid var(--linea);transition:background-color .15s,color .15s}
-.tipos-gasto label:nth-of-type(3n+1){border-left:0}
-.tipos-gasto label:hover{background:var(--hundido)}
+  background:var(--hundido);border-radius:4px;transition:background-color .15s,color .15s}
+.tipos-gasto label:hover{background:color-mix(in srgb,var(--hundido) 60%,var(--linea-2))}
 .tipos-gasto label:has(input:checked){background:var(--tinta);color:var(--fondo)}
 .tipos-gasto label:has(input:checked) small{color:color-mix(in srgb,var(--fondo) 75%,var(--tinta))}
 .tipos-gasto input{position:absolute;opacity:0;pointer-events:none}
@@ -79,18 +79,17 @@ CSS = r"""
 .tipos-gasto small{font-size:12.5px;color:var(--tinta-3);line-height:1.4}
 .tipos-gasto label:focus-within{outline:2px solid var(--tinta);outline-offset:2px}
 #ejemplos{align-items:center}
-.resultados{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:0 40px;margin-top:28px;border-top:3px solid var(--tinta)}
-.resultado{padding:14px 0 6px}
-.resultado+.resultado{border-left:1px solid var(--linea);padding-left:20px;margin-left:-20px}
+.resultados{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:0 56px;margin-top:40px}
+.resultado{padding:0 0 6px}
 .controles:has(#precio){align-items:flex-start}
 .campo:has(#iibb){min-width:260px}
-.resultado h3{margin:0;font-size:15px;font-weight:700}
+.resultado h3{margin:0;font-size:15px;font-weight:650;color:var(--tinta-2)}
 .resultado .total{font-size:52px;font-weight:800;font-stretch:68%;line-height:.95;margin-top:8px;font-variant-numeric:normal}
 .resultado:first-child .total{font-size:80px;font-stretch:64%;line-height:.9}
-.resultado .por{font-size:14px;color:var(--tinta-2);margin-top:8px}
+.resultado .por{font-size:13.5px;color:var(--tinta-3);margin-top:8px}
 .resultados>.nota{grid-column:1 / -1;padding-top:14px}
-.desglose{margin-top:14px;font-size:14px}
-.desglose li{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid var(--linea)}
+.desglose{margin-top:16px;font-size:13.5px;color:var(--tinta-2)}
+.desglose li{display:flex;justify-content:space-between;gap:12px;padding:5px 0}
 .desglose li span:last-child{font-variant-numeric:tabular-nums;white-space:nowrap}
 .desglose li.no{color:var(--tinta-3)}
 @media (max-width:899px){
@@ -103,15 +102,14 @@ CSS = r"""
   .tipos-gasto label{padding:9px 12px 10px}
   .tipos-gasto small{font-size:12px}
   .campo:has(#iibb){min-width:0}
-  .tipos-gasto label{border-left:0}
-  .tipos-gasto label:nth-of-type(-n+3){border-top:0}
-  .tipos-gasto label:first-of-type{border-top:1px solid var(--linea-2)}
+  .tipos-gasto{gap:6px}
   .resultados{grid-template-columns:1fr}
-  .resultado+.resultado{border-left:0;padding-left:0;margin-left:0;border-top:1px solid var(--linea-2);margin-top:18px;padding-top:14px}
+  .resultados{margin-top:32px}
+  .resultado+.resultado{margin-top:28px}
   .resultado:first-child .total{font-size:64px}
   .resultado .total{font-size:44px}
 }
-@media (max-width:640px){
+@media (max-width:899px){
   #tabla-imp td:nth-child(5){order:2;margin-left:auto;font-size:16px;font-weight:700;color:var(--tinta);text-align:right}
   #tabla-imp td:nth-child(2)::before{content:"IVA "}
   #tabla-imp td:nth-child(3)::before{content:"Percepción "}
@@ -133,12 +131,12 @@ CUERPO = r"""
     <label class="campo">Precio en dólares <input id="precio" type="number" inputmode="decimal" min="0" step="any" value="69.99"></label>
     <label class="campo">Ingresos Brutos de tu provincia (%) <input id="iibb" type="number" inputmode="decimal" min="0" max="10" step="0.1"></label>
   </div>
-  <fieldset class="tipos-gasto" id="tipos" style="border:0;padding:0;margin:14px 0 0">
-    <legend class="nota" style="padding:0;margin-bottom:6px">¿Qué estás pagando?</legend>
+  <fieldset class="tipos-gasto" id="tipos">
+    <legend class="nota">¿Qué estás pagando?</legend>
   </fieldset>
   <div class="controles"><div class="grupo" role="group" aria-label="Ejemplos" id="ejemplos"></div></div>
   <div class="resultados" id="resultados" aria-live="polite"></div>
-  <p class="nota" id="nota-res" style="margin-top:12px"></p>
+  <p class="nota" id="nota-res"></p>
 </section>
 
 <section class="bloque" aria-labelledby="t-imp">
@@ -150,8 +148,8 @@ CUERPO = r"""
   </table></div>
 </section>
 
-<section class="bloque" aria-labelledby="t-glos">
-  <h2 id="t-glos">Cómo leer esta página</h2>
+<details class="bloque plegado">
+  <summary><h2 id="t-glos">Cómo leer esta página</h2></summary>
   <dl class="glosario">
     <div><dt>Dólar tarjeta</dt><dd>Dólar oficial más la percepción del 30%. Es lo que se paga en un gasto en el exterior; en servicios digitales se suman además el IVA y los Ingresos Brutos.</dd></div>
     <div><dt>Percepción del 30%</dt><dd>Figura en el resumen como «RG 5617». Es un pago a cuenta de Ganancias o Bienes Personales: quien paga esos impuestos la descuenta, y quien no, puede pedir la devolución a ARCA. Desde abril de 2025 no se cobra en las plataformas de juegos.</dd></div>
@@ -159,7 +157,7 @@ CUERPO = r"""
     <div><dt>Ingresos Brutos</dt><dd>Percepción provincial sobre servicios digitales del exterior. En CABA y Provincia de Buenos Aires es 2%; en otras provincias cambia. Figura en el resumen.</dd></div>
     <div><dt>Servicios que cobran en pesos</dt><dd>Algunos servicios publican su precio en pesos. En ese caso esta cuenta no aplica tal cual: revisá en tu resumen qué impuestos se suman.</dd></div>
   </dl>
-</section>
+</details>
 """
 
 

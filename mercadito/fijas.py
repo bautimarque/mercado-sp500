@@ -15,7 +15,7 @@ METODOLOGIA = """
 <section class="bloque texto">
   <h2>Cuándo se actualiza</h2>
   <p>El dólar, los gastos en dólares, las tasas, el Merval y los bonos se actualizan cada 30 minutos, de lunes a viernes entre las 10 y las 17:30.
-  A las 18:30 se actualiza todo, incluido el S&amp;P 500. Cada página dice a qué hora se armó y, cuando la fuente lo informa,
+  A las 18:30 se actualiza todo, incluidos los CEDEARs. Cada página dice a qué hora se armó y, cuando la fuente lo informa,
   de qué fecha es cada dato. Si una fuente no responde, esa sección queda con su última versión.</p>
 </section>
 
@@ -69,8 +69,11 @@ METODOLOGIA = """
 </section>
 
 <section class="bloque texto">
-  <h2>S&amp;P 500</h2>
+  <h2>CEDEARs (empresas del S&amp;P 500)</h2>
   <ul>
+    <li><b>Con CEDEAR:</b> la empresa tiene un CEDEAR que cotiza en BYMA, según la lista de data912.com. El símbolo suele ser el mismo
+      que en Estados Unidos (con excepciones, como Disney, que es DISN). El precio del CEDEAR en pesos y en dólares MEP es el de BYMA;
+      cada CEDEAR representa una parte de la acción, por eso no vale lo mismo que la acción en Estados Unidos.</li>
     <li><b>Empresas:</b> lista de Wikipedia. Precios diarios de Yahoo Finance, sin ajustar por dividendos; las semanas se arman con los datos diarios.</li>
     <li><b>Máximo:</b> mayor precio intradiario. Se descarta un máximo diario que supere en más de 50% la apertura, el cierre y los cierres vecinos, porque suele ser un error de la fuente.</li>
     <li><b>Vs. 200 semanas:</b> precio ÷ promedio de los últimos 200 cierres semanales − 1.</li>
@@ -129,8 +132,7 @@ CSS = r"""
 .texto p,.texto li{font-size:16px;line-height:1.6;color:var(--tinta-2)}
 .texto p{margin-top:10px}
 .texto ul,.texto ol{margin-top:10px}
-.texto ul li{padding:9px 0;border-bottom:1px solid var(--linea)}
-.texto ul li:last-child{border-bottom:0}
+.texto ul li{padding:7px 0}
 .texto b{color:var(--tinta);font-weight:700}
 .legal{list-style:decimal;padding-left:24px}
 .legal li{padding:7px 0 7px 4px}

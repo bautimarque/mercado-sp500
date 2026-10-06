@@ -7,7 +7,7 @@
 <meta name="description" content="Tasas de plazo fijo en cada entidad, rendimiento de los fondos money market, inflación y tasas de referencia del BCRA.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#111317" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#050607" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#050505" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='2' fill='%23111317'/%3E%3Cpath d='M4 11V4.5l4 4 4-4V11' fill='none' stroke='%23F7F7F5' stroke-width='1.8' stroke-linejoin='round'/%3E%3Crect y='13' width='16' height='3' fill='%2374ACDF'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,7 +20,11 @@ try { var t = localStorage.getItem("tema"); if (t === "claro" || t === "oscuro")
 
 .calc-pf{margin-top:12px}
 #pf-monto{height:56px;font-size:30px;font-weight:750;font-stretch:76%;width:min(100%,280px)}
-@media (max-width:640px){
+@media (max-width:899px){
+  /* a la vista: entidad, TNA e interés del monto (plazo fijo) o TNA (fondos); lo demás, al tocar la fila */
+  #tabla-pf tr:not(.abierta) td:is(:nth-child(3),:nth-child(4)),
+  #tabla-pf tr:not(.abierta) td:first-child .sub,
+  #tabla-fci tr:not(.abierta) td:is(:nth-child(3),:nth-child(4)){display:none}
   #tabla-pf td:nth-child(2),#tabla-fci td:nth-child(2),#tabla-ref td:nth-child(2){order:2;margin-left:auto;font-size:16px;font-weight:700;color:var(--tinta);text-align:right}
   #tabla-pf td:nth-child(3)::before{content:"TEA "}
   #tabla-pf td:nth-child(4)::before{content:"En 30 días "}
@@ -43,7 +47,7 @@ try { var t = localStorage.getItem("tema"); if (t === "claro" || t === "oscuro")
       <span id="tema-txt">Modo oscuro</span>
     </button>
   </div></div>
-  <nav class="menu" aria-label="Secciones"><ul><li><a href="../">Inicio</a></li><li><a href="../dolar/">Dólar</a></li><li><a href="../gastos/">Gastos en US$</a></li><li><a href="../tasas/" aria-current="page">Tasas</a></li><li><a href="../merval/">Merval</a></li><li><a href="../sp500/">S&amp;P 500</a></li><li><a href="../bonos/">Bonos</a></li><li><a href="../metodologia/">Cómo se calcula</a></li></ul></nav>
+  <nav class="menu" aria-label="Secciones"><ul><li><a href="../">Inicio</a></li><li><a href="../dolar/">Dólar</a></li><li><a href="../gastos/">Gastos en US$</a></li><li><a href="../tasas/" aria-current="page">Tasas</a></li><li><a href="../merval/">Merval</a></li><li><a href="../sp500/">CEDEARs</a></li><li><a href="../bonos/">Bonos</a></li><li><a href="../metodologia/">Cómo se calcula</a></li></ul></nav>
 </header>
 <div class="pagina">
 <main id="contenido">
@@ -53,7 +57,7 @@ try { var t = localStorage.getItem("tema"); if (t === "claro" || t === "oscuro")
   <p class="bajada">Cuánto paga cada entidad por un plazo fijo, cuánto rinden los fondos money market y cómo viene la inflación.</p>
 </div>
 <section aria-label="Datos principales"><div class="cifras" id="cifras"></div></section>
-<p class="fecha">Actualizado el 06/10/2026 14:52 hs</p>
+<p class="fecha">Actualizado el 06/10/2026 15:50 hs</p>
 
 <section class="bloque" aria-labelledby="t-pf">
   <h2 id="t-pf">Plazo fijo a 30 días</h2>
@@ -61,7 +65,7 @@ try { var t = localStorage.getItem("tema"); if (t === "claro" || t === "oscuro")
   <div class="controles">
     <label class="campo">Monto a invertir <input id="pf-monto" type="number" inputmode="decimal" min="0" step="any" value="1000000"></label>
   </div>
-  <div class="caja-tabla"><table class="tabla-datos" id="tabla-pf">
+  <div class="caja-tabla"><table class="tabla-datos" id="tabla-pf" data-ficha>
     <thead><tr>
       <th data-k="n" data-asc="1"><button type="button">Entidad</button></th>
       <th class="der" data-k="tna"><button type="button">TNA</button></th>
@@ -76,7 +80,7 @@ try { var t = localStorage.getItem("tema"); if (t === "claro" || t === "oscuro")
 <section class="bloque" aria-labelledby="t-fci" id="bloque-fci">
   <h2 id="t-fci">Fondos money market</h2>
   <p class="nota">Fondos de liquidez inmediata en pesos con al menos $ 1.000 millones de patrimonio. La TNA es el rendimiento del último día hábil llevado a un año: cambia todos los días.</p>
-  <div class="caja-tabla"><table class="tabla-datos" id="tabla-fci">
+  <div class="caja-tabla"><table class="tabla-datos" id="tabla-fci" data-ficha>
     <thead><tr>
       <th data-k="n" data-asc="1"><button type="button">Fondo</button></th>
       <th class="der" data-k="tna"><button type="button">TNA del último día</button></th>
@@ -94,29 +98,29 @@ try { var t = localStorage.getItem("tema"); if (t === "claro" || t === "oscuro")
   <div id="grafico"></div>
 </section>
 
-<section class="bloque" aria-labelledby="t-ref" id="bloque-ref">
-  <h2 id="t-ref">Referencias del BCRA</h2>
+<details class="bloque plegado" id="bloque-ref">
+  <summary><h2 id="t-ref">Referencias del BCRA</h2></summary>
   <div class="caja-tabla"><table class="tabla-datos" id="tabla-ref">
     <thead><tr><th>Dato</th><th class="der">Valor</th><th class="der">Fecha</th></tr></thead>
     <tbody></tbody>
   </table></div>
-</section>
+</details>
 
-<section class="bloque" aria-labelledby="t-glos">
-  <h2 id="t-glos">Cómo leer esta página</h2>
+<details class="bloque plegado">
+  <summary><h2 id="t-glos">Cómo leer esta página</h2></summary>
   <dl class="glosario">
     <div><dt>TNA</dt><dd>Tasa nominal anual: la que publica cada entidad. Para un plazo fijo a 30 días, el interés del mes es TNA × 30 / 365.</dd></div>
     <div><dt>TEA</dt><dd>Tasa efectiva anual: lo que rendiría en un año si se renovara cada 30 días con la misma TNA, sumando los intereses.</dd></div>
     <div><dt>Frente a la inflación</dt><dd>Diferencia entre lo que rinde el plazo fijo en 30 días y la inflación del último mes publicado. Es una comparación con el pasado: la inflación de los próximos meses puede ser distinta.</dd></div>
     <div><dt>Money market</dt><dd>Fondos comunes de inversión que invierten en instrumentos de muy corto plazo y permiten retirar el dinero en el día. El rendimiento no está garantizado.</dd></div>
   </dl>
-</section>
+</details>
 
 </main>
 <footer class="sitio-pie">
   <p class="pie-fuentes"><b>Fuentes.</b> Plazo fijo, fondos e inflación: argentinadatos.com (con datos del BCRA y la CAFCI). Tasas de referencia: BCRA.</p>
   <p class="pie-aviso"><strong>Información con fines educativos e informativos. No es una recomendación de inversión ni asesoramiento financiero.</strong> Los datos son de terceros y pueden tener errores o demoras; verificalos con tu banco, agente o broker antes de operar. <a href="../legal/">Aviso legal completo</a>.</p>
-  <nav class="pie-sumario" aria-label="Secciones de Mercadito"><ul><li><a href="../">Inicio</a></li><li><a href="../dolar/">Dólar</a></li><li><a href="../gastos/">Gastos en US$</a></li><li><a href="../tasas/">Tasas</a></li><li><a href="../merval/">Merval</a></li><li><a href="../sp500/">S&amp;P 500</a></li><li><a href="../bonos/">Bonos</a></li><li><a href="../metodologia/">Cómo se calcula</a></li><li><a href="../legal/">Aviso legal</a></li></ul></nav>
+  <nav class="pie-sumario" aria-label="Secciones de Mercadito"><ul><li><a href="../">Inicio</a></li><li><a href="../dolar/">Dólar</a></li><li><a href="../gastos/">Gastos en US$</a></li><li><a href="../tasas/">Tasas</a></li><li><a href="../merval/">Merval</a></li><li><a href="../sp500/">CEDEARs</a></li><li><a href="../bonos/">Bonos</a></li><li><a href="../metodologia/">Cómo se calcula</a></li><li><a href="../legal/">Aviso legal</a></li></ul></nav>
 </footer>
 </div>
 <script src="../assets/base.js"></script>

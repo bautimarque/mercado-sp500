@@ -143,7 +143,11 @@ CSS = r"""
 .calc-res{margin-top:14px}
 #calc-monto{height:56px;font-size:30px;font-weight:750;font-stretch:76%;width:min(100%,260px)}
 .ent-cond{display:block;font-size:12px;color:var(--tinta-3)}
-@media (max-width:640px){
+@media (max-width:899px){
+  /* a la vista: nombre, venta y brecha (tipos) o compra (entidades); lo demás, al tocar la fila */
+  #tabla-tipos tr:not(.abierta) td:is(:nth-child(2),:nth-child(4),:nth-child(6)),
+  #tabla-ent tr:not(.abierta) td:is(:nth-child(4),:nth-child(5),:nth-child(6)),
+  #tabla-ent tr:not(.abierta) td:first-child .ent-cond{display:none}
   #tabla-tipos td:nth-child(3),#tabla-ent td:nth-child(3),#tabla-calc td:nth-child(3){order:2;margin-left:auto;font-size:16px;font-weight:700;color:var(--tinta);text-align:right}
   #tabla-tipos td:nth-child(2)::before,#tabla-ent td:nth-child(2)::before{content:"Compra "}
   #tabla-tipos td:nth-child(4)::before{content:"Día "}
@@ -168,7 +172,7 @@ CUERPO = r"""
 <section class="bloque" aria-labelledby="t-tipos">
   <h2 id="t-tipos">Todos los tipos</h2>
   <p class="nota">Precio de venta: lo que se paga por cada dólar. La brecha compara cada tipo con el oficial. ¿Vas a pagar un juego o una suscripción? En <a href="../gastos/">Gastos en dólares</a> está la cuenta con todos los impuestos.</p>
-  <div class="caja-tabla"><table class="tabla-datos" id="tabla-tipos">
+  <div class="caja-tabla"><table class="tabla-datos" id="tabla-tipos" data-ficha>
     <thead><tr><th>Tipo</th><th class="der">Compra</th><th class="der">Venta</th><th class="der">Variación diaria</th><th class="der">Brecha con el oficial</th><th class="der">Hora</th></tr></thead>
     <tbody></tbody>
   </table></div>
@@ -205,7 +209,7 @@ CUERPO = r"""
     <label class="check"><input type="checkbox" id="ent-bancos"> Solo bancos</label>
     <label class="check"><input type="checkbox" id="ent-24"> Solo las que operan las 24 horas</label>
   </div>
-  <div class="caja-tabla"><table class="tabla-datos" id="tabla-ent">
+  <div class="caja-tabla"><table class="tabla-datos" id="tabla-ent" data-ficha>
     <thead><tr><th>Entidad</th><th class="der">Compra</th><th class="der">Venta</th><th class="der">Diferencia</th><th class="der">Variación</th><th>Tipo</th></tr></thead>
     <tbody></tbody>
   </table></div>
@@ -230,10 +234,10 @@ CUERPO = r"""
   </table></div>
 </section>
 
-<section class="bloque" aria-labelledby="t-glos">
-  <h2 id="t-glos">Qué es cada tipo</h2>
+<details class="bloque plegado">
+  <summary><h2 id="t-glos">Qué es cada tipo</h2></summary>
   <dl class="glosario" id="glosario"></dl>
-</section>
+</details>
 """
 
 

@@ -35,7 +35,7 @@
     const t = raiz.getAttribute("data-tema");
     // la barra del navegador toma el color del cabezal
     document.querySelectorAll("meta[name=theme-color]").forEach(m => {
-      m.content = t ? (o ? "#050607" : "#111317") : (m.media.includes("dark") ? "#050607" : "#111317");
+      m.content = t ? (o ? "#050505" : "#111317") : (m.media.includes("dark") ? "#050505" : "#111317");
     });
     reacciones.forEach(f => f());
   }
@@ -213,6 +213,43 @@
       if (Math.abs(caja.clientWidth - ancho) > 4) { ancho = caja.clientWidth; dibujar(); }
     }).observe(caja);
   }
+
+  /* ---------- ficha de cada fila (celular) ----------
+     Las tablas con data-ficha muestran en el celular solo el nombre, el dato principal
+     y uno más (lo decide el CSS de cada sección). Tocar la fila, o Enter sobre ella,
+     despliega el resto de sus datos. En pantallas grandes se ven todas las columnas. */
+  const celular = matchMedia("(max-width: 899px)");
+  function prepararFilas(tabla) {
+    const cuerpo = tabla.tBodies[0];
+    if (!cuerpo) return;
+    [...cuerpo.rows].forEach(tr => {
+      if (tr.cells.length < 2) return;
+      if (celular.matches) {
+        tr.tabIndex = 0;
+        tr.setAttribute("aria-expanded", tr.classList.contains("abierta"));
+      } else {
+        tr.removeAttribute("tabindex");
+        tr.removeAttribute("aria-expanded");
+      }
+    });
+  }
+  document.querySelectorAll(".tabla-datos[data-ficha]").forEach(tabla => {
+    const cuerpo = tabla.tBodies[0];
+    if (!cuerpo) return;
+    prepararFilas(tabla);
+    new MutationObserver(() => prepararFilas(tabla)).observe(cuerpo, {childList: true});
+    cuerpo.addEventListener("click", e => {
+      if (!celular.matches || e.target.closest("a, button, input, select")) return;
+      const tr = e.target.closest("tr");
+      if (!tr || tr.cells.length < 2) return;
+      tr.classList.toggle("abierta");
+      tr.setAttribute("aria-expanded", tr.classList.contains("abierta"));
+    });
+    cuerpo.addEventListener("keydown", e => {
+      if ((e.key === "Enter" || e.key === " ") && e.target.tagName === "TR") { e.preventDefault(); e.target.click(); }
+    });
+  });
+  celular.addEventListener("change", () => document.querySelectorAll(".tabla-datos[data-ficha]").forEach(prepararFilas));
 
   // Recorta una serie [["aaaa-mm-dd", v], ...] a los últimos n días
   function desde(puntos, dias) {

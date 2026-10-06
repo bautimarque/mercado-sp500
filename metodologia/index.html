@@ -7,7 +7,7 @@
 <meta name="description" content="De dónde sale cada dato de Mercadito y qué cuenta se hace con él.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#111317" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#050607" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#050505" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='2' fill='%23111317'/%3E%3Cpath d='M4 11V4.5l4 4 4-4V11' fill='none' stroke='%23F7F7F5' stroke-width='1.8' stroke-linejoin='round'/%3E%3Crect y='13' width='16' height='3' fill='%2374ACDF'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,8 +22,7 @@ try { var t = localStorage.getItem("tema"); if (t === "claro" || t === "oscuro")
 .texto p,.texto li{font-size:16px;line-height:1.6;color:var(--tinta-2)}
 .texto p{margin-top:10px}
 .texto ul,.texto ol{margin-top:10px}
-.texto ul li{padding:9px 0;border-bottom:1px solid var(--linea)}
-.texto ul li:last-child{border-bottom:0}
+.texto ul li{padding:7px 0}
 .texto b{color:var(--tinta);font-weight:700}
 .legal{list-style:decimal;padding-left:24px}
 .legal li{padding:7px 0 7px 4px}
@@ -43,7 +42,7 @@ try { var t = localStorage.getItem("tema"); if (t === "claro" || t === "oscuro")
       <span id="tema-txt">Modo oscuro</span>
     </button>
   </div></div>
-  <nav class="menu" aria-label="Secciones"><ul><li><a href="../">Inicio</a></li><li><a href="../dolar/">Dólar</a></li><li><a href="../gastos/">Gastos en US$</a></li><li><a href="../tasas/">Tasas</a></li><li><a href="../merval/">Merval</a></li><li><a href="../sp500/">S&amp;P 500</a></li><li><a href="../bonos/">Bonos</a></li><li><a href="../metodologia/" aria-current="page">Cómo se calcula</a></li></ul></nav>
+  <nav class="menu" aria-label="Secciones"><ul><li><a href="../">Inicio</a></li><li><a href="../dolar/">Dólar</a></li><li><a href="../gastos/">Gastos en US$</a></li><li><a href="../tasas/">Tasas</a></li><li><a href="../merval/">Merval</a></li><li><a href="../sp500/">CEDEARs</a></li><li><a href="../bonos/">Bonos</a></li><li><a href="../metodologia/" aria-current="page">Cómo se calcula</a></li></ul></nav>
 </header>
 <div class="pagina">
 <main id="contenido">
@@ -56,7 +55,7 @@ try { var t = localStorage.getItem("tema"); if (t === "claro" || t === "oscuro")
 <section class="bloque texto">
   <h2>Cuándo se actualiza</h2>
   <p>El dólar, los gastos en dólares, las tasas, el Merval y los bonos se actualizan cada 30 minutos, de lunes a viernes entre las 10 y las 17:30.
-  A las 18:30 se actualiza todo, incluido el S&amp;P 500. Cada página dice a qué hora se armó y, cuando la fuente lo informa,
+  A las 18:30 se actualiza todo, incluidos los CEDEARs. Cada página dice a qué hora se armó y, cuando la fuente lo informa,
   de qué fecha es cada dato. Si una fuente no responde, esa sección queda con su última versión.</p>
 </section>
 
@@ -110,8 +109,11 @@ try { var t = localStorage.getItem("tema"); if (t === "claro" || t === "oscuro")
 </section>
 
 <section class="bloque texto">
-  <h2>S&amp;P 500</h2>
+  <h2>CEDEARs (empresas del S&amp;P 500)</h2>
   <ul>
+    <li><b>Con CEDEAR:</b> la empresa tiene un CEDEAR que cotiza en BYMA, según la lista de data912.com. El símbolo suele ser el mismo
+      que en Estados Unidos (con excepciones, como Disney, que es DISN). El precio del CEDEAR en pesos y en dólares MEP es el de BYMA;
+      cada CEDEAR representa una parte de la acción, por eso no vale lo mismo que la acción en Estados Unidos.</li>
     <li><b>Empresas:</b> lista de Wikipedia. Precios diarios de Yahoo Finance, sin ajustar por dividendos; las semanas se arman con los datos diarios.</li>
     <li><b>Máximo:</b> mayor precio intradiario. Se descarta un máximo diario que supere en más de 50% la apertura, el cierre y los cierres vecinos, porque suele ser un error de la fuente.</li>
     <li><b>Vs. 200 semanas:</b> precio ÷ promedio de los últimos 200 cierres semanales − 1.</li>
@@ -137,7 +139,7 @@ try { var t = localStorage.getItem("tema"); if (t === "claro" || t === "oscuro")
 <footer class="sitio-pie">
   
   <p class="pie-aviso"><strong>Información con fines educativos e informativos. No es una recomendación de inversión ni asesoramiento financiero.</strong> Los datos son de terceros y pueden tener errores o demoras; verificalos con tu banco, agente o broker antes de operar. <a href="../legal/">Aviso legal completo</a>.</p>
-  <nav class="pie-sumario" aria-label="Secciones de Mercadito"><ul><li><a href="../">Inicio</a></li><li><a href="../dolar/">Dólar</a></li><li><a href="../gastos/">Gastos en US$</a></li><li><a href="../tasas/">Tasas</a></li><li><a href="../merval/">Merval</a></li><li><a href="../sp500/">S&amp;P 500</a></li><li><a href="../bonos/">Bonos</a></li><li><a href="../metodologia/">Cómo se calcula</a></li><li><a href="../legal/">Aviso legal</a></li></ul></nav>
+  <nav class="pie-sumario" aria-label="Secciones de Mercadito"><ul><li><a href="../">Inicio</a></li><li><a href="../dolar/">Dólar</a></li><li><a href="../gastos/">Gastos en US$</a></li><li><a href="../tasas/">Tasas</a></li><li><a href="../merval/">Merval</a></li><li><a href="../sp500/">CEDEARs</a></li><li><a href="../bonos/">Bonos</a></li><li><a href="../metodologia/">Cómo se calcula</a></li><li><a href="../legal/">Aviso legal</a></li></ul></nav>
 </footer>
 </div>
 <script src="../assets/base.js"></script>

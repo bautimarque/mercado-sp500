@@ -113,7 +113,12 @@ def generar():
 
 
 CSS = r"""
-@media (max-width:640px){
+@media (max-width:899px){
+  /* a la vista: instrumento, precio y un dato más; lo demás, al tocar la fila */
+  #tabla-sob tr:not(.abierta) td:nth-child(n+4),
+  #tabla-sob tr:not(.abierta) td:first-child .sub,
+  #tabla-letras tr:not(.abierta) td:is(:nth-child(2),:nth-child(5),:nth-child(6)),
+  #tabla-ons tr:not(.abierta) td:nth-child(4){display:none}
   #tabla-sob td:nth-child(2),#tabla-ons td:nth-child(2),#tabla-letras td:nth-child(4){order:2;margin-left:auto;font-size:16px;font-weight:700;color:var(--tinta);text-align:right}
   #tabla-sob td:nth-child(2)::before,#tabla-ons td:nth-child(2)::before{content:"US$ "}
   #tabla-sob td:nth-child(3)::before,#tabla-letras td:nth-child(5)::before,#tabla-ons td:nth-child(3)::before{content:"Día "}
@@ -145,7 +150,7 @@ CUERPO = r"""
 <section class="bloque" aria-labelledby="t-sob">
   <h2 id="t-sob">Bonos soberanos en dólares</h2>
   <p class="nota">Precio cada 100 dólares de valor nominal original. Los AL y el AE38 son de ley argentina; los GD, de ley de Nueva York. El dólar implícito es el precio en pesos dividido por el precio en dólares MEP.</p>
-  <div class="caja-tabla"><table class="tabla-datos" id="tabla-sob">
+  <div class="caja-tabla"><table class="tabla-datos" id="tabla-sob" data-ficha>
     <thead><tr>
       <th data-k="t" data-asc="1"><button type="button">Bono</button></th>
       <th class="der" data-k="d"><button type="button">Precio US$ MEP</button></th>
@@ -162,7 +167,7 @@ CUERPO = r"""
 <section class="bloque" aria-labelledby="t-letras" id="bloque-letras">
   <h2 id="t-letras">Letras y bonos cortos del Tesoro</h2>
   <p class="nota">Ordenadas por vencimiento. Precio en pesos cada 100 de valor nominal.</p>
-  <div class="caja-tabla"><table class="tabla-datos" id="tabla-letras">
+  <div class="caja-tabla"><table class="tabla-datos" id="tabla-letras" data-ficha>
     <thead><tr>
       <th data-k="t" data-asc="1"><button type="button">Instrumento</button></th>
       <th data-k="tipo" data-asc="1"><button type="button">Tipo</button></th>
@@ -178,7 +183,7 @@ CUERPO = r"""
 <section class="bloque" aria-labelledby="t-ons" id="bloque-ons">
   <h2 id="t-ons">Obligaciones negociables más operadas</h2>
   <p class="nota">Deuda de empresas que cotiza en dólares MEP, ordenada por volumen del día. Se muestra el símbolo de BYMA.</p>
-  <div class="caja-tabla"><table class="tabla-datos" id="tabla-ons">
+  <div class="caja-tabla"><table class="tabla-datos" id="tabla-ons" data-ficha>
     <thead><tr>
       <th data-k="t" data-asc="1"><button type="button">Símbolo</button></th>
       <th class="der" data-k="c"><button type="button">Precio US$</button></th>
@@ -189,8 +194,8 @@ CUERPO = r"""
   </table></div>
 </section>
 
-<section class="bloque" aria-labelledby="t-glos">
-  <h2 id="t-glos">Cómo leer esta página</h2>
+<details class="bloque plegado">
+  <summary><h2 id="t-glos">Cómo leer esta página</h2></summary>
   <dl class="glosario">
     <div><dt>MEP y cable</dt><dd>El mismo bono se puede comprar o vender en pesos, en dólares en el país (MEP, símbolo terminado en D) o en dólares en el exterior (cable, terminado en C).</dd></div>
     <div><dt>LECAP y BONCAP</dt><dd>Letras y bonos del Tesoro en pesos que pagan todo al vencimiento.</dd></div>
@@ -198,7 +203,7 @@ CUERPO = r"""
     <div><dt>Dólar linked</dt><dd>Instrumentos en pesos que se ajustan por el dólar oficial mayorista.</dd></div>
     <div><dt>Próximamente</dt><dd>Tasa interna de retorno (TIR) y duration de cada bono, que requieren su cronograma de pagos.</dd></div>
   </dl>
-</section>
+</details>
 """
 
 
