@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bonos · Mercadito</title>
+<meta name="description" content="Riesgo país, precios de los bonos soberanos en dólares, letras del Tesoro y obligaciones negociables.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#111317" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#050607" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='2' fill='%23111317'/%3E%3Cpath d='M4 11V4.5l4 4 4-4V11' fill='none' stroke='%23F7F7F5' stroke-width='1.8' stroke-linejoin='round'/%3E%3Crect y='13' width='16' height='3' fill='%2374ACDF'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+<script>
+try { var t = localStorage.getItem("tema"); if (t === "claro" || t === "oscuro") document.documentElement.setAttribute("data-tema", t); } catch (e) {}
+</script>
+<link rel="stylesheet" href="../assets/base.css">
+<style>
+
+@media (max-width:640px){
+  #tabla-sob td:nth-child(2),#tabla-ons td:nth-child(2),#tabla-letras td:nth-child(4){order:2;margin-left:auto;font-size:16px;font-weight:700;color:var(--tinta);text-align:right}
+  #tabla-sob td:nth-child(2)::before,#tabla-ons td:nth-child(2)::before{content:"US$ "}
+  #tabla-sob td:nth-child(3)::before,#tabla-letras td:nth-child(5)::before,#tabla-ons td:nth-child(3)::before{content:"Día "}
+  #tabla-sob td:nth-child(4)::before{content:"Cable "}
+  #tabla-sob td:nth-child(5)::before{content:"$ "}
+  #tabla-sob td:nth-child(6)::before{content:"Dólar implícito "}
+  #tabla-sob td:nth-child(7)::before,#tabla-letras td:nth-child(6)::before,#tabla-ons td:nth-child(4)::before{content:"Volumen "}
+  #tabla-letras td:nth-child(3)::before{content:"Vence "}
+  #tabla-letras td:nth-child(3) .sub{display:inline;margin-left:4px}
+}
+
+</style>
+</head>
+<body>
+<a class="saltar" href="#contenido">Ir al contenido</a>
+<header class="sitio">
+  <div class="cabezal"><div class="sitio-barra">
+    <a class="marca" href="../">Mercadito</a>
+    <p class="cabezal-fecha">martes 6 de octubre de 2026</p>
+    <button id="tema" class="boton boton-tema" type="button" aria-label="Cambiar a modo oscuro">
+      <svg class="ico ico-luna" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.2 10.1A5.6 5.6 0 0 1 5.9 2.8a5.6 5.6 0 1 0 7.3 7.3Z"/></svg>
+      <svg class="ico ico-sol" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.3M8 13.2v1.3M1.5 8h1.3M13.2 8h1.3M3.4 3.4l.9.9M11.7 11.7l.9.9M3.4 12.6l.9-.9M11.7 4.3l.9-.9"/></svg>
+      <span id="tema-txt">Modo oscuro</span>
+    </button>
+  </div></div>
+  <nav class="menu" aria-label="Secciones"><ul><li><a href="../">Inicio</a></li><li><a href="../dolar/">Dólar</a></li><li><a href="../gastos/">Gastos en US$</a></li><li><a href="../tasas/">Tasas</a></li><li><a href="../merval/">Merval</a></li><li><a href="../sp500/">S&amp;P 500</a></li><li><a href="../bonos/" aria-current="page">Bonos</a></li><li><a href="../metodologia/">Cómo se calcula</a></li></ul></nav>
+</header>
+<div class="pagina">
+<main id="contenido">
+
+<div class="titulo">
+  <h1>Bonos</h1>
+  <p class="bajada">Riesgo país y precios de bonos del Tesoro, letras y obligaciones negociables.</p>
+</div>
+<section aria-label="Datos principales"><div class="cifras" id="cifras"></div></section>
+<p class="fecha">Actualizado el 06/10/2026 14:42 hs · precios con demora</p>
+
+<section class="bloque" aria-labelledby="t-riesgo" id="bloque-riesgo">
+  <h2 id="t-riesgo">Riesgo país</h2>
+  <p class="nota">Diferencia, en puntos básicos, entre lo que rinden los bonos argentinos en dólares y los del Tesoro de Estados Unidos (100 puntos = 1%).</p>
+  <div class="controles"><div class="grupo" role="group" aria-label="Período" id="rangos"></div></div>
+  <div id="grafico"></div>
+</section>
+
+<section class="bloque" aria-labelledby="t-sob">
+  <h2 id="t-sob">Bonos soberanos en dólares</h2>
+  <p class="nota">Precio cada 100 dólares de valor nominal original. Los AL y el AE38 son de ley argentina; los GD, de ley de Nueva York. El dólar implícito es el precio en pesos dividido por el precio en dólares MEP.</p>
+  <div class="caja-tabla"><table class="tabla-datos" id="tabla-sob">
+    <thead><tr>
+      <th data-k="t" data-asc="1"><button type="button">Bono</button></th>
+      <th class="der" data-k="d"><button type="button">Precio US$ MEP</button></th>
+      <th class="der" data-k="var"><button type="button">Día</button></th>
+      <th class="der" data-k="c"><button type="button">Precio US$ cable</button></th>
+      <th class="der" data-k="p"><button type="button">Precio $</button></th>
+      <th class="der" data-k="mep"><button type="button">Dólar implícito</button></th>
+      <th class="der" data-k="vol"><button type="button">Volumen</button></th>
+    </tr></thead>
+    <tbody></tbody>
+  </table></div>
+</section>
+
+<section class="bloque" aria-labelledby="t-letras" id="bloque-letras">
+  <h2 id="t-letras">Letras y bonos cortos del Tesoro</h2>
+  <p class="nota">Ordenadas por vencimiento. Precio en pesos cada 100 de valor nominal.</p>
+  <div class="caja-tabla"><table class="tabla-datos" id="tabla-letras">
+    <thead><tr>
+      <th data-k="t" data-asc="1"><button type="button">Instrumento</button></th>
+      <th data-k="tipo" data-asc="1"><button type="button">Tipo</button></th>
+      <th class="der" data-k="vence" data-asc="1"><button type="button">Vence</button></th>
+      <th class="der" data-k="c"><button type="button">Precio</button></th>
+      <th class="der" data-k="var"><button type="button">Día</button></th>
+      <th class="der" data-k="vol"><button type="button">Volumen</button></th>
+    </tr></thead>
+    <tbody></tbody>
+  </table></div>
+</section>
+
+<section class="bloque" aria-labelledby="t-ons" id="bloque-ons">
+  <h2 id="t-ons">Obligaciones negociables más operadas</h2>
+  <p class="nota">Deuda de empresas que cotiza en dólares MEP, ordenada por volumen del día. Se muestra el símbolo de BYMA.</p>
+  <div class="caja-tabla"><table class="tabla-datos" id="tabla-ons">
+    <thead><tr>
+      <th data-k="t" data-asc="1"><button type="button">Símbolo</button></th>
+      <th class="der" data-k="c"><button type="button">Precio US$</button></th>
+      <th class="der" data-k="var"><button type="button">Día</button></th>
+      <th class="der" data-k="vol"><button type="button">Volumen</button></th>
+    </tr></thead>
+    <tbody></tbody>
+  </table></div>
+</section>
+
+<section class="bloque" aria-labelledby="t-glos">
+  <h2 id="t-glos">Cómo leer esta página</h2>
+  <dl class="glosario">
+    <div><dt>MEP y cable</dt><dd>El mismo bono se puede comprar o vender en pesos, en dólares en el país (MEP, símbolo terminado en D) o en dólares en el exterior (cable, terminado en C).</dd></div>
+    <div><dt>LECAP y BONCAP</dt><dd>Letras y bonos del Tesoro en pesos que pagan todo al vencimiento.</dd></div>
+    <div><dt>Ajusta por CER</dt><dd>Instrumentos cuyo capital se actualiza por inflación.</dd></div>
+    <div><dt>Dólar linked</dt><dd>Instrumentos en pesos que se ajustan por el dólar oficial mayorista.</dd></div>
+    <div><dt>Próximamente</dt><dd>Tasa interna de retorno (TIR) y duration de cada bono, que requieren su cronograma de pagos.</dd></div>
+  </dl>
+</section>
+
+</main>
+<footer class="sitio-pie">
+  <p class="pie-fuentes"><b>Fuentes.</b> Precios: data912.com (proyecto gratuito con fines educativos, con demora). Riesgo país: argentinadatos.com.</p>
+  <p class="pie-aviso"><strong>Información con fines educativos e informativos. No es una recomendación de inversión ni asesoramiento financiero.</strong> Los datos son de terceros y pueden tener errores o demoras; verificalos con tu banco, agente o broker antes de operar. <a href="../legal/">Aviso legal completo</a>.</p>
+  <nav class="pie-sumario" aria-label="Secciones de Mercadito"><ul><li><a href="../">Inicio</a></li><li><a href="../dolar/">Dólar</a></li><li><a href="../gastos/">Gastos en US$</a></li><li><a href="../tasas/">Tasas</a></li><li><a href="../merval/">Merval</a></li><li><a href="../sp500/">S&amp;P 500</a></li><li><a href="../bonos/">Bonos</a></li><li><a href="../metodologia/">Cómo se calcula</a></li><li><a href="../legal/">Aviso legal</a></li></ul></nav>
+</footer>
+</div>
+<script src="../assets/base.js"></script>
+<script>
+
+const M = Mercadito;
+const D = {"sob": [{"t": "AL29", "ley": "Argentina", "d": 54.64, "var": 0.25, "vol": 518684.0, "c": 52.29, "p": 84000.0, "mep": 1537.34}, {"t": "AL30", "ley": "Argentina", "d": 55.78, "var": 0.54, "vol": 77593846.0, "c": 53.37, "p": 85780.0, "mep": 1537.83}, {"t": "AL35", "ley": "Argentina", "d": 71.8, "var": 1.26, "vol": 1652271.0, "c": 68.68, "p": 110390.0, "mep": 1537.47}, {"t": "AE38", "ley": "Argentina", "d": 74.71, "var": 0.95, "vol": 2948505.0, "c": 71.5, "p": 114890.0, "mep": 1537.81}, {"t": "AL41", "ley": "Argentina", "d": 66.6, "var": 1.29, "vol": 1069994.0, "c": 63.74, "p": 102430.0, "mep": 1537.99}, {"t": "GD29", "ley": "Nueva York", "d": 55.84, "var": 1.28, "vol": 124270.0, "c": 53.31, "p": 85840.0, "mep": 1537.25}, {"t": "GD30", "ley": "Nueva York", "d": 57.41, "var": 0.7, "vol": 629644.0, "c": 54.9, "p": 88180.0, "mep": 1535.97}, {"t": "GD35", "ley": "Nueva York", "d": 76.07, "var": 1.22, "vol": 1418280.0, "c": 72.8, "p": 116950.0, "mep": 1537.4}, {"t": "GD38", "ley": "Nueva York", "d": 80.5, "var": 1.3, "vol": 558979.0, "c": 76.96, "p": 123640.0, "mep": 1535.9}, {"t": "GD41", "ley": "Nueva York", "d": 70.55, "var": 1.16, "vol": 408035.0, "c": 67.4, "p": 108500.0, "mep": 1537.92}, {"t": "GD46", "ley": "Nueva York", "d": 65.1, "var": 1.38, "vol": 254907.0, "c": 62.18, "p": 100130.0, "mep": 1538.1}], "letras": [{"t": "S16O6", "tipo": "LECAP", "vence": "2026-10-16", "dias": 10, "c": 104.725, "var": 0.07, "vol": 38043002599.0}, {"t": "D30O6", "tipo": "Dólar linked", "vence": "2026-10-30", "dias": 24, "c": 151300.0, "var": -0.01, "vol": 29943221.0}, {"t": "S30O6", "tipo": "LECAP", "vence": "2026-10-30", "dias": 24, "c": 133.51, "var": 0.01, "vol": 543558624.0}, {"t": "S13N6", "tipo": "LECAP", "vence": "2026-11-13", "dias": 38, "c": 107.154, "var": 0.06, "vol": 26034603374.0}, {"t": "D30N6", "tipo": "Dólar linked", "vence": "2026-11-30", "dias": 55, "c": 151060.0, "var": 0.03, "vol": 5176761.0}, {"t": "S30N6", "tipo": "LECAP", "vence": "2026-11-30", "dias": 55, "c": 125.579, "var": 0.06, "vol": 17045496598.0}, {"t": "X30N6", "tipo": "Ajusta por CER", "vence": "2026-11-30", "dias": 55, "c": 127.53, "var": 0.03, "vol": 4952722238.0}, {"t": "D15E7", "tipo": "Dólar linked", "vence": "2027-01-15", "dias": 101, "c": 151600.0, "var": 0.39, "vol": 6.0}, {"t": "S29E7", "tipo": "LECAP", "vence": "2027-01-29", "dias": 115, "c": 103.595, "var": 0.03, "vol": 1411218036.0}, {"t": "X29E7", "tipo": "Ajusta por CER", "vence": "2027-01-29", "dias": 115, "c": 102.85, "var": 0.09, "vol": 12720988779.0}, {"t": "D31M7", "tipo": "Dólar linked", "vence": "2027-03-31", "dias": 176, "c": 149000.0, "var": -0.26, "vol": 286436.0}, {"t": "D10Y7", "tipo": "Dólar linked", "vence": "2027-05-10", "dias": 216, "c": 150000.0, "var": -0.07, "vol": 0.0}], "ons": [{"t": "VSCVD", "c": 110.85, "var": 0.0, "vol": 981000.0}, {"t": "IRCPD", "c": 103.45, "var": 0.29, "vol": 832740.0}, {"t": "MGCRD", "c": 103.15, "var": 0.34, "vol": 660000.0}, {"t": "YM34D", "c": 106.8, "var": -0.09, "vol": 593793.0}, {"t": "YMCXD", "c": 107.85, "var": -0.13, "vol": 492611.0}, {"t": "YM44D", "c": 99.35, "var": 0.45, "vol": 482150.0}, {"t": "MGCOD", "c": 105.3, "var": 0.91, "vol": 479000.0}, {"t": "PLC7D", "c": 100.9, "var": 0.29, "vol": 423000.0}, {"t": "BACGD", "c": 107.3, "var": 0.32, "vol": 419000.0}, {"t": "VSCXD", "c": 106.1, "var": 0.61, "vol": 412000.0}, {"t": "BACHD", "c": 105.85, "var": 0.71, "vol": 406000.0}, {"t": "MIC3D", "c": 102.0, "var": 0.09, "vol": 404933.0}, {"t": "TLCPD", "c": 110.4, "var": 0.13, "vol": 395976.0}, {"t": "PLC4D", "c": 109.1, "var": 0.04, "vol": 339000.0}, {"t": "TLCTD", "c": 105.4, "var": 0.38, "vol": 325985.0}, {"t": "OLC7D", "c": 102.7, "var": 0.29, "vol": 290791.0}, {"t": "TLCMD", "c": 110.0, "var": 0.13, "vol": 270000.0}, {"t": "PLC6D", "c": 104.95, "var": 0.33, "vol": 207628.0}, {"t": "PLC5D", "c": 108.4, "var": 0.09, "vol": 191000.0}, {"t": "TTCDD", "c": 108.7, "var": 0.6, "vol": 190000.0}, {"t": "VMC1D", "c": 99.99, "var": 0.09, "vol": 179170.0}, {"t": "DNCAD", "c": 101.6, "var": 0.09, "vol": 172900.0}, {"t": "CP38D", "c": 111.0, "var": -0.26, "vol": 160100.0}, {"t": "YM43D", "c": 100.5, "var": 0.29, "vol": 148130.0}, {"t": "LOC5D", "c": 104.3, "var": 0.09, "vol": 137000.0}, {"t": "PLC2D", "c": 106.9, "var": -0.55, "vol": 133989.0}, {"t": "DNC3D", "c": 104.55, "var": 0.04, "vol": 126374.0}, {"t": "YM42D", "c": 104.6, "var": -0.28, "vol": 124891.0}, {"t": "DNCBD", "c": 98.2, "var": -0.1, "vol": 121640.0}, {"t": "TSC4D", "c": 105.7, "var": 0.57, "vol": 121000.0}], "riesgo": [["2024-10-06", 1258], ["2024-10-07", 1207], ["2024-10-08", 1188], ["2024-10-09", 1121], ["2024-10-10", 1126], ["2024-10-11", 1106], ["2024-10-12", 1106], ["2024-10-13", 1106], ["2024-10-14", 1106], ["2024-10-15", 1044], ["2024-10-16", 1052], ["2024-10-17", 1099], ["2024-10-18", 1097], ["2024-10-19", 1097], ["2024-10-20", 1097], ["2024-10-21", 1100], ["2024-10-22", 1099], ["2024-10-23", 1103], ["2024-10-24", 1036], ["2024-10-25", 967], ["2024-10-26", 967], ["2024-10-27", 967], ["2024-10-28", 914], ["2024-10-29", 933], ["2024-10-30", 956], ["2024-10-31", 984], ["2024-11-01", 955], ["2024-11-02", 955], ["2024-11-03", 955], ["2024-11-04", 955], ["2024-11-05", 933], ["2024-11-06", 870], ["2024-11-07", 859], ["2024-11-08", 850], ["2024-11-09", 850], ["2024-11-10", 850], ["2024-11-11", 850], ["2024-11-12", 819], ["2024-11-13", 800], ["2024-11-14", 772], ["2024-11-15", 769], ["2024-11-16", 769], ["2024-11-17", 769], ["2024-11-18", 769], ["2024-11-19", 746], ["2024-11-20", 720], ["2024-11-21", 734], ["2024-11-22", 745], ["2024-11-23", 745], ["2024-11-24", 745], ["2024-11-25", 748], ["2024-11-26", 751], ["2024-11-27", 755], ["2024-11-28", 752], ["2024-11-29", 752], ["2024-11-30", 752], ["2024-12-01", 752], ["2024-12-02", 749], ["2024-12-03", 754], ["2024-12-04", 751], ["2024-12-05", 760], ["2024-12-06", 769], ["2024-12-07", 769], ["2024-12-08", 769], ["2024-12-09", 737], ["2024-12-10", 735], ["2024-12-11", 719], ["2024-12-12", 715], ["2024-12-13", 708], ["2024-12-14", 708], ["2024-12-15", 708], ["2024-12-16", 677], ["2024-12-17", 673], ["2024-12-18", 658], ["2024-12-19", 663], ["2024-12-20", 671], ["2024-12-21", 671], ["2024-12-22", 671], ["2024-12-23", 649], ["2024-12-24", 649], ["2024-12-25", 650], ["2024-12-26", 631], ["2024-12-27", 627], ["2024-12-28", 627], ["2024-12-29", 627], ["2024-12-30", 635], ["2024-12-31", 635], ["2025-01-01", 635], ["2025-01-02", 610], ["2025-01-03", 610], ["2025-01-06", 569], ["2025-01-07", 561], ["2025-01-08", 572], ["2025-01-09", 560], ["2025-01-10", 580], ["2025-01-13", 589], ["2025-01-14", 579], ["2025-01-15", 597], ["2025-01-16", 626], ["2025-01-17", 644], ["2025-01-20", 641], ["2025-01-21", 638], ["2025-01-22", 640], ["2025-01-23", 646], ["2025-01-24", 631], ["2025-01-27", 642], ["2025-01-28", 634], ["2025-01-29", 611], ["2025-01-30", 614], ["2025-01-31", 618], ["2025-02-03", 632], ["2025-02-04", 640], ["2025-02-05", 660], ["2025-02-06", 659], ["2025-02-07", 660], ["2025-02-10", 677], ["2025-02-11", 710], ["2025-02-12", 673], ["2025-02-13", 675], ["2025-02-14", 675], ["2025-02-17", 675], ["2025-02-18", 696], ["2025-02-19", 719], ["2025-02-20", 719], ["2025-02-21", 720], ["2025-02-24", 730], ["2025-02-25", 748], ["2025-02-26", 749], ["2025-02-27", 769], ["2025-02-28", 780], ["2025-03-03", 780], ["2025-03-04", 780], ["2025-03-05", 717], ["2025-03-06", 714], ["2025-03-07", 692], ["2025-03-10", 723], ["2025-03-11", 723], ["2025-03-12", 718], ["2025-03-13", 748], ["2025-03-14", 737], ["2025-03-17", 750], ["2025-03-18", 787], ["2025-03-19", 777], ["2025-03-20", 762], ["2025-03-21", 769], ["2025-03-25", 761], ["2025-03-26", 769], ["2025-03-27", 759], ["2025-03-28", 797], ["2025-03-31", 816], ["2025-04-01", 823], ["2025-04-02", 823], ["2025-04-03", 872], ["2025-04-04", 925], ["2025-04-07", 960], ["2025-04-08", 978], ["2025-04-09", 889], ["2025-04-10", 899], ["2025-04-11", 874], ["2025-04-14", 896], ["2025-04-15", 725], ["2025-04-16", 745], ["2025-04-17", 745], ["2025-04-18", 726], ["2025-04-21", 720], ["2025-04-22", 720], ["2025-04-23", 720], ["2025-04-24", 713], ["2025-04-25", 692], ["2025-04-28", 710], ["2025-04-29", 701], ["2025-04-30", 726], ["2025-05-01", 735], ["2025-05-02", 741], ["2025-05-05", 741], ["2025-05-06", 741], ["2025-05-07", 766], ["2025-05-08", 678], ["2025-05-09", 678], ["2025-05-12", 650], ["2025-05-13", 651], ["2025-05-14", 648], ["2025-05-15", 676], ["2025-05-16", 676], ["2025-05-19", 675], ["2025-05-20", 663], ["2025-05-21", 661], ["2025-05-22", 665], ["2025-05-23", 665], ["2025-05-26", 666], ["2025-05-27", 666], ["2025-05-28", 655], ["2025-05-29", 663], ["2025-06-03", 668], ["2025-06-04", 688], ["2025-06-05", 688], ["2025-06-06", 691], ["2025-06-09", 686], ["2025-06-10", 655], ["2025-06-11", 668], ["2025-06-12", 678], ["2025-06-13", 688], ["2025-06-16", 687], ["2025-06-17", 714], ["2025-06-18", 726], ["2025-06-23", 719], ["2025-06-24", 681], ["2025-06-25", 687], ["2025-06-26", 685], ["2025-06-27", 677], ["2025-06-30", 701], ["2025-07-01", 699], ["2025-07-02", 700], ["2025-07-03", 679], ["2025-07-07", 698], ["2025-07-08", 704], ["2025-07-09", 692], ["2025-07-10", 700], ["2025-07-11", 717], ["2025-07-15", 736], ["2025-07-16", 748], ["2025-07-17", 770], ["2025-07-18", 759], ["2025-07-21", 763], ["2025-07-22", 775], ["2025-07-23", 773], ["2025-07-24", 753], ["2025-07-25", 734], ["2025-07-28", 719], ["2025-07-29", 727], ["2025-07-30", 716], ["2025-07-31", 730], ["2025-08-01", 771], ["2025-08-04", 761], ["2025-08-05", 743], ["2025-08-06", 735], ["2025-08-07", 728], ["2025-08-08", 733], ["2025-08-11", 724], ["2025-08-12", 722], ["2025-08-13", 711], ["2025-08-14", 712], ["2025-08-15", 709], ["2025-08-18", 706], ["2025-08-19", 700], ["2025-08-20", 747], ["2025-08-21", 753], ["2025-08-22", 767], ["2025-08-25", 829], ["2025-08-26", 850], ["2025-08-27", 853], ["2025-08-28", 837], ["2025-08-29", 829], ["2025-09-02", 898], ["2025-09-03", 893], ["2025-09-04", 901], ["2025-09-05", 906], ["2025-09-08", 1108], ["2025-09-09", 1070], ["2025-09-10", 1024], ["2025-09-11", 1047], ["2025-09-12", 1140], ["2025-09-15", 1231], ["2025-09-16", 1167], ["2025-09-17", 1246], ["2025-09-18", 1456], ["2025-09-19", 1456], ["2025-09-22", 1089], ["2025-09-23", 1018], ["2025-09-24", 898], ["2025-09-25", 973], ["2025-09-26", 1060], ["2025-09-27", 1060], ["2025-09-29", 1115], ["2025-09-30", 1222], ["2025-10-01", 1264], ["2025-10-02", 1264], ["2025-10-03", 1165], ["2025-10-06", 1080], ["2025-10-07", 1016], ["2025-10-08", 1074], ["2025-10-09", 1071], ["2025-10-10", 932], ["2025-10-13", 932], ["2025-10-14", 1026], ["2025-10-15", 1004], ["2025-10-16", 1029], ["2025-10-17", 1089], ["2025-10-20", 1048], ["2025-10-21", 1075], ["2025-10-22", 1123], ["2025-10-23", 1081], ["2025-10-24", 1081], ["2025-10-27", 708], ["2025-10-28", 685], ["2025-10-29", 666], ["2025-10-30", 676], ["2025-10-31", 657], ["2025-11-03", 665], ["2025-11-04", 660], ["2025-11-05", 621], ["2025-11-06", 638], ["2025-11-07", 647], ["2025-11-10", 599], ["2025-11-11", 598], ["2025-11-12", 605], ["2025-11-13", 616], ["2025-11-14", 612], ["2025-11-17", 616], ["2025-11-18", 614], ["2025-11-19", 601], ["2025-11-20", 620], ["2025-11-21", 651], ["2025-11-24", 635], ["2025-11-25", 656], ["2025-11-26", 652], ["2025-11-27", 653], ["2025-11-28", 648], ["2025-12-01", 648], ["2025-12-02", 647], ["2025-12-03", 639], ["2025-12-04", 634], ["2025-12-05", 627], ["2025-12-08", 633], ["2025-12-09", 634], ["2025-12-10", 628], ["2025-12-11", 634], ["2025-12-12", 624], ["2025-12-15", 602], ["2025-12-16", 573], ["2025-12-17", 569], ["2025-12-18", 568], ["2025-12-19", 573], ["2025-12-22", 570], ["2025-12-23", 575], ["2025-12-24", 575], ["2025-12-25", 575], ["2025-12-26", 580], ["2025-12-29", 571], ["2025-12-30", 569], ["2025-12-31", 571], ["2026-01-01", 571], ["2026-01-02", 553], ["2026-01-05", 566], ["2026-01-06", 566], ["2026-01-07", 575], ["2026-01-08", 579], ["2026-01-09", 566], ["2026-01-12", 577], ["2026-01-13", 581], ["2026-01-14", 586], ["2026-01-15", 571], ["2026-01-16", 564], ["2026-01-19", 566], ["2026-01-20", 569], ["2026-01-21", 562], ["2026-01-22", 546], ["2026-01-23", 526], ["2026-01-26", 513], ["2026-01-27", 494], ["2026-01-28", 484], ["2026-01-29", 492], ["2026-01-30", 496], ["2026-02-02", 495], ["2026-02-03", 503], ["2026-02-04", 502], ["2026-02-05", 516], ["2026-02-06", 512], ["2026-02-09", 502], ["2026-02-10", 507], ["2026-02-11", 506], ["2026-02-12", 514], ["2026-02-13", 519], ["2026-02-16", 519], ["2026-02-17", 511], ["2026-02-18", 515], ["2026-02-19", 524], ["2026-02-20", 519], ["2026-02-23", 537], ["2026-02-24", 545], ["2026-02-25", 545], ["2026-02-26", 554], ["2026-02-27", 572], ["2026-03-02", 567], ["2026-03-03", 573], ["2026-03-04", 534], ["2026-03-05", 546], ["2026-03-06", 575], ["2026-03-09", 583], ["2026-03-10", 555], ["2026-03-11", 552], ["2026-03-12", 568], ["2026-03-13", 584], ["2026-03-16", 601], ["2026-03-17", 587], ["2026-03-18", 610], ["2026-03-19", 602], ["2026-03-20", 633], ["2026-03-23", 600], ["2026-03-24", 603], ["2026-03-25", 595], ["2026-03-26", 583], ["2026-03-27", 615], ["2026-03-30", 637], ["2026-03-31", 617], ["2026-04-01", 612], ["2026-04-02", 612], ["2026-04-03", 609], ["2026-04-06", 611], ["2026-04-07", 610], ["2026-04-08", 570], ["2026-04-09", 557], ["2026-04-10", 553], ["2026-04-13", 528], ["2026-04-14", 525], ["2026-04-15", 527], ["2026-04-16", 518], ["2026-04-17", 519], ["2026-04-20", 526], ["2026-04-21", 533], ["2026-04-22", 532], ["2026-04-23", 549], ["2026-04-24", 557], ["2026-04-27", 582], ["2026-04-28", 584], ["2026-04-29", 573], ["2026-04-30", 567], ["2026-05-01", 539], ["2026-05-04", 558], ["2026-05-05", 554], ["2026-05-06", 514], ["2026-05-07", 522], ["2026-05-08", 510], ["2026-05-11", 496], ["2026-05-12", 511], ["2026-05-13", 523], ["2026-05-14", 525], ["2026-05-15", 538], ["2026-05-18", 543], ["2026-05-19", 547], ["2026-05-20", 524], ["2026-05-21", 516], ["2026-05-22", 514], ["2026-05-25", 514], ["2026-05-26", 508], ["2026-05-27", 500], ["2026-05-28", 494], ["2026-05-29", 493], ["2026-06-01", 490], ["2026-06-02", 488], ["2026-06-03", 492], ["2026-06-04", 486], ["2026-06-05", 499], ["2026-06-08", 494], ["2026-06-09", 498], ["2026-06-10", 503], ["2026-06-11", 443], ["2026-06-12", 437], ["2026-06-15", 425], ["2026-06-16", 430], ["2026-06-17", 435], ["2026-06-18", 429], ["2026-06-19", 429], ["2026-06-22", 421], ["2026-06-23", 433], ["2026-06-24", 437], ["2026-06-25", 437], ["2026-06-26", 437], ["2026-06-29", 431], ["2026-06-30", 426], ["2026-07-01", 421], ["2026-07-02", 415], ["2026-07-03", 415], ["2026-07-06", 408], ["2026-07-07", 405], ["2026-07-08", 408], ["2026-07-09", 404], ["2026-07-10", 402], ["2026-07-13", 405], ["2026-07-14", 410], ["2026-07-15", 404], ["2026-07-16", 410], ["2026-07-17", 419], ["2026-07-20", 416], ["2026-07-21", 421], ["2026-07-22", 410], ["2026-07-23", 437], ["2026-07-24", 437], ["2026-07-27", 442], ["2026-07-28", 441], ["2026-07-29", 445], ["2026-07-30", 441], ["2026-07-31", 430], ["2026-08-03", 411], ["2026-08-04", 421], ["2026-08-05", 428], ["2026-08-06", 446], ["2026-08-07", 451], ["2026-08-10", 465], ["2026-08-11", 466], ["2026-08-12", 471], ["2026-08-13", 472], ["2026-08-14", 480], ["2026-08-17", 489], ["2026-08-18", 511], ["2026-08-19", 517], ["2026-08-20", 532], ["2026-08-21", 505], ["2026-08-24", 509], ["2026-08-25", 512], ["2026-08-26", 517], ["2026-08-27", 509], ["2026-08-28", 512], ["2026-08-31", 512], ["2026-09-01", 501], ["2026-09-02", 500], ["2026-09-03", 494], ["2026-09-04", 490], ["2026-09-07", 490], ["2026-09-08", 494], ["2026-09-09", 491], ["2026-09-10", 491], ["2026-09-11", 485], ["2026-09-14", 490], ["2026-09-15", 506], ["2026-09-16", 510], ["2026-09-17", 515], ["2026-09-18", 524], ["2026-09-21", 533], ["2026-09-22", 555], ["2026-09-23", 566], ["2026-09-24", 578], ["2026-09-25", 609], ["2026-09-28", 628], ["2026-09-29", 607], ["2026-09-30", 607], ["2026-10-01", 636], ["2026-10-02", 655], ["2026-10-05", 599]]};
+const $ = id => document.getElementById(id);
+const celda = (v, dec, signo) => "<td class='der num'>" + (v === null || v === undefined ? "—" : signo ? M.pct(v, dec) : M.num(v, dec)) + "</td>";
+const por = Object.fromEntries(D.sob.map(s => [s.t, s]));
+
+/* cifras */
+const cifras = [];
+if (D.riesgo.length) {
+  const [f, v] = D.riesgo[D.riesgo.length - 1], prev = D.riesgo.length > 1 ? D.riesgo[D.riesgo.length - 2][1] : null;
+  cifras.push(["Riesgo país", M.num(v, 0) + " puntos", (prev !== null ? (v - prev > 0 ? "+" : "") + M.num(v - prev, 0) + " vs. el día anterior · " : "") + M.fecha(f)]);
+}
+if (por.AL30) cifras.push(["AL30 en dólares MEP", M.dolares(por.AL30.d), M.pct(por.AL30.var, 2) + " en el día"]);
+if (por.GD30) cifras.push(["GD30 en dólares MEP", M.dolares(por.GD30.d), M.pct(por.GD30.var, 2) + " en el día"]);
+if (por.AL30 && por.AL30.mep) cifras.push(["Dólar implícito en el AL30", M.pesos(por.AL30.mep), "Precio en pesos ÷ precio en dólares"]);
+$("cifras").innerHTML = cifras.map(([e, v, s]) =>
+  "<div class='cifra'><p class='cifra-et'>" + e + "</p><p class='cifra-val num'>" + v + "</p><p class='cifra-sub'>" + s + "</p></div>").join("");
+
+/* riesgo país */
+if (D.riesgo.length) {
+  const RANGOS = [["3 meses", 92], ["6 meses", 183], ["1 año", 366], ["2 años", 731]];
+  let rango = 366;
+  const pintar = () => M.linea($("grafico"), [{nombre: "Riesgo país", color: "var(--s1)", puntos: M.desde(D.riesgo, rango)}],
+    {formato: v => M.num(v, 0), titulo: "Riesgo país en puntos básicos"});
+  $("rangos").innerHTML = RANGOS.map(([n, d]) =>
+    "<button type='button' class='boton boton-chico' data-d='" + d + "' aria-pressed='" + (d === rango) + "'>" + n + "</button>").join("");
+  $("rangos").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    rango = +b.dataset.d;
+    $("rangos").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b));
+    pintar();
+  });
+  pintar();
+} else {
+  $("bloque-riesgo").hidden = true;
+}
+
+/* soberanos */
+M.ordenable($("tabla-sob"), ["t", true], (k, a) => {
+  $("tabla-sob").tBodies[0].innerHTML = D.sob.slice().sort(M.comparar(k, a)).map(s =>
+    "<tr><td><b>" + M.esc(s.t) + "</b><span class='sub'>Ley " + M.esc(s.ley) + "</span></td>" +
+    celda(s.d, 2) + celda(s.var, 2, true) + celda(s.c, 2) + celda(s.p, 0) + celda(s.mep, 2) + celda(s.vol, 0) + "</tr>").join("");
+});
+
+/* letras */
+if (D.letras.length) {
+  M.ordenable($("tabla-letras"), ["vence", true], (k, a) => {
+    $("tabla-letras").tBodies[0].innerHTML = D.letras.slice().sort(M.comparar(k, a)).map(l =>
+      "<tr><td><b>" + M.esc(l.t) + "</b></td><td>" + M.esc(l.tipo) + "</td>" +
+      "<td class='der num'>" + M.fecha(l.vence) + "<span class='sub'>" + l.dias + " días</span></td>" +
+      celda(l.c, 2) + celda(l.var, 2, true) + celda(l.vol, 0) + "</tr>").join("");
+  });
+} else {
+  $("bloque-letras").hidden = true;
+}
+
+/* obligaciones negociables */
+if (D.ons.length) {
+  M.ordenable($("tabla-ons"), ["vol", false], (k, a) => {
+    $("tabla-ons").tBodies[0].innerHTML = D.ons.slice().sort(M.comparar(k, a)).map(o =>
+      "<tr><td><b>" + M.esc(o.t) + "</b></td>" + celda(o.c, 2) + celda(o.var, 2, true) + celda(o.vol, 0) + "</tr>").join("");
+  });
+} else {
+  $("bloque-ons").hidden = true;
+}
+
+</script>
+</body>
+</html>

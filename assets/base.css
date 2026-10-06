@@ -1,0 +1,286 @@
+/* Mercadito: estilos compartidos por todas las páginas.
+   El sitio se lee como la página de Mercados del diario: cabezal fechado,
+   cifra de tapa con su pie de fecha y tablas de cotizaciones con filetes.
+   Lo propio de cada sección va en un <style> dentro de su página. */
+
+:root{
+  --fondo:#F7F7F5; --superficie:#FFFFFF; --hundido:#EDEEEB;
+  --tinta:#111317; --tinta-2:#4A4F57; --tinta-3:#646A73;
+  --linea:#DFE0DC; --linea-2:#BCBFC3;
+  --cabezal:#111317; --cabezal-tinta:#F7F7F5; --cabezal-2:#A7ACB3; --cabezal-linea:#3A3E45;
+  --celeste:#74ACDF; --activo:#111317; --activo-tinta:#F7F7F5;
+  --t0:#1E4D8F; --t1:#3F7DC9; --t2:#86AEDD; --t3:#D3D2CD; --t4:#E89650; --t5:#CF6420; --t6:#9E3F0F;
+  --sin:#E4E6EA;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; --s7:#4a3aa7;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-tema="claro"]){
+    --fondo:#101010; --superficie:#171717; --hundido:#202020;
+    --tinta:#EDEDEB; --tinta-2:#B9B9B6; --tinta-3:#8F8F8C;
+    --linea:#2A2A2A; --linea-2:#3E3E3D;
+    --cabezal:#050505; --cabezal-tinta:#EDEDEB; --cabezal-2:#8F8F8C; --cabezal-linea:#2E2E2E;
+    --celeste:#8EC0EC; --activo:#EDEDEB; --activo-tinta:#101010;
+    --t0:#93BEF5; --t1:#4F8BD8; --t2:#2F5C93; --t3:#3A3A37; --t4:#8E4A17; --t5:#D9762D; --t6:#FFA466;
+    --sin:#2E2E2E;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9;
+    color-scheme:dark;
+  }
+}
+:root[data-tema="oscuro"]{
+  --fondo:#101010; --superficie:#171717; --hundido:#202020;
+  --tinta:#EDEDEB; --tinta-2:#B9B9B6; --tinta-3:#8F8F8C;
+  --linea:#2A2A2A; --linea-2:#3E3E3D;
+  --cabezal:#050505; --cabezal-tinta:#EDEDEB; --cabezal-2:#8F8F8C; --cabezal-linea:#2E2E2E;
+  --celeste:#8EC0EC; --activo:#EDEDEB; --activo-tinta:#101010;
+  --t0:#93BEF5; --t1:#4F8BD8; --t2:#2F5C93; --t3:#3A3A37; --t4:#8E4A17; --t5:#D9762D; --t6:#FFA466;
+  --sin:#2E2E2E;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9;
+  color-scheme:dark;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scrollbar-color:var(--linea-2) var(--fondo);accent-color:var(--tinta)}
+body{margin:0;background:var(--fondo);color:var(--tinta);
+  font-family:"Archivo",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-size:15px;line-height:1.5;caret-color:var(--tinta)}
+::selection{background:color-mix(in srgb,var(--celeste) 45%,transparent);color:var(--tinta)}
+:focus-visible{outline:2px solid var(--tinta);outline-offset:2px;border-radius:2px}
+h1,h2,h3,p,ul,ol,dl,dd,figure{margin:0}
+ul,ol{padding:0;list-style:none}
+button{font:inherit;color:inherit}
+a{color:inherit;text-underline-offset:3px;text-decoration-thickness:1px}
+a:hover{text-decoration-thickness:2px}
+[hidden]{display:none!important}
+.oculto{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.b0{fill:var(--t0);background:var(--t0)} .b1{fill:var(--t1);background:var(--t1)}
+.b2{fill:var(--t2);background:var(--t2)} .b3{fill:var(--t3);background:var(--t3)}
+.b4{fill:var(--t4);background:var(--t4)} .b5{fill:var(--t5);background:var(--t5)}
+.b6{fill:var(--t6);background:var(--t6)} .bx{fill:var(--sin);background:var(--sin)}
+.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+/* sin color propio: subas y bajas nunca van en verde o rojo */
+.sube{} .baja{}
+
+.saltar{position:absolute;left:16px;top:-60px;z-index:10;background:var(--tinta);color:var(--fondo);
+  padding:10px 14px;border-radius:4px;font-weight:600;text-decoration:none}
+.saltar:focus{top:10px}
+.pagina{max-width:1200px;margin:0 auto;padding:0 32px 64px}
+
+/* ---------- cabezal ---------- */
+.cabezal{background:var(--cabezal);color:var(--cabezal-tinta);border-bottom:3px solid var(--celeste)}
+.sitio-barra{max-width:1200px;margin:0 auto;padding:12px 32px 13px;display:flex;align-items:center;gap:6px 22px}
+.marca{font-size:40px;font-weight:900;font-stretch:68%;letter-spacing:-.005em;line-height:1;text-decoration:none;color:inherit}
+.marca:hover{text-decoration:none}
+.cabezal-fecha{font-size:13.5px;color:var(--cabezal-2);margin-right:auto;padding-top:4px}
+.cabezal .boton{background:transparent;color:var(--cabezal-tinta);border-color:var(--cabezal-linea)}
+.cabezal .boton:hover{background:color-mix(in srgb,var(--cabezal-tinta) 10%,transparent);border-color:var(--cabezal-2)}
+.cabezal :focus-visible{outline-color:var(--celeste)}
+
+/* ---------- menú ---------- */
+.menu{border-bottom:1px solid var(--linea-2);background:var(--fondo)}
+.menu ul{max-width:1200px;margin:0 auto;padding:0 32px;display:flex}
+.menu a{display:flex;align-items:center;height:46px;padding:0 16px;font-size:14.5px;font-weight:650;font-stretch:92%;
+  color:var(--tinta-2);text-decoration:none;white-space:nowrap;border-right:1px solid var(--linea);
+  transition:background-color .15s,color .15s}
+.menu li:first-child a{border-left:1px solid var(--linea)}
+.menu li:last-child{margin-left:auto}
+.menu li:last-child a{border-left:1px solid var(--linea);font-weight:550}
+.menu a:hover{color:var(--tinta);background:var(--hundido)}
+.menu a[aria-current="page"]{background:var(--activo);color:var(--activo-tinta);box-shadow:inset 0 -3px 0 var(--celeste)}
+.menu a:focus-visible{outline-offset:-3px}
+
+/* ---------- título de cada página ---------- */
+.titulo{padding:30px 0 0}
+.titulo h1{font-size:46px;font-weight:850;font-stretch:68%;letter-spacing:-.01em;line-height:.95;text-wrap:balance}
+.bajada{font-size:16px;color:var(--tinta-2);max-width:60ch;margin-top:10px;line-height:1.45;text-wrap:pretty}
+.fecha{font-size:13px;color:var(--tinta-2);margin:10px 0 0;line-height:1.45}
+.bloque{margin-top:52px}
+/* filete doble de diario: grueso arriba, fino debajo */
+.bloque>h2,.sec-tit{font-size:24px;font-weight:850;font-stretch:72%;line-height:1.1;letter-spacing:-.005em;
+  padding-top:13px;border-top:3px solid var(--tinta);
+  background:linear-gradient(var(--tinta),var(--tinta)) 0 3px / 100% 1px no-repeat}
+.bloque>.nota{margin-top:6px}
+.nota{font-size:14px;color:var(--tinta-2);max-width:72ch;line-height:1.5}
+h3{font-size:15px;font-weight:700;margin:14px 0 8px}
+
+/* ---------- cifras de tapa ----------
+   La primera cifra es la de tapa: más grande y a lo ancho de dos columnas.
+   Con .cifras-parejas todas pesan lo mismo (Dólar). */
+.cifras{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));margin-top:26px;padding-top:4px;
+  border-top:3px solid var(--tinta);border-bottom:1px solid var(--linea-2);
+  background:linear-gradient(var(--tinta),var(--tinta)) 0 3px / 100% 1px no-repeat}
+.cifra{padding:14px 20px 18px;border-left:1px solid var(--linea);min-width:0}
+.cifra:first-child{grid-column:span 2;border-left:0;padding-left:0}
+.cifra-et{font-size:14px;font-weight:650;line-height:1.3}
+.cifra-val{font-size:44px;font-weight:800;font-stretch:70%;line-height:1;letter-spacing:-.01em;margin-top:8px;
+  font-variant-numeric:normal}
+.cifra:first-child .cifra-val{font-size:76px;font-stretch:66%;line-height:.92}
+.cifra-sub{font-size:13px;color:var(--tinta-2);margin-top:9px;line-height:1.4}
+.cifras-parejas{grid-template-columns:repeat(4,minmax(0,1fr))}
+.cifras-parejas .cifra:first-child{grid-column:auto}
+.cifras-parejas .cifra-val,.cifras-parejas .cifra:first-child .cifra-val{font-size:52px;font-stretch:68%;line-height:.95}
+.cifras+.fecha,section:has(>.cifras)+.fecha{margin-top:10px}
+
+/* ---------- botones y controles ---------- */
+.boton{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:40px;padding:0 14px;border-radius:4px;
+  border:1px solid var(--linea-2);background:var(--superficie);color:var(--tinta);
+  font-size:14px;font-weight:600;white-space:nowrap;cursor:pointer;text-decoration:none;
+  transition:background-color .15s,border-color .15s,color .15s}
+.boton:hover{background:var(--hundido);border-color:var(--tinta-3)}
+.boton[aria-pressed="true"]{background:var(--tinta);border-color:var(--tinta);color:var(--fondo)}
+.boton:disabled{opacity:.45;cursor:default;background:transparent;border-color:var(--linea-2)}
+.boton-chico{min-height:34px;padding:0 12px;font-size:13.5px}
+.boton-tema .ico-sol{display:none}
+.boton-tema.es-oscuro .ico-sol{display:block}
+.boton-tema.es-oscuro .ico-luna{display:none}
+.boton-texto{border-color:transparent;background:transparent;text-decoration:underline;
+  text-underline-offset:3px;text-decoration-thickness:1px;padding:0 6px}
+.boton-texto:hover{background:transparent;border-color:transparent;text-decoration-thickness:2px}
+.boton-texto:disabled{background:transparent;border-color:transparent;text-decoration:none}
+.grupo{display:flex;flex-wrap:wrap;gap:6px}
+.controles{display:flex;flex-wrap:wrap;align-items:end;gap:12px 18px;margin-top:16px}
+.campo{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--tinta-2)}
+.campo input,.campo select{font:inherit;font-size:16px;font-weight:500;height:44px;padding:0 12px;border:1px solid var(--linea-2);
+  border-radius:4px;background:var(--superficie);color:var(--tinta);min-width:0;transition:border-color .15s}
+.campo select{-webkit-appearance:none;appearance:none;padding-right:38px;cursor:pointer;
+  background-image:linear-gradient(45deg,transparent 50%,var(--tinta-3) 50%),linear-gradient(135deg,var(--tinta-3) 50%,transparent 50%);
+  background-position:calc(100% - 19px) 50%,calc(100% - 14px) 50%;background-size:5px 5px;background-repeat:no-repeat}
+.campo select option{background:var(--superficie);color:var(--tinta)}
+.campo input:hover,.campo select:hover{border-color:var(--tinta-3)}
+.campo input:focus-visible,.campo select:focus-visible{outline:2px solid var(--tinta);outline-offset:1px;border-color:var(--tinta)}
+.campo input[type=number]{font-variant-numeric:tabular-nums}
+.check{display:inline-flex;align-items:center;gap:9px;min-height:44px;font-size:14.5px;color:var(--tinta);cursor:pointer}
+.check input{width:18px;height:18px;margin:0}
+
+/* ---------- tablas ----------
+   Sobre el papel, con filete grueso arriba y filetes finos entre filas.
+   En el celular cada fila pasa a ser un listado de dos líneas (ver más abajo). */
+.caja-tabla{margin-top:16px;overflow-x:auto;border-top:2px solid var(--tinta)}
+.tabla-datos{width:100%;border-collapse:collapse;font-size:14.5px}
+.tabla-datos th{font-size:12.5px;font-weight:650;color:var(--tinta-2);text-align:left;padding:10px 12px 8px;
+  border-bottom:1px solid var(--linea-2);white-space:nowrap;vertical-align:bottom}
+.tabla-datos td{padding:8px 12px;border-bottom:1px solid var(--linea);vertical-align:top;line-height:1.4}
+.tabla-datos th:first-child,.tabla-datos td:first-child{padding-left:0}
+.tabla-datos th:last-child,.tabla-datos td:last-child{padding-right:0}
+.tabla-datos tbody tr:hover td{background:color-mix(in srgb,var(--hundido) 70%,transparent)}
+.tabla-datos .der{text-align:right}
+.tabla-datos b{font-weight:700}
+.tabla-datos th button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+.tabla-datos th button:hover{color:var(--tinta)}
+.tabla-datos th button:focus-visible{outline:2px solid var(--tinta);outline-offset:2px;border-radius:2px}
+.tabla-datos th[aria-sort]{color:var(--tinta)}
+.tabla-datos th[aria-sort] button::after{content:"";width:9px;height:9px;flex:none;background:currentColor;
+  -webkit-mask:var(--flecha) center/contain no-repeat;mask:var(--flecha) center/contain no-repeat}
+.tabla-datos th[aria-sort="ascending"] button::after{transform:rotate(180deg)}
+.tabla-datos{--flecha:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M5 9V1M1.5 5.5 5 9l3.5-3.5' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+.tabla-datos small{color:var(--tinta-3);font-size:12.5px}
+.tabla-datos .sub{display:block;color:var(--tinta-3);font-size:12.5px;font-weight:400}
+
+/* ---------- gráfico de líneas ---------- */
+.grafico-linea{position:relative;margin-top:14px}
+.grafico-linea svg{display:block;width:100%;height:auto;overflow:visible}
+.grafico-linea .eje{font-size:12px;fill:var(--tinta-3);font-variant-numeric:tabular-nums}
+.grafico-linea .grilla{stroke:var(--linea);stroke-width:1}
+.grafico-linea .serie{fill:none;stroke-width:2.25;stroke-linejoin:round;stroke-linecap:round}
+.grafico-linea .ultimo{stroke:var(--fondo);stroke-width:2}
+.grafico-linea .cursor{stroke:var(--tinta-2);stroke-width:1}
+.grafico-tip{position:absolute;top:0;pointer-events:none;background:var(--tinta);color:var(--fondo);
+  border-radius:4px;padding:7px 10px;font-size:12.5px;line-height:1.45;white-space:nowrap;
+  font-variant-numeric:tabular-nums;box-shadow:0 2px 10px rgba(10,14,20,.18)}
+.leyenda-graf{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px;font-size:13px;color:var(--tinta-2)}
+.leyenda-graf span{display:inline-flex;align-items:center;gap:7px}
+.leyenda-graf i{width:16px;height:3px;border-radius:2px;display:inline-block}
+
+/* ---------- glosario ---------- */
+.glosario{margin-top:8px}
+.glosario>div{padding:12px 0;border-bottom:1px solid var(--linea)}
+.glosario dt{font-weight:700}
+.glosario dd{color:var(--tinta-2);font-size:14.5px;margin-top:3px;max-width:70ch}
+
+/* ---------- pie del sitio ---------- */
+.sitio-pie{margin-top:72px;padding-top:14px;border-top:3px solid var(--tinta);font-size:14px;color:var(--tinta-2)}
+.pie-fuentes{max-width:90ch}
+.pie-fuentes b{color:var(--tinta);font-weight:700}
+.pie-aviso{max-width:90ch;margin-top:16px;padding:14px 16px;border:2px solid var(--tinta);color:var(--tinta);font-size:14.5px;line-height:1.55}
+.pie-aviso strong{font-weight:750}
+.pie-sumario{margin-top:20px;padding-top:12px;border-top:1px solid var(--linea)}
+.pie-sumario ul{display:flex;flex-wrap:wrap;gap:4px 0}
+.pie-sumario li:not(:last-child)::after{content:"·";margin:0 10px;color:var(--tinta-3)}
+.pie-sumario a{color:var(--tinta);font-weight:600}
+
+/* ---------- celular y tablet ---------- */
+@media (max-width:899px){
+  .pagina{padding:0 16px 48px}
+  .sitio-barra{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"marca tema" "fecha tema";
+    padding:10px 16px 11px;gap:2px 12px}
+  .marca{grid-area:marca;font-size:32px}
+  .cabezal-fecha{grid-area:fecha;font-size:12.5px;padding-top:0}
+  .boton-tema{grid-area:tema}
+  .menu ul{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding:0}
+  .menu li:last-child{margin-left:0}
+  .menu a,.menu li:first-child a,.menu li:last-child a{justify-content:center;height:46px;padding:0 4px;font-size:13.5px;
+    font-stretch:86%;text-align:center;line-height:1.15;white-space:normal;border-left:0;border-right:1px solid var(--linea)}
+  .menu li:nth-child(4n) a{border-right:0}
+  .menu li:nth-child(-n+4) a{border-bottom:1px solid var(--linea)}
+  .titulo{padding-top:22px}
+  .titulo h1{font-size:40px}
+  .bajada{font-size:15px}
+  .bloque{margin-top:44px}
+  .bloque>h2,.sec-tit{font-size:22px}
+  .cifras{grid-template-columns:1fr;margin-top:20px}
+  .cifra{padding:12px 0 14px;border-left:0}
+  .cifra:first-child{grid-column:auto}
+  .cifra:first-child .cifra-val{font-size:64px}
+  /* las cifras que siguen a la de tapa, como renglones */
+  .cifras:not(.cifras-parejas) .cifra:not(:first-child){display:grid;grid-template-columns:minmax(0,1fr) auto;
+    gap:2px 14px;align-items:baseline;border-top:1px solid var(--linea);padding:11px 0 12px}
+  .cifras:not(.cifras-parejas) .cifra:not(:first-child) .cifra-val{font-size:30px;margin-top:0;text-align:right;grid-row:span 2}
+  .cifras:not(.cifras-parejas) .cifra:not(:first-child) .cifra-sub{margin-top:0}
+  .cifras-parejas{grid-template-columns:1fr 1fr}
+  .cifras-parejas .cifra{padding:12px 14px 14px}
+  .cifras-parejas .cifra:nth-child(odd){padding-left:0}
+  .cifras-parejas .cifra:nth-child(even){border-left:1px solid var(--linea);padding-right:0}
+  .cifras-parejas .cifra:nth-child(n+3){border-top:1px solid var(--linea)}
+  .cifras-parejas .cifra-val,.cifras-parejas .cifra:first-child .cifra-val{font-size:38px}
+  .controles>.campo{flex:1 1 150px}
+  .sitio-pie{margin-top:56px}
+}
+
+/* tablas como listados: nombre y dato principal arriba, el resto en una línea con su etiqueta.
+   Cada sección pone su columna principal arriba a la derecha (order:2, margin-left:auto, sin separador)
+   y las etiquetas de las demás con ::before; el resto va en una línea corrida, separado por espacio. Los encabezados ordenables quedan como una fila de botones. */
+@media (max-width:640px){
+  .caja-tabla{overflow:visible}
+  .tabla-datos,.tabla-datos tbody{display:block}
+  .tabla-datos thead{display:block}
+  .tabla-datos thead tr{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:10px 0;border-bottom:1px solid var(--linea-2)}
+  .tabla-datos thead tr::before{content:"Ordenar";font-size:12.5px;font-weight:650;color:var(--tinta-2);margin-right:2px}
+  .tabla-datos thead tr:not(:has(th[data-k])){display:none}
+  .tabla-datos th{display:none;padding:0;border:0}
+  .tabla-datos th[data-k]{display:block;padding:0}
+  .tabla-datos th[data-k] button{min-height:32px;padding:0 10px;border:1px solid var(--linea-2);border-radius:4px;
+    background:var(--superficie);font-size:13px;font-weight:600;color:var(--tinta)}
+  .tabla-datos th[aria-sort] button{background:var(--tinta);border-color:var(--tinta);color:var(--fondo)}
+  .tabla-datos tbody tr{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:14px;row-gap:2px;padding:10px 0 11px;border-bottom:1px solid var(--linea)}
+  .tabla-datos tbody tr::after{content:"";flex-basis:100%;order:3;height:0}
+  .tabla-datos td,.tabla-datos td:first-child,.tabla-datos td:last-child,.tabla-datos td.der{display:block;padding:0;border:0;order:4;
+    font-size:13px;line-height:1.45;color:var(--tinta-2);text-align:left}
+  .tabla-datos td:first-child{order:1;flex:1 1 0;min-width:0;font-size:15px;color:var(--tinta)}
+  .tabla-datos td .sub{display:inline;margin-left:4px}
+  .tabla-datos td:first-child .sub{display:block;margin-left:0}
+  .tabla-datos td[colspan]{flex-basis:100%}
+  .tabla-datos tbody tr:hover td{background:transparent}
+  .tabla-datos td .sub{font-size:12.5px}
+  .tabla-datos td::before{color:var(--tinta-3);font-weight:400}
+}
+@media (max-width:420px){
+  .boton-tema span{display:none}
+  .boton-tema{padding:0 11px}
+  .titulo h1{font-size:36px}
+  .cifra:first-child .cifra-val{font-size:58px}
+  .cifras-parejas .cifra-val,.cifras-parejas .cifra:first-child .cifra-val{font-size:33px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition:none!important;scroll-behavior:auto!important}
+}

@@ -1,75 +1,84 @@
-# S&P 500: distancia al máximo y a la 200 semanal
+# Mercadito
 
-Una tabla con las 500 empresas del índice S&P 500 que muestra, para cada una,
-cuánto le falta al precio para volver a su máximo histórico y qué tan lejos
-está del promedio de las últimas 200 semanas (casi cuatro años).
+Dólar, tasas, acciones y bonos de Argentina y Estados Unidos en un solo lugar.
+Datos para mirar el mercado, no recomendaciones.
 
 **Ver la página:** https://bautimarque.github.io/mercado-sp500/
 
-## Para qué sirve
+## Secciones
 
-Para encontrar rápido qué empresas están castigadas y cuáles están en zona de
-máximos, sin abrir 500 gráficos. Se puede filtrar por sector, por cuánto cayó,
-por distancia a la 200 semanal y por antigüedad del máximo, que es el dato que
-separa una caída reciente de una empresa que nunca se recuperó.
+| Sección | Qué muestra | Se actualiza |
+|---|---|---|
+| **Inicio** | Los números clave de cada sección, con su fecha | Con cada sección |
+| **Dólar** | Todos los tipos de cambio, brecha, historia de 2 años, banda cambiaria del BCRA, precio en cada banco, billetera y broker, calculadora | Cada 30 min |
+| **Gastos en US$** | Calculadora de cuánto se paga en pesos un juego, una suscripción o un gasto en el exterior, en pesos o con dólares propios, con los impuestos vigentes | Cada 30 min |
+| **Tasas** | Plazo fijo en cada entidad (con calculadora y comparación con la inflación), fondos money market, inflación y referencias del BCRA | Cada 30 min |
+| **Merval** | El índice y sus principales acciones en pesos y en dólares contado con liqui | Cada 30 min |
+| **S&P 500** | Las ~500 empresas: distancia al máximo, al promedio de 200 semanas, 12 meses, patrones de precio y gráfico de TradingView | 18:30 |
+| **Bonos** | Riesgo país, soberanos en dólares, letras del Tesoro y obligaciones negociables | Cada 30 min |
 
-## Señales
+"Cada 30 min" es de lunes a viernes entre las 10 y las 17:30 de Argentina. A las
+18:30 se actualiza todo. **Cómo se calcula** (`metodologia/`) explica cada dato y
+su fuente; **Aviso legal** (`legal/`) aclara qué es y qué no es el sitio.
 
-- **Posible compra**: el precio está a ±5% de su promedio de 200 semanas, el
-  máximo histórico es de los últimos 2 años y ese promedio viene subiendo en
-  los últimos 6 meses. Es una empresa que venía fuerte y corrigió hasta su
-  promedio largo, no una que nunca se recuperó.
-- **Tomar ganancias**: subió 50% o más en los últimos 12 meses y sigue a menos
-  de 10% de su máximo. Quien la tenga desde hace un año gana al menos eso.
+## Patrones de precio (S&P 500)
 
-Los umbrales están al principio de `generar_pagina.py` y la página los toma de
-ahí, así que cambiarlos no requiere tocar el HTML.
+Son descripciones del precio calculadas con reglas fijas. No son
+recomendaciones ni sugieren operar.
 
-## La lista
+- **En su promedio o debajo**: el precio está como máximo 5% arriba de su
+  promedio de 200 semanas (puede estar por debajo, sin límite), el máximo
+  histórico es de los últimos 2 años y ese promedio es más alto que hace 6 meses.
+- **Subió fuerte**: el precio subió 50% o más en los últimos 12 meses y está a
+  menos de 10% de su máximo histórico.
 
-Arranca con las 25 empresas más grandes del índice y se cargan de a 25 más
-(o todas de una). Cualquier filtro u orden vuelve a mostrar las primeras 25.
-El tamaño de cada empresa (su valor en bolsa) sale del buscador de nasdaq.com;
-si no responde, la lista arranca ordenada por caída desde el máximo.
+## Cómo está armado
 
-## Gráfico de cada empresa
+```
+generar.py              arma el sitio: todo, "rapido" o secciones sueltas
+mercadito/comun.py      menú, pie, aviso legal y lectura de fuentes
+mercadito/<seccion>.py  datos, cuentas y página de cada sección
+mercadito/inicio.py     el tablero del inicio
+mercadito/fijas.py      "Cómo se calcula" y "Aviso legal"
+assets/base.css         estilos compartidos
+assets/base.js          modo claro/oscuro, formatos y gráfico de líneas
+datos/<seccion>.json    resumen de cada sección para el inicio
+```
 
-Al abrir una empresa aparecen dos botones:
+Las páginas son archivos estáticos con los datos ya calculados adentro. Lo
+único externo que se carga es el gráfico de TradingView, y recién cuando
+alguien lo abre.
 
-- **Ver gráfico con indicadores**: abre un gráfico de TradingView con velas
-  diarias (promedios de 20, 50 y 200 días, volumen, RSI y MACD) o semanales
-  (promedios de 50 y 200 semanas, volumen, RSI y MACD).
-- **Abrir en TradingView**: lleva al gráfico completo en tradingview.com. Los
-  links de TradingView no aceptan indicadores; si tenés cuenta, se abre con
-  tu última plantilla guardada.
+Cada sección es independiente: si una fuente falla, las demás se publican
+igual y esa sección queda con su última versión. El bot de GitHub Actions
+(`.github/workflows/pagina.yml`) termina en error para que GitHub avise.
 
-La bolsa de cada ticker (NYSE, NASDAQ, CBOE) sale del directorio oficial de
-Nasdaq, así TradingView no la confunde con una acción de otro país.
+### Fuentes
 
-## Cómo funciona
+dolarapi.com, comparadolar.ar, argentinadatos.com, API del BCRA, Yahoo Finance
+(yfinance), Wikipedia, Nasdaq (directorio de símbolos y buscador), data912.com
+y TradingView. Son servicios de terceros, gratuitos y sin garantía; data912.com
+es un proyecto con fines educativos. Antes de cualquier uso comercial hay que
+revisar los términos de cada uno.
 
-Un workflow de GitHub Actions corre `generar_pagina.py` de lunes a viernes a
-las 18:30 de Argentina, después del cierre de Nueva York. El script toma la
-lista del índice de Wikipedia, baja el histórico diario de cada ticker con
-yfinance, arma las semanas para el promedio de 200 y escribe `index.html` con
-los datos ya calculados adentro. La página no consulta nada al abrirse: es un
-archivo estático. Lo único externo es el gráfico de TradingView, que se carga
-recién cuando alguien lo abre.
-
-Si Yahoo falla, los tickers que no llegaron se piden de nuevo. Si igual quedan
-menos de 475 empresas con datos, el script termina con error y no publica nada:
-sigue online la última página buena y GitHub avisa por mail que falló.
-
-Para correrlo en local:
+### Correrlo en local
 
 ```
 python -m venv .venv
 .venv\Scripts\activate          # en Mac/Linux: source .venv/bin/activate
 pip install -r requirements.txt
-python generar_pagina.py
+python generar.py               # todo (~1,5 minutos)
+python generar.py rapido        # sin el S&P 500 (~15 segundos)
+python generar.py dolar         # una sola sección
 ```
 
 ## Aviso
 
-Esto ordena precios, no mide calidad. Una acción barata puede estar barata con
-razón. No es una recomendación de compra ni asesoramiento financiero.
+Información con fines educativos e informativos. No es una recomendación de
+inversión ni asesoramiento financiero, y quienes hacen esta página no están
+registrados ante la CNV. Los datos son de terceros y pueden tener errores o
+demoras. Invertir implica riesgos, incluida la pérdida del capital.
+
+S&P 500 y S&P Merval son marcas de S&P Dow Jones Indices LLC. Este proyecto no
+está afiliado ni avalado por S&P Dow Jones Indices, BYMA, Nasdaq, Yahoo,
+TradingView ni los proveedores de datos.

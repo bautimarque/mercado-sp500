@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S&amp;P 500 · Mercadito</title>
+<meta name="description" content="Las empresas del S&amp;P 500 según cuánto les falta para volver a su máximo, qué tan lejos están de su promedio de 200 semanas y cuánto cambiaron en 12 meses. Datos sobre el precio, no recomendaciones.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#111317" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#050607" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='2' fill='%23111317'/%3E%3Cpath d='M4 11V4.5l4 4 4-4V11' fill='none' stroke='%23F7F7F5' stroke-width='1.8' stroke-linejoin='round'/%3E%3Crect y='13' width='16' height='3' fill='%2374ACDF'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+<script>
+try { var t = localStorage.getItem("tema"); if (t === "claro" || t === "oscuro") document.documentElement.setAttribute("data-tema", t); } catch (e) {}
+</script>
+<link rel="stylesheet" href="../assets/base.css">
+<style>
+
+/* hoy: cifra de tapa arriba, termómetro plegable debajo */
+.hoy{display:flex;flex-direction:column}
+.hoy>.lecturas,.hoy>.fecha{order:-1}
+.hoy>.fecha{padding-top:10px;border-top:1px solid var(--linea-2)}
+.lecturas{padding-bottom:16px}
+.franja:not(.leyendo-ya) .franja-lectura span{white-space:normal;right:0;overflow:visible}
+.franja{position:relative}
+.franja-lectura{position:relative;height:30px;font-size:13.5px;color:var(--tinta-2)}
+.franja-lectura span{position:absolute;left:0;bottom:6px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.franja-lectura b{color:var(--tinta);font-weight:700}
+.leyendo-ya .franja-lectura span{color:var(--tinta);background:var(--superficie);padding:3px 8px;
+  border-radius:4px;bottom:4px;box-shadow:0 1px 2px rgba(10,14,20,.08),0 3px 12px rgba(10,14,20,.10)}
+.franja-zona{position:relative;height:96px;cursor:crosshair;touch-action:pan-y;
+  -webkit-user-select:none;user-select:none;border-radius:6px}
+.franja-zona:focus-visible{outline-offset:4px;border-radius:8px}
+.franja-zona svg{display:block;width:100%;height:100%;clip-path:inset(0 round 3px)}
+.franja-zona rect,.sector-franja rect{transition:opacity .2s ease-out}
+rect.off{opacity:.14}
+.franja-prom{position:absolute;top:-5px;bottom:-9px;width:2px;margin-left:-1px;background:var(--tinta);pointer-events:none}
+.franja-cursor{position:absolute;top:-6px;bottom:-6px;width:3px;margin-left:-1.5px;border-radius:2px;
+  background:var(--tinta);box-shadow:0 0 0 1.5px var(--fondo);display:none;pointer-events:none}
+.leyendo-ya .franja-cursor{display:block}
+.franja-eje{position:relative;height:30px;font-size:12.5px;color:var(--tinta-3)}
+.franja-eje>span{position:absolute;top:10px;white-space:nowrap}
+#eje-izq{left:0} #eje-der{right:0}
+#eje-prom{transform:translateX(-50%);color:var(--tinta);font-weight:600}
+.plegable{margin:30px 0 10px}
+.plegable>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700;color:var(--tinta);
+  padding:10px 0 8px;border-top:1px solid var(--linea-2);user-select:none}
+.plegable>summary::-webkit-details-marker{display:none}
+.plegable>summary::before{content:"";width:7px;height:7px;margin:0 2px 3px 2px;border-right:1.6px solid currentColor;border-bottom:1.6px solid currentColor;
+  transform:rotate(-45deg);transition:transform .15s;color:var(--tinta-2)}
+.plegable[open]>summary::before{transform:rotate(45deg)}
+.plegable>summary::after{content:"Mostrar";margin-left:auto;font-size:13px;font-weight:600;color:var(--tinta);background:var(--superficie);border:1px solid var(--linea-2);border-radius:4px;padding:5px 12px}
+.plegable[open]>summary::after{content:"Ocultar"}
+.plegable>summary:hover{color:var(--tinta)}
+.plegable>summary:hover::after{color:var(--tinta);background:var(--hundido)}
+.plegable>summary:focus-visible{outline:2px solid var(--tinta-3);outline-offset:3px;border-radius:6px}
+.leyenda{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:4px;font-size:12.5px;color:var(--tinta-2)}
+.leyenda li{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.leyenda small{color:var(--tinta-3);font-size:12px;font-variant-numeric:tabular-nums}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;flex:none}
+
+/* hoy: lecturas */
+.lecturas{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);grid-template-areas:"temp lect" "res lect";
+  grid-template-rows:auto 1fr;gap:0 56px;margin-top:26px;align-items:start;border-top:3px solid var(--tinta);padding-top:18px;
+  background:linear-gradient(var(--tinta),var(--tinta)) 0 3px / 100% 1px no-repeat}
+.panel,.emp-cab,.pie{background:linear-gradient(var(--tinta),var(--tinta)) 0 3px / 100% 1px no-repeat}
+.panel,.emp-cab,.pie{padding-top:12px}
+.temp{grid-area:temp} .lect-col{grid-area:lect}
+.temp-val{font-size:76px;font-weight:800;font-stretch:66%;line-height:.92;letter-spacing:-.01em}
+.temp-et{font-size:19px;font-weight:550;line-height:1.3;max-width:20ch;margin-top:12px}
+.temp-sub{font-size:13.5px;color:var(--tinta-2);margin-top:6px}
+.resumen{grid-area:res;font-size:15px;color:var(--tinta-2);max-width:42ch;margin-top:18px;padding-top:14px;border-top:1px solid var(--linea)}
+.resumen b{color:var(--tinta);font-weight:650}
+.lect{border-top:0}
+.lect>li{border-bottom:1px solid var(--linea)}
+.lect-fila{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 20px;align-items:center;
+  width:100%;padding:15px 10px;text-align:left}
+.lect-boton{grid-template-columns:minmax(0,1fr) auto 16px;border:0;background:transparent;border-radius:4px;cursor:pointer;
+  transition:background-color .15s,color .15s}
+.lect-boton:hover{background:var(--hundido)}
+.lect-boton[aria-pressed="true"]{background:var(--tinta);color:var(--fondo)}
+.lect-boton[aria-pressed="true"] .lect-sub,.lect-boton[aria-pressed="true"] .lect-uni,
+.lect-boton[aria-pressed="true"] .chev{color:color-mix(in srgb,var(--fondo) 72%,var(--tinta))}
+.lect-txt,.lect-num{display:flex;flex-direction:column;min-width:0}
+.lect-nom{display:flex;align-items:center;gap:8px;font-size:16.5px;font-weight:650;line-height:1.3}
+.lect-sub{font-size:13.5px;color:var(--tinta-2);margin-top:3px;line-height:1.45}
+.lect-cond{display:flex;align-items:center;gap:9px;font-size:30px;font-weight:750;font-stretch:76%;line-height:1.05;margin-top:3px}
+.lect-cond:empty{display:none}
+.lect-cond .sw{width:14px;height:14px;border-radius:3px}
+.lect-num{align-items:flex-end;text-align:right}
+.lect-val{font-size:34px;font-weight:750;font-stretch:78%;line-height:1;letter-spacing:-.01em}
+.lect-uni{font-size:12.5px;color:var(--tinta-3);margin-top:4px;white-space:nowrap}
+.chev{color:var(--tinta-3)}
+.aviso-corto{font-size:13.5px;color:var(--tinta-2);margin-top:12px;max-width:70ch}
+
+/* paneles */
+.paneles{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px 56px;margin-top:48px}
+.panel{position:relative;display:flex;flex-direction:column;border-top:3px solid var(--tinta);padding-top:10px}
+.panel>h2,.emp-cab h2,.pie>h2{font-size:24px;font-weight:850;font-stretch:72%;line-height:1.1;letter-spacing:-.005em}
+.panel-nota{font-size:13.5px;color:var(--tinta-2);margin:5px 0 16px;max-width:60ch}
+.sectores-cab,.sector{display:grid;grid-template-columns:minmax(0,10.5em) minmax(0,1fr) 3.4em;gap:14px;align-items:center}
+.sectores-cab{font-size:12px;color:var(--tinta-3);padding:0 8px 6px}
+.sectores-cab span:last-child{text-align:right}
+.sector{width:100%;height:36px;padding:0 8px;border:0;background:transparent;border-radius:4px;cursor:pointer;text-align:left;
+  transition:background-color .15s}
+.sector:hover{background:var(--hundido)}
+.sector[aria-pressed="true"]{background:var(--hundido);box-shadow:inset 0 0 0 2px var(--tinta)}
+.sector-nom{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sector-n{color:var(--tinta-3);font-size:12.5px;font-variant-numeric:tabular-nums;margin-left:3px}
+.sector-franja{display:block;width:100%;height:16px;clip-path:inset(0 round 3px)}
+.sector-pct{font-size:14px;font-weight:650;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.sector-arr{display:none;font-weight:400;color:var(--tinta-2)}
+.histo{position:relative;display:flex;align-items:flex-end;gap:3px;flex:1;min-height:176px;border-bottom:1px solid var(--linea-2)}
+.barra{position:relative;flex:1;height:100%;padding:0;border:0;background:transparent;cursor:pointer;
+  display:flex;align-items:flex-end;border-radius:3px 3px 0 0}
+.barra:focus-visible{outline-offset:1px}
+.barra-total{position:absolute;left:0;right:0;bottom:0;background:var(--hundido);border-radius:3px 3px 0 0;
+  transition:background-color .15s}
+.barra:hover .barra-total,.barra:focus-visible .barra-total{background:var(--linea-2)}
+.barra-pila{position:relative;width:100%;display:flex;flex-direction:column-reverse;gap:1px;
+  border-radius:3px 3px 0 0;overflow:hidden;transition:height .2s ease-out}
+.barra-pila i{display:block;min-height:1px}
+.histo-eje{position:relative;height:24px;font-size:12px;color:var(--tinta-3);font-variant-numeric:tabular-nums}
+.histo-eje span{position:absolute;top:6px;transform:translateX(-50%);white-space:nowrap}
+.histo-eje span:first-child{transform:none}
+.histo-eje span:last-child{transform:translateX(-100%)}
+.tip{position:absolute;z-index:3;pointer-events:none;background:var(--tinta);color:var(--fondo);
+  font-size:12.5px;line-height:1.4;padding:6px 9px;border-radius:4px;max-width:230px;display:none;
+  box-shadow:0 2px 10px rgba(10,14,20,.18)}
+.tip.ver{display:block}
+
+/* empresas */
+.empresas{margin-top:52px;scroll-margin-top:12px}
+.emp-cab{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;border-top:3px solid var(--tinta);padding-top:10px}
+.cuenta{font-size:14px;color:var(--tinta-2);font-variant-numeric:tabular-nums}
+.cuenta b{color:var(--tinta);font-weight:650}
+.filtros{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1.2fr);gap:12px;margin-top:16px}
+.campo label{display:block;font-size:12.5px;font-weight:550;color:var(--tinta-2);margin-bottom:5px}
+.control{position:relative;display:flex;align-items:center}
+.control .ico{position:absolute;pointer-events:none;color:var(--tinta-3)}
+.control-buscar .ico{left:12px}
+.control-select .ico{right:12px}
+input,select{font:inherit;font-size:15px;height:44px;width:100%;padding:0 12px;border:1px solid var(--linea-2);
+  border-radius:4px;background:var(--superficie);color:var(--tinta);transition:border-color .15s}
+input::placeholder{color:var(--tinta-3);opacity:1}
+input:hover,select:hover{border-color:var(--tinta-3)}
+input:focus-visible,select:focus-visible{outline:2px solid var(--tinta);outline-offset:1px;border-color:var(--tinta);border-radius:4px}
+.control-buscar input{padding-left:36px}
+input[type=search]::-webkit-search-decoration{-webkit-appearance:none}
+select{-webkit-appearance:none;appearance:none;padding-right:36px;cursor:pointer}
+select option{background:var(--superficie);color:var(--tinta)}
+input[type=number]{-moz-appearance:textfield;appearance:textfield;padding-right:52px}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.unidad{position:absolute;right:12px;font-size:14px;color:var(--tinta-3);pointer-events:none}
+.campo-orden{display:none}
+.atajos{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.atajos .ico{margin-left:-2px}
+.mas{margin-top:12px}
+.mas summary{display:inline-flex;align-items:center;gap:8px;padding:8px 2px;font-size:14px;font-weight:550;
+  cursor:pointer;list-style:none;border-radius:6px}
+.mas summary::-webkit-details-marker{display:none}
+.mas summary .ico{transition:transform .2s ease-out;color:var(--tinta-3)}
+.mas[open] summary .ico{transform:rotate(180deg)}
+.mas-n{font-size:12px;font-weight:650;background:var(--tinta);color:var(--fondo);border-radius:9px;
+  min-width:18px;height:18px;line-height:18px;text-align:center;padding:0 5px}
+.mas-n:empty{display:none}
+.numeros{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:6px 0 4px}
+.ayuda{display:block;font-size:12.5px;color:var(--tinta-3);margin-top:5px;line-height:1.4}
+.regla-activa{display:flex;gap:10px;align-items:flex-start;margin-top:14px;padding:11px 14px;
+  background:var(--hundido);border-radius:4px;font-size:14px;color:var(--tinta-2);max-width:90ch}
+.regla-activa b{color:var(--tinta);font-weight:650}
+.regla-activa .ico{margin-top:2px;color:var(--tinta)}
+
+.tabla-caja{margin-top:16px;border-top:2px solid var(--tinta);overflow:clip}
+.tabla-caja.desborda{overflow-x:auto}
+.ver-mas{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;margin-top:14px}
+.ver-mas[hidden]{display:none}
+.ver-mas p{font-size:14px;color:var(--tinta-2)}
+.ver-mas-acc{display:flex;flex-wrap:wrap;gap:8px}
+.tabla{width:100%;border-collapse:separate;border-spacing:0;font-size:14px}
+.tabla thead th{position:sticky;top:0;z-index:2;background:var(--fondo);padding:0;text-align:left;
+  font-size:12.5px;font-weight:550;line-height:1.3;color:var(--tinta-2);white-space:nowrap;vertical-align:bottom;border-bottom:1px solid var(--linea-2)}
+.tabla th button{display:flex;align-items:flex-end;gap:5px;width:100%;padding:12px 12px 10px;border:0;background:transparent;
+  font:inherit;color:inherit;cursor:pointer;text-align:inherit;border-radius:0}
+.tabla th button:hover{color:var(--tinta)}
+.tabla th button:focus-visible{outline-offset:-3px;border-radius:6px}
+.tabla th.c-num{white-space:normal}
+.tabla th.c-num button{justify-content:flex-end;text-align:right}
+.flecha{width:12px;height:12px;flex:none;margin-bottom:1px;opacity:0;transition:transform .15s}
+th[aria-sort] .flecha{opacity:1}
+th[aria-sort="descending"] .flecha{transform:rotate(180deg)}
+th[aria-sort]{color:var(--tinta)}
+.tabla td{padding:10px 12px;border-bottom:1px solid var(--linea);vertical-align:middle}
+.tabla td:first-child,.tabla th:first-child button{padding-left:0}
+.tabla td:last-child,.tabla th:last-child button{padding-right:0}
+.tabla tbody tr:last-child td{border-bottom:0}
+.fila{cursor:pointer}
+.fila:hover td{background:var(--hundido)}
+.c-num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.abrir{display:flex;align-items:baseline;gap:10px;min-width:0;max-width:100%;padding:0;border:0;background:transparent;
+  cursor:pointer;text-align:left;border-radius:3px}
+.tk{font-weight:700;min-width:3.7em}
+.nom{color:var(--tinta-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+td.c-emp{max-width:270px}
+.c-sec{color:var(--tinta-2);white-space:nowrap;font-size:13.5px}
+.c-dm .sw{margin-right:8px;vertical-align:-1px}
+.c-da{font-weight:650;font-stretch:88%}
+.c-fa{white-space:nowrap;font-variant-numeric:tabular-nums}
+.fa-hace{color:var(--tinta-3)}
+.patron{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;white-space:nowrap}
+.nd{color:var(--tinta-3);font-size:13px}
+.m-et{display:none}
+.tabla .detalle td{background:var(--hundido);padding:14px 18px 16px}
+.detalle p{max-width:78ch;font-size:14.5px;color:var(--tinta-2);line-height:1.55}
+.detalle p+p{margin-top:6px}
+.detalle b{color:var(--tinta);font-weight:650}
+.det-acc{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin-top:12px}
+.det-acc a.boton{text-decoration:none}
+
+/* gráfico de TradingView */
+.grafico{width:min(1120px,calc(100vw - 32px));height:min(800px,calc(100vh - 32px));max-width:none;max-height:none;
+  padding:0;border:1px solid var(--linea-2);border-top:3px solid var(--tinta);border-radius:4px;background:var(--superficie);color:var(--tinta)}
+.grafico[open]{display:flex;flex-direction:column}
+.grafico::backdrop{background:rgba(10,12,16,.6)}
+.graf-cab{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;padding:12px 14px 12px 18px;border-bottom:1px solid var(--linea)}
+.graf-tit{margin-right:auto;min-width:0;font-size:17px;font-weight:750;line-height:1.25}
+.graf-tit small{margin-left:8px;font-size:14px;font-weight:450;color:var(--tinta-2)}
+.graf-int{display:inline-flex;gap:6px}
+.graf-cab a.boton{text-decoration:none}
+.graf-ind{padding:9px 18px;border-bottom:1px solid var(--linea);font-size:13.5px;color:var(--tinta-2)}
+.graf-caja{flex:1;min-height:0}
+.graf-caja .tradingview-widget-container,.graf-caja .tradingview-widget-container__widget{height:100%}
+.tabla .vacio td{padding:40px 16px;text-align:center;color:var(--tinta-2);cursor:default}
+.vacio:hover td{background:transparent}
+.vacio .boton{margin-top:12px}
+
+/* pie */
+.pie{margin-top:64px;padding-top:10px;border-top:3px solid var(--tinta)}
+.pie-grilla{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:24px 56px;margin-top:10px}
+.glosario>div{padding:12px 0;border-bottom:1px solid var(--linea)}
+.glosario dt{font-weight:650}
+.glosario dd{color:var(--tinta-2);font-size:14.5px;margin-top:2px;max-width:65ch}
+h3{font-size:15px;font-weight:700;margin:14px 0 8px}
+.escala li{display:grid;grid-template-columns:10px minmax(0,7.5em) minmax(0,1fr) auto;gap:10px;align-items:center;
+  padding:6px 0;border-bottom:1px solid var(--linea);font-size:14px}
+.escala small{color:var(--tinta-2);font-size:13px;font-variant-numeric:tabular-nums}
+.escala .n{color:var(--tinta-3);font-size:13px;font-variant-numeric:tabular-nums;text-align:right}
+.fuente{font-size:14px;color:var(--tinta-2);max-width:65ch}
+
+@media (max-width:1279px){
+  .c-sec{display:none}
+}
+@media (max-width:1099px){
+  .fa-hace{display:none}
+}
+@media (max-width:899px){
+  .franja-zona{height:64px}
+  .lecturas{grid-template-columns:1fr;grid-template-areas:"temp" "lect" "res";grid-template-rows:auto;margin-top:22px;gap:18px}
+  .leyenda{gap:5px 14px}
+  .sectores-cab{display:none}
+  .sector{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"nom pct" "fr fr";height:auto;gap:7px 12px;padding:9px 8px 11px}
+  .sector-nom{grid-area:nom} .sector-pct{grid-area:pct} .sector-franja{grid-area:fr;height:12px}
+  .sector-arr{display:inline}
+  .lect-cond{font-size:26px}
+  .temp{display:block}
+  .temp-val{font-size:64px}
+  .temp-et{font-size:16.5px;margin-top:10px;max-width:none}
+  .franja-lectura{height:44px}
+  .temp-sub{margin-top:4px}
+  .resumen{max-width:none;margin-top:0}
+  .lect-fila{padding:13px 6px}
+  .lect-val{font-size:30px}
+  .paneles{grid-template-columns:1fr;margin-top:36px;gap:36px}
+  .panel{padding-top:16px}
+  .empresas{margin-top:40px}
+  .filtros{grid-template-columns:1fr 1fr}
+  .campo-buscar{grid-column:1 / -1}
+  .campo-orden{display:block}
+  input,select{font-size:16px}
+  .numeros{grid-template-columns:1fr}
+  .tabla-caja{margin-left:0;margin-right:0}
+  .tabla thead{display:none}
+  .tabla,.tabla tbody{display:block}
+  .tabla tr.fila{display:grid;grid-template-columns:6.9em 5.8em minmax(0,1fr) auto;
+    grid-template-areas:"emp emp emp da" "dm r fa fa" "sg sg sg sg";gap:3px 12px;align-items:center;
+    padding:11px 0 12px;border-bottom:1px solid var(--linea)}
+  .tabla tr.fila td{display:block;padding:0;border:0;background:transparent}
+  .fila:hover{background:var(--hundido)}
+  .c-emp{grid-area:emp} .c-da{grid-area:da;font-weight:650;font-size:15px}
+  .c-dm{grid-area:dm} .c-r{grid-area:r} .c-fa{grid-area:fa} .c-sg{grid-area:sg}
+  .c-dm,.c-r,.c-fa{font-size:13px;color:var(--tinta-2);text-align:left}
+  .tabla tr.fila td.c-pre,.tabla tr.fila td.c-sec{display:none}
+  td.c-emp{max-width:none;min-width:0}
+  .tk{min-width:0;font-size:15px}
+  .nom{font-size:14px}
+  .m-et{display:inline;color:var(--tinta-3)}
+  .fa-hace{display:none}
+  .tabla tr.fila td.c-sg:empty{display:none}
+  .tabla tr.fila td.c-sg{padding-top:3px}
+  .c-dm .sw{margin-right:6px}
+  .tabla tr.detalle,.tabla tr.vacio{display:block;border-bottom:1px solid var(--linea)}
+  .tabla tr.detalle td,.tabla tr.vacio td{display:block;border:0}
+  .tabla .detalle td{padding:12px 16px 14px}
+  .grafico{width:100vw;height:100%;border:0;border-radius:0}
+  .graf-cab{padding:10px 12px 10px 16px}
+  .graf-tit{flex:1 1 calc(100% - 64px)}
+  .graf-tit small{display:block;margin:2px 0 0}
+  #graf-cerrar{order:1}
+  .graf-int{order:2}
+  .graf-cab a.boton{order:3}
+  .graf-ind{padding:8px 16px;font-size:13px}
+  .pie{margin-top:48px}
+  .pie-grilla{grid-template-columns:1fr}
+  }
+@media (max-width:520px){
+  .filtros{grid-template-columns:1fr}
+}
+@media (max-width:420px){
+  .largo{display:none}
+  .temp-val{font-size:58px}
+}
+
+
+</style>
+</head>
+<body>
+<a class="saltar" href="#contenido">Ir al contenido</a>
+<header class="sitio">
+  <div class="cabezal"><div class="sitio-barra">
+    <a class="marca" href="../">Mercadito</a>
+    <p class="cabezal-fecha">martes 6 de octubre de 2026</p>
+    <button id="tema" class="boton boton-tema" type="button" aria-label="Cambiar a modo oscuro">
+      <svg class="ico ico-luna" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.2 10.1A5.6 5.6 0 0 1 5.9 2.8a5.6 5.6 0 1 0 7.3 7.3Z"/></svg>
+      <svg class="ico ico-sol" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.3M8 13.2v1.3M1.5 8h1.3M13.2 8h1.3M3.4 3.4l.9.9M11.7 11.7l.9.9M3.4 12.6l.9-.9M11.7 4.3l.9-.9"/></svg>
+      <span id="tema-txt">Modo oscuro</span>
+    </button>
+  </div></div>
+  <nav class="menu" aria-label="Secciones"><ul><li><a href="../">Inicio</a></li><li><a href="../dolar/">Dólar</a></li><li><a href="../gastos/">Gastos en US$</a></li><li><a href="../tasas/">Tasas</a></li><li><a href="../merval/">Merval</a></li><li><a href="../sp500/" aria-current="page">S&amp;P 500</a></li><li><a href="../bonos/">Bonos</a></li><li><a href="../metodologia/">Cómo se calcula</a></li></ul></nav>
+</header>
+<div class="pagina">
+<main id="contenido">
+
+<div class="titulo">
+  <h1>S&amp;P 500</h1>
+  <p class="bajada">Las 500 empresas más grandes de Estados Unidos: cuánto les falta para volver a su máximo, qué tan lejos están de su promedio de 200 semanas y cuánto cambiaron en 12 meses.</p>
+</div>
+<section class="hoy" aria-labelledby="t-hoy">
+  <h2 id="t-hoy" class="oculto">Cómo está el mercado</h2>
+  <details class="plegable" id="dfranja" open>
+    <summary class="plegable-tit">Termómetro del índice y gráficos</summary>
+  <figure class="franja">
+    <div class="franja-lectura" aria-hidden="true"><span id="lectura">Pasar el dedo o el mouse por la franja para ver cada empresa</span></div>
+    <div class="franja-zona" id="franja" tabindex="0" role="slider" aria-valuemin="1" aria-valuenow="1"
+      aria-label="Las empresas del índice, de la que está más debajo de su promedio de 200 semanas a la que está más arriba">
+      <svg id="franja-svg" preserveAspectRatio="none" aria-hidden="true"></svg>
+      <span class="franja-prom" id="franja-prom"></span>
+      <span class="franja-cursor" id="franja-cursor"></span>
+    </div>
+    <figcaption class="franja-eje">
+      <span id="eje-izq">Más frías</span>
+      <span id="eje-prom">Promedio<span class="largo"> de 200 semanas</span></span>
+      <span id="eje-der">Más calientes</span>
+    </figcaption>
+  </figure>
+  <ul class="leyenda" id="leyenda" aria-label="Escala de temperatura según la distancia al promedio de 200 semanas"></ul>
+  </details>
+
+  <div class="lecturas">
+    <div class="temp">
+      <p class="temp-val" id="k-amp-val"></p>
+      <p class="temp-et">de las empresas cotiza arriba de su promedio de 200 semanas</p>
+      <p class="temp-sub" id="k-amp-sub"></p>
+    </div>
+    <p class="resumen" id="resumen"></p>
+    <div class="lect-col">
+      <ul class="lect">
+        <li id="k-idx">
+          <div class="lect-fila">
+            <span class="lect-txt"><span class="lect-nom">Índice S&amp;P 500</span><span class="lect-cond" id="k-idx-cond"></span><span class="lect-sub" id="k-idx-sub"></span></span>
+            <span class="lect-num"><span class="lect-val" id="k-idx-val"></span><span class="lect-uni">desde su máximo</span></span>
+          </div>
+        </li>
+        <li>
+          <button class="lect-fila lect-boton" type="button" data-p="promedio" aria-pressed="false">
+            <span class="lect-txt"><span class="lect-nom" id="k-c-nom">En su promedio o debajo</span><span class="lect-sub" id="k-c-sub"></span></span>
+            <span class="lect-num"><span class="lect-val" id="k-c-val"></span><span class="lect-uni">empresas</span></span>
+            <svg class="ico chev" viewBox="0 0 16 16" aria-hidden="true"><path d="m6 3.5 4.5 4.5L6 12.5"/></svg>
+          </button>
+        </li>
+        <li>
+          <button class="lect-fila lect-boton" type="button" data-p="suba" aria-pressed="false">
+            <span class="lect-txt"><span class="lect-nom" id="k-g-nom">Subió fuerte</span><span class="lect-sub" id="k-g-sub"></span></span>
+            <span class="lect-num"><span class="lect-val" id="k-g-val"></span><span class="lect-uni">empresas</span></span>
+            <svg class="ico chev" viewBox="0 0 16 16" aria-hidden="true"><path d="m6 3.5 4.5 4.5L6 12.5"/></svg>
+          </button>
+        </li>
+      </ul>
+      <p class="aviso-corto">Los dos patrones describen el precio con reglas fijas, explicadas al pie de la página. Son datos, no recomendaciones de inversión.</p>
+    </div>
+  </div>
+  <p class="fecha">Precios del martes 06/10/2026 a las 13:42 de Nueva York, con el mercado abierto · actualizado 14:42 hs ARG</p>
+</section>
+
+<div class="paneles">
+  <section class="panel" aria-labelledby="t-sec">
+    <h2 id="t-sec">Temperatura por sector</h2>
+    <p class="panel-nota">Cada franja ordena las empresas del sector de la más fría a la más caliente. Tocar un sector filtra la lista.</p>
+    <div class="sectores-cab" aria-hidden="true"><span>Sector y empresas</span><span>De la más fría a la más caliente</span><span>Arriba</span></div>
+    <ul class="sectores" id="sectores"></ul>
+  </section>
+  <section class="panel" aria-labelledby="t-caida">
+    <h2 id="t-caida">Cuánto les falta para volver a su máximo</h2>
+    <p class="panel-nota">Cada barra agrupa las empresas según su caída desde el máximo, con el color de su temperatura. El 0% es estar en el máximo. Tocar una barra muestra las que cayeron al menos eso.</p>
+    <div class="histo" id="histo"></div>
+    <div class="histo-eje" aria-hidden="true"><span style="left:0">−100%</span><span style="left:25%">−75%</span><span style="left:50%">−50%</span><span style="left:75%">−25%</span><span style="left:100%">0%</span></div>
+    <div class="tip" id="tip"></div>
+  </section>
+</div>
+
+<section class="empresas" id="empresas" aria-labelledby="t-emp">
+  <div class="emp-cab">
+    <h2 id="t-emp">Empresas</h2>
+    <p class="cuenta" id="cuenta" aria-live="polite"></p>
+  </div>
+  <div class="filtros">
+    <div class="campo campo-buscar">
+      <label for="q">Buscar</label>
+      <span class="control control-buscar">
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="m10.4 10.4 3.6 3.6"/></svg>
+        <input id="q" type="search" placeholder="Ticker o nombre, por ejemplo AAPL" autocomplete="off" spellcheck="false">
+      </span>
+    </div>
+    <div class="campo">
+      <label for="sec">Sector</label>
+      <span class="control control-select">
+        <select id="sec"><option value="">Todos los sectores</option></select>
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>
+      </span>
+    </div>
+    <div class="campo campo-orden">
+      <label for="orden">Ordenar</label>
+      <span class="control control-select">
+        <select id="orden"></select>
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>
+      </span>
+    </div>
+  </div>
+  <div class="atajos" role="group" aria-label="Atajos">
+    <button class="boton" type="button" data-p="promedio" aria-pressed="false"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 12.5h13"/><circle cx="8" cy="8.6" r="3.1"/></svg>En su promedio o debajo</button>
+    <button class="boton" type="button" data-p="suba" aria-pressed="false"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 2.5h11M8 14V6.2M4.8 9.4 8 6.2l3.2 3.2"/></svg>Subió fuerte</button>
+    <button class="boton" type="button" data-p="recientes" aria-pressed="false">Cayeron fuerte hace poco</button>
+    <button class="boton" type="button" data-p="maximos" aria-pressed="false">En zona de máximos</button>
+    <button class="boton boton-texto" type="button" id="limpiar">Limpiar filtros</button>
+  </div>
+  <details class="mas" id="mas">
+    <summary>Filtros por número <span class="mas-n" id="mas-n"></span><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></summary>
+    <div class="numeros">
+      <div class="campo">
+        <label for="mincaida">Cayó al menos</label>
+        <span class="control"><input id="mincaida" type="number" inputmode="decimal" min="0" max="100" step="1" placeholder="Ej.: 30"><span class="unidad">%</span></span>
+        <span class="ayuda">Desde su máximo histórico.</span>
+      </div>
+      <div class="campo">
+        <label for="maxma">A menos de</label>
+        <span class="control"><input id="maxma" type="number" inputmode="decimal" min="0" step="1" placeholder="Ej.: 5"><span class="unidad">%</span></span>
+        <span class="ayuda">De su promedio de 200 semanas, por arriba o por debajo.</span>
+      </div>
+      <div class="campo">
+        <label for="maxanios">Máximo hace menos de</label>
+        <span class="control"><input id="maxanios" type="number" inputmode="decimal" min="0" step="1" placeholder="Ej.: 2"><span class="unidad">años</span></span>
+        <span class="ayuda">Deja afuera a las que hace mucho no vuelven a su máximo.</span>
+      </div>
+    </div>
+  </details>
+  <p class="regla-activa" id="regla-activa" hidden></p>
+  <div class="tabla-caja">
+    <table class="tabla">
+      <caption class="oculto">Empresas del S&amp;P 500 con su distancia al máximo, al promedio de 200 semanas, su variación en 12 meses y su patrón de precio</caption>
+      <thead><tr>
+        <th scope="col" class="c-emp" data-k="t"><button type="button">Empresa<svg class="ico flecha" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13V3.5M4.5 7 8 3.5 11.5 7"/></svg></button></th>
+        <th scope="col" class="c-sec" data-k="s"><button type="button">Sector<svg class="ico flecha" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13V3.5M4.5 7 8 3.5 11.5 7"/></svg></button></th>
+        <th scope="col" class="c-num c-pre" data-k="p"><button type="button">Precio (US$)<svg class="ico flecha" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13V3.5M4.5 7 8 3.5 11.5 7"/></svg></button></th>
+        <th scope="col" class="c-num c-da" data-k="da"><button type="button">Desde su máximo<svg class="ico flecha" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13V3.5M4.5 7 8 3.5 11.5 7"/></svg></button></th>
+        <th scope="col" class="c-num c-dm" data-k="dm"><button type="button">Vs. 200 semanas<svg class="ico flecha" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13V3.5M4.5 7 8 3.5 11.5 7"/></svg></button></th>
+        <th scope="col" class="c-num c-r" data-k="r"><button type="button">12 meses<svg class="ico flecha" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13V3.5M4.5 7 8 3.5 11.5 7"/></svg></button></th>
+        <th scope="col" class="c-fa" data-k="fa"><button type="button">Máximo<svg class="ico flecha" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13V3.5M4.5 7 8 3.5 11.5 7"/></svg></button></th>
+        <th scope="col" class="c-sg" data-k="sg"><button type="button">Patrón<svg class="ico flecha" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13V3.5M4.5 7 8 3.5 11.5 7"/></svg></button></th>
+      </tr></thead>
+      <tbody id="cuerpo"></tbody>
+    </table>
+  </div>
+  <div class="ver-mas" id="ver-mas" hidden>
+    <p id="ver-mas-txt"></p>
+    <div class="ver-mas-acc">
+      <button type="button" class="boton" id="ver-mas-btn"></button>
+      <button type="button" class="boton boton-texto" id="ver-todas">Ver todas</button>
+    </div>
+  </div>
+</section>
+
+<section class="pie" aria-labelledby="t-pie">
+  <h2 id="t-pie">Cómo leer esta página</h2>
+  <div class="pie-grilla">
+    <dl class="glosario">
+      <div><dt>Desde su máximo</dt><dd>Cuánto le falta al precio para volver al mayor valor que alcanzó esa acción.</dd></div>
+      <div><dt>Promedio de 200 semanas</dt><dd>El precio promedio de las últimas 200 semanas, casi cuatro años. La distancia del precio a ese promedio es lo que esta página llama temperatura: debajo del promedio, fría; muy por arriba, caliente.</dd></div>
+      <div><dt>12 meses</dt><dd>Cuánto subió o bajó el precio en el último año.</dd></div>
+      <div><dt>Máximo</dt><dd>Cuándo marcó su máximo. Permite distinguir una caída reciente de un precio que no volvió a ese nivel en muchos años.</dd></div>
+      <div><dt>En su promedio o debajo</dt><dd id="def-c"></dd></div>
+      <div><dt>Subió fuerte</dt><dd id="def-g"></dd></div>
+    </dl>
+    <div>
+      <h3>Escala de temperatura</h3>
+      <ul class="escala" id="escala"></ul>
+      <h3>De dónde salen los datos</h3>
+      <p class="fuente">Precios diarios de Yahoo Finance, sin ajustar por dividendos, en dólares. La lista de empresas del índice sale de Wikipedia y el tamaño de cada una (su valor en bolsa), de nasdaq.com. Los datos se actualizan de lunes a viernes, después del cierre de Nueva York. El gráfico de cada empresa es de TradingView y se carga solo cuando lo abrís.</p>
+    </div>
+  </div>
+</section>
+
+<dialog class="grafico" id="grafico" aria-labelledby="graf-tit">
+  <div class="graf-cab">
+    <h2 class="graf-tit" id="graf-tit"></h2>
+    <div class="graf-int" role="group" aria-label="Velas">
+      <button type="button" class="boton" data-int="D" aria-pressed="true">Diario</button>
+      <button type="button" class="boton" data-int="W" aria-pressed="false">Semanal</button>
+    </div>
+    <a class="boton" id="graf-tv" target="_blank" rel="noopener">Abrir en TradingView<svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 7.5 8.5M11.5 9.5v4h-9v-9h4"/></svg></a>
+    <button type="button" class="boton" id="graf-cerrar" aria-label="Cerrar el gráfico"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></button>
+  </div>
+  <p class="graf-ind" id="graf-ind"></p>
+  <div class="graf-caja" id="graf-caja"></div>
+</dialog>
+
+</main>
+<footer class="sitio-pie">
+  <p class="pie-fuentes"><b>Fuentes.</b> Precios: Yahoo Finance. Lista del índice: Wikipedia. Tamaño de cada empresa: nasdaq.com. Gráficos: TradingView.</p>
+  <p class="pie-aviso"><strong>Información con fines educativos e informativos. No es una recomendación de inversión ni asesoramiento financiero.</strong> Los datos son de terceros y pueden tener errores o demoras; verificalos con tu banco, agente o broker antes de operar. <a href="../legal/">Aviso legal completo</a>.</p>
+  <nav class="pie-sumario" aria-label="Secciones de Mercadito"><ul><li><a href="../">Inicio</a></li><li><a href="../dolar/">Dólar</a></li><li><a href="../gastos/">Gastos en US$</a></li><li><a href="../tasas/">Tasas</a></li><li><a href="../merval/">Merval</a></li><li><a href="../sp500/">S&amp;P 500</a></li><li><a href="../bonos/">Bonos</a></li><li><a href="../metodologia/">Cómo se calcula</a></li><li><a href="../legal/">Aviso legal</a></li></ul></nav>
+</footer>
+</div>
+<script src="../assets/base.js"></script>
+<script>
+
+const D = [{"t": "AIG", "n": "American International Group", "s": "Finanzas", "p": 75.2, "a": 2075.0, "fa": "2000-12-08", "da": -96.4, "m": 72.19, "dm": 4.2, "r": -9.4, "sg": null, "x": "NYSE", "mc": 39280}, {"t": "PSKY", "n": "Paramount Skydance Corporation", "s": "Comunicaciones", "p": 9.78, "a": 101.97, "fa": "2021-03-15", "da": -90.4, "m": 13.21, "dm": -25.9, "r": -48.9, "sg": null, "x": null, "mc": null}, {"t": "MOS", "n": "Mosaic Company (The)", "s": "Materiales", "p": 21.11, "a": 163.25, "fa": "2008-06-18", "da": -87.1, "m": 31.39, "dm": -32.7, "r": -40.3, "sg": null, "x": "NYSE", "mc": 6768}, {"t": "CHTR", "n": "Charter Communications", "s": "Comunicaciones", "p": 109.05, "a": 825.62, "fa": "2021-09-02", "da": -86.8, "m": 306.19, "dm": -64.4, "r": -61.4, "sg": null, "x": "NASDAQ", "mc": 12348}, {"t": "CTVA", "n": "Corteva", "s": "Materiales", "p": 13.91, "a": 90.97, "fa": "2026-07-29", "da": -84.7, "m": 62.4, "dm": -77.7, "r": -78.4, "sg": "c", "x": "NYSE", "mc": 8267}, {"t": "PCG", "n": "PG&E Corporation", "s": "Servicios públicos", "p": 12.41, "a": 71.57, "fa": "2017-09-11", "da": -82.7, "m": 16.88, "dm": -26.5, "r": -22.6, "sg": null, "x": "NYSE", "mc": 33099}, {"t": "PYPL", "n": "PayPal", "s": "Finanzas", "p": 54.65, "a": 310.16, "fa": "2021-07-26", "da": -82.4, "m": 64.86, "dm": -15.7, "r": -23.3, "sg": null, "x": "NASDAQ", "mc": 46546}, {"t": "LULU", "n": "Lululemon Athletica", "s": "Consumo discrecional", "p": 93.69, "a": 516.39, "fa": "2023-12-29", "da": -81.9, "m": 287.32, "dm": -67.4, "r": -46.2, "sg": null, "x": "NASDAQ", "mc": 9835}, {"t": "FISV", "n": "Fiserv", "s": "Finanzas", "p": 45.55, "a": 238.59, "fa": "2025-03-03", "da": -80.9, "m": 127.76, "dm": -64.3, "r": -63.6, "sg": null, "x": "NASDAQ", "mc": 24536}, {"t": "NKE", "n": "Nike, Inc.", "s": "Consumo discrecional", "p": 34.24, "a": 179.1, "fa": "2021-11-05", "da": -80.9, "m": 81.16, "dm": -57.8, "r": -51.9, "sg": null, "x": "NYSE", "mc": 50441}, {"t": "ALGN", "n": "Align Technology", "s": "Salud", "p": 141.45, "a": 737.45, "fa": "2021-09-23", "da": -80.8, "m": 226.5, "dm": -37.6, "r": 7.6, "sg": null, "x": "NASDAQ", "mc": 9992}, {"t": "AES", "n": "AES Corporation", "s": "Servicios públicos", "p": 14.91, "a": 72.81, "fa": "2000-10-03", "da": -79.5, "m": 16.48, "dm": -9.5, "r": 4.5, "sg": null, "x": "NYSE", "mc": 10630}, {"t": "ARE", "n": "Alexandria Real Estate Equities", "s": "Inmobiliario", "p": 46.04, "a": 224.95, "fa": "2021-12-31", "da": -79.5, "m": 95.2, "dm": -51.6, "r": -42.4, "sg": null, "x": "NYSE", "mc": 7994}, {"t": "FIS", "n": "Fidelity National Information Services", "s": "Finanzas", "p": 33.46, "a": 158.21, "fa": "2020-02-14", "da": -78.9, "m": 64.34, "dm": -48.0, "r": -50.2, "sg": null, "x": "NYSE", "mc": 17317}, {"t": "WY", "n": "Weyerhaeuser", "s": "Inmobiliario", "p": 18.4, "a": 87.09, "fa": "2007-02-27", "da": -78.9, "m": 28.61, "dm": -35.7, "r": -26.3, "sg": null, "x": "NYSE", "mc": 13326}, {"t": "C", "n": "Citigroup", "s": "Finanzas", "p": 128.2, "a": 591.25, "fa": "2000-08-28", "da": -78.3, "m": 77.13, "dm": 66.2, "r": 30.7, "sg": null, "x": "NYSE", "mc": 215634}, {"t": "KHC", "n": "Kraft Heinz", "s": "Consumo básico", "p": 22.02, "a": 97.77, "fa": "2017-02-17", "da": -77.5, "m": 31.21, "dm": -29.5, "r": -12.9, "sg": null, "x": "NYSE", "mc": 25898}, {"t": "VTRS", "n": "Viatris", "s": "Salud", "p": 17.53, "a": 76.69, "fa": "2015-04-24", "da": -77.1, "m": 11.6, "dm": 51.1, "r": 73.1, "sg": null, "x": "NASDAQ", "mc": 20238}, {"t": "NCLH", "n": "Norwegian Cruise Line Holdings", "s": "Consumo discrecional", "p": 15.53, "a": 64.27, "fa": "2015-11-02", "da": -75.8, "m": 19.16, "dm": -18.9, "r": -35.6, "sg": null, "x": "NYSE", "mc": 6828}, {"t": "LVS", "n": "Las Vegas Sands", "s": "Consumo discrecional", "p": 36.46, "a": 148.76, "fa": "2007-10-29", "da": -75.5, "m": 50.31, "dm": -27.5, "r": -30.2, "sg": null, "x": "NYSE", "mc": 23712}, {"t": "APTV", "n": "Aptiv", "s": "Consumo discrecional", "p": 44.55, "a": 180.81, "fa": "2021-11-04", "da": -75.4, "m": 76.98, "dm": -42.1, "r": -49.1, "sg": null, "x": "NYSE", "mc": 9113}, {"t": "KDP", "n": "Keurig Dr Pepper", "s": "Consumo básico", "p": 31.14, "a": 126.65, "fa": "2018-01-29", "da": -75.4, "m": 31.98, "dm": -2.6, "r": 23.1, "sg": null, "x": "NASDAQ", "mc": 42036}, {"t": "EL", "n": "Estée Lauder Companies (The)", "s": "Consumo básico", "p": 93.68, "a": 374.2, "fa": "2022-01-03", "da": -75.0, "m": 121.87, "dm": -23.1, "r": 5.7, "sg": null, "x": "NYSE", "mc": 33805}, {"t": "BAX", "n": "Baxter International", "s": "Salud", "p": 24.14, "a": 95.19, "fa": "2020-04-20", "da": -74.6, "m": 32.32, "dm": -25.3, "r": 4.3, "sg": null, "x": "NYSE", "mc": 12522}, {"t": "XYZ", "n": "Block, Inc.", "s": "Finanzas", "p": 76.41, "a": 289.23, "fa": "2021-08-05", "da": -73.6, "m": 68.72, "dm": 11.2, "r": -1.8, "sg": null, "x": "NYSE", "mc": 45799}, {"t": "CSGP", "n": "CoStar Group", "s": "Inmobiliario", "p": 27.99, "a": 101.05, "fa": "2021-10-26", "da": -72.3, "m": 70.82, "dm": -60.5, "r": -65.5, "sg": null, "x": "NASDAQ", "mc": 11208}, {"t": "ZTS", "n": "Zoetis", "s": "Salud", "p": 70.86, "a": 249.27, "fa": "2021-12-30", "da": -71.6, "m": 153.07, "dm": -53.7, "r": -51.3, "sg": null, "x": "NYSE", "mc": 29508}, {"t": "FICO", "n": "Fair Isaac", "s": "Tecnología", "p": 684.28, "a": 2402.52, "fa": "2024-11-13", "da": -71.5, "m": 1334.93, "dm": -48.7, "r": -63.0, "sg": "c", "x": "NYSE", "mc": 14894}, {"t": "APA", "n": "APA Corporation", "s": "Energía", "p": 44.24, "a": 149.23, "fa": "2008-05-21", "da": -70.4, "m": 30.99, "dm": 42.8, "r": 76.1, "sg": null, "x": "NASDAQ", "mc": 15363}, {"t": "MGM", "n": "MGM Resorts", "s": "Consumo discrecional", "p": 30.67, "a": 100.5, "fa": "2007-10-10", "da": -69.5, "m": 38.94, "dm": -21.2, "r": -9.6, "sg": null, "x": "NYSE", "mc": 7794}, {"t": "WYNN", "n": "Wynn Resorts", "s": "Consumo discrecional", "p": 77.03, "a": 249.31, "fa": "2014-03-05", "da": -69.1, "m": 98.73, "dm": -22.0, "r": -38.2, "sg": null, "x": "NASDAQ", "mc": 7946}, {"t": "AKAM", "n": "Akamai Technologies", "s": "Tecnología", "p": 107.74, "a": 345.5, "fa": "2000-01-03", "da": -68.8, "m": 96.42, "dm": 11.7, "r": 37.4, "sg": null, "x": "NASDAQ", "mc": 15520}, {"t": "BF-B", "n": "Brown–Forman", "s": "Consumo básico", "p": 26.34, "a": 83.4, "fa": "2020-09-02", "da": -68.4, "m": 43.38, "dm": -39.3, "r": -4.4, "sg": null, "x": "NYSE", "mc": null}, {"t": "ALB", "n": "Albemarle Corporation", "s": "Materiales", "p": 106.48, "a": 334.55, "fa": "2022-11-11", "da": -68.2, "m": 135.32, "dm": -21.3, "r": 15.7, "sg": null, "x": "NYSE", "mc": 12316}, {"t": "IT", "n": "Gartner", "s": "Tecnología", "p": 186.2, "a": 584.01, "fa": "2025-02-04", "da": -68.1, "m": 348.77, "dm": -46.6, "r": -27.4, "sg": null, "x": "NYSE", "mc": 11857}, {"t": "CCI", "n": "Crown Castle", "s": "Inmobiliario", "p": 68.22, "a": 209.87, "fa": "2021-12-31", "da": -67.5, "m": 101.74, "dm": -32.9, "r": -27.4, "sg": null, "x": "NYSE", "mc": 28752}, {"t": "F", "n": "Ford Motor Company", "s": "Consumo discrecional", "p": 12.18, "a": 37.3, "fa": "1999-04-19", "da": -67.3, "m": 12.07, "dm": 0.9, "r": -4.1, "sg": null, "x": "NYSE", "mc": 47588}, {"t": "ADBE", "n": "Adobe Inc.", "s": "Tecnología", "p": 237.77, "a": 699.54, "fa": "2021-11-22", "da": -66.0, "m": 412.85, "dm": -42.4, "r": -32.1, "sg": null, "x": "NASDAQ", "mc": 92935}, {"t": "CLX", "n": "Clorox", "s": "Consumo básico", "p": 83.72, "a": 239.87, "fa": "2020-08-05", "da": -65.1, "m": 134.6, "dm": -37.8, "r": -29.4, "sg": null, "x": "NYSE", "mc": 9918}, {"t": "GIS", "n": "General Mills", "s": "Consumo básico", "p": 32.06, "a": 90.89, "fa": "2023-05-15", "da": -64.7, "m": 60.07, "dm": -46.6, "r": -36.1, "sg": null, "x": "NYSE", "mc": 16939}, {"t": "SMCI", "n": "Supermicro", "s": "Tecnología", "p": 43.51, "a": 122.9, "fa": "2024-03-08", "da": -64.6, "m": 39.26, "dm": 10.8, "r": -20.3, "sg": null, "x": "NASDAQ", "mc": 28374}, {"t": "INTU", "n": "Intuit", "s": "Tecnología", "p": 288.73, "a": 813.7, "fa": "2025-07-30", "da": -64.5, "m": 545.6, "dm": -47.1, "r": -56.9, "sg": null, "x": "NASDAQ", "mc": 76077}, {"t": "HRL", "n": "Hormel Foods", "s": "Consumo básico", "p": 19.83, "a": 55.11, "fa": "2022-04-21", "da": -64.0, "m": 31.07, "dm": -36.2, "r": -18.4, "sg": null, "x": "NYSE", "mc": 11051}, {"t": "DECK", "n": "Deckers Brands", "s": "Consumo discrecional", "p": 81.47, "a": 223.98, "fa": "2025-01-30", "da": -63.6, "m": 115.62, "dm": -29.5, "r": -20.2, "sg": "c", "x": "NYSE", "mc": 10942}, {"t": "CCL", "n": "Carnival Corporation", "s": "Consumo discrecional", "p": 26.5, "a": 72.7, "fa": "2018-01-30", "da": -63.5, "m": 20.59, "dm": 28.7, "r": -8.9, "sg": null, "x": "NYSE", "mc": 34368}, {"t": "GPN", "n": "Global Payments", "s": "Finanzas", "p": 81.5, "a": 220.81, "fa": "2021-04-26", "da": -63.1, "m": 98.26, "dm": -17.1, "r": -6.5, "sg": null, "x": "NYSE", "mc": 21746}, {"t": "CMCSA", "n": "Comcast", "s": "Comunicaciones", "p": 21.43, "a": 57.92, "fa": "2021-09-02", "da": -63.0, "m": 34.01, "dm": -37.0, "r": -26.4, "sg": null, "x": "NASDAQ", "mc": 76544}, {"t": "DOC", "n": "Healthpeak Properties", "s": "Inmobiliario", "p": 18.93, "a": 51.06, "fa": "2013-05-22", "da": -62.9, "m": 19.73, "dm": -4.0, "r": -1.6, "sg": null, "x": "NYSE", "mc": 12991}, {"t": "APP", "n": "AppLovin", "s": "Comunicaciones", "p": 278.32, "a": 745.61, "fa": "2025-09-29", "da": -62.7, "m": 242.56, "dm": 14.7, "r": -52.6, "sg": null, "x": "NASDAQ", "mc": 94362}, {"t": "DVN", "n": "Devon Energy", "s": "Energía", "p": 48.0, "a": 127.43, "fa": "2008-07-02", "da": -62.3, "m": 43.65, "dm": 9.9, "r": 37.5, "sg": null, "x": "NYSE", "mc": 52778}, {"t": "PODD", "n": "Insulet Corporation", "s": "Salud", "p": 135.15, "a": 354.88, "fa": "2025-11-20", "da": -61.9, "m": 238.17, "dm": -43.3, "r": -56.6, "sg": null, "x": "NASDAQ", "mc": 9406}, {"t": "MRNA", "n": "Moderna", "s": "Salud", "p": 190.13, "a": 497.49, "fa": "2021-08-10", "da": -61.8, "m": 81.3, "dm": 133.9, "r": 590.4, "sg": null, "x": "NASDAQ", "mc": 81129}, {"t": "BSX", "n": "Boston Scientific", "s": "Salud", "p": 42.27, "a": 109.5, "fa": "2025-09-09", "da": -61.4, "m": 72.3, "dm": -41.5, "r": -56.3, "sg": "c", "x": "NYSE", "mc": 61447}, {"t": "DOW", "n": "Dow Inc.", "s": "Materiales", "p": 28.36, "a": 71.86, "fa": "2022-04-21", "da": -60.5, "m": 42.52, "dm": -33.3, "r": 21.1, "sg": null, "x": "NYSE", "mc": 20594}, {"t": "UPS", "n": "United Parcel Service", "s": "Industria", "p": 92.57, "a": 233.72, "fa": "2022-02-01", "da": -60.4, "m": 131.16, "dm": -29.4, "r": 6.9, "sg": null, "x": "NYSE", "mc": 79242}, {"t": "WBD", "n": "Warner Bros. Discovery", "s": "Comunicaciones", "p": 30.95, "a": 78.14, "fa": "2021-03-19", "da": -60.4, "m": 15.05, "dm": 105.7, "r": 62.2, "sg": null, "x": "NASDAQ", "mc": 77706}, {"t": "SWKS", "n": "Skyworks Solutions", "s": "Tecnología", "p": 81.12, "a": 204.0, "fa": "2021-04-29", "da": -60.2, "m": 87.04, "dm": -6.8, "r": 5.5, "sg": null, "x": "NASDAQ", "mc": 12626}, {"t": "SWK", "n": "Stanley Black & Decker", "s": "Industria", "p": 90.44, "a": 225.0, "fa": "2021-05-10", "da": -59.8, "m": 84.12, "dm": 7.5, "r": 21.6, "sg": null, "x": "NYSE", "mc": 13543}, {"t": "BXP", "n": "BXP, Inc.", "s": "Inmobiliario", "p": 59.62, "a": 147.83, "fa": "2020-02-19", "da": -59.7, "m": 65.86, "dm": -9.5, "r": -20.1, "sg": null, "x": "NYSE", "mc": 9479}, {"t": "ERIE", "n": "Erie Indemnity", "s": "Finanzas", "p": 221.71, "a": 547.0, "fa": "2024-09-25", "da": -59.5, "m": 321.01, "dm": -30.9, "r": -29.9, "sg": null, "x": "NASDAQ", "mc": 10229}, {"t": "CIEN", "n": "Ciena", "s": "Tecnología", "p": 433.72, "a": 1057.0, "fa": "2000-10-20", "da": -59.0, "m": 138.02, "dm": 214.2, "r": 183.0, "sg": null, "x": "NYSE", "mc": 55261}, {"t": "KIM", "n": "Kimco Realty", "s": "Inmobiliario", "p": 22.08, "a": 53.6, "fa": "2007-02-22", "da": -58.8, "m": 21.23, "dm": 4.0, "r": 2.6, "sg": null, "x": "NYSE", "mc": 14777}, {"t": "LEN", "n": "Lennar", "s": "Consumo discrecional", "p": 77.39, "a": 187.61, "fa": "2024-09-19", "da": -58.7, "m": 121.69, "dm": -36.4, "r": -38.8, "sg": null, "x": "NYSE", "mc": 17709}, {"t": "CPRT", "n": "Copart", "s": "Industria", "p": 26.92, "a": 64.38, "fa": "2024-11-27", "da": -58.2, "m": 45.15, "dm": -40.4, "r": -39.4, "sg": "c", "x": "NASDAQ", "mc": 25613}, {"t": "STZ", "n": "Constellation Brands", "s": "Consumo básico", "p": 115.22, "a": 274.87, "fa": "2024-04-11", "da": -58.1, "m": 202.43, "dm": -43.1, "r": -16.9, "sg": null, "x": "NYSE", "mc": 19351}, {"t": "COIN", "n": "Coinbase", "s": "Finanzas", "p": 187.24, "a": 444.65, "fa": "2025-07-18", "da": -57.9, "m": 187.53, "dm": -0.2, "r": -51.5, "sg": "c", "x": "NASDAQ", "mc": 49659}, {"t": "SLB", "n": "Schlumberger", "s": "Energía", "p": 50.09, "a": 118.76, "fa": "2014-07-01", "da": -57.8, "m": 46.62, "dm": 7.4, "r": 44.8, "sg": null, "x": "NYSE", "mc": 74623}, {"t": "ORCL", "n": "Oracle Corporation", "s": "Tecnología", "p": 146.17, "a": 345.72, "fa": "2025-09-10", "da": -57.7, "m": 150.88, "dm": -3.1, "r": -49.9, "sg": "c", "x": "NYSE", "mc": 431928}, {"t": "MKC", "n": "McCormick & Company", "s": "Consumo básico", "p": 45.75, "a": 107.35, "fa": "2022-03-07", "da": -57.4, "m": 71.0, "dm": -35.6, "r": -33.0, "sg": null, "x": "NYSE", "mc": 12253}, {"t": "SBAC", "n": "SBA Communications", "s": "Inmobiliario", "p": 166.49, "a": 391.15, "fa": "2021-12-31", "da": -57.4, "m": 217.58, "dm": -23.5, "r": -11.7, "sg": null, "x": "NASDAQ", "mc": 17167}, {"t": "BA", "n": "Boeing", "s": "Industria", "p": 190.73, "a": 446.01, "fa": "2019-03-01", "da": -57.2, "m": 201.04, "dm": -5.1, "r": -13.2, "sg": null, "x": "NYSE", "mc": 152320}, {"t": "GNRC", "n": "Generac", "s": "Industria", "p": 224.29, "a": 524.31, "fa": "2021-11-02", "da": -57.2, "m": 152.58, "dm": 47.0, "r": 36.7, "sg": null, "x": "NYSE", "mc": 12698}, {"t": "HAL", "n": "Halliburton", "s": "Energía", "p": 32.62, "a": 74.33, "fa": "2014-07-23", "da": -56.1, "m": 32.27, "dm": 1.1, "r": 33.9, "sg": null, "x": "NYSE", "mc": 27310}, {"t": "PFE", "n": "Pfizer", "s": "Salud", "p": 27.32, "a": 61.71, "fa": "2021-12-20", "da": -55.7, "m": 29.48, "dm": -7.3, "r": 3.3, "sg": null, "x": "NYSE", "mc": 156228}, {"t": "CMG", "n": "Chipotle Mexican Grill", "s": "Consumo discrecional", "p": 31.03, "a": 69.26, "fa": "2024-06-18", "da": -55.2, "m": 44.47, "dm": -30.2, "r": -25.5, "sg": null, "x": "NYSE", "mc": 39038}, {"t": "KEY", "n": "KeyCorp", "s": "Finanzas", "p": 20.08, "a": 44.88, "fa": "1998-04-14", "da": -55.2, "m": 16.58, "dm": 21.2, "r": 8.3, "sg": null, "x": "NYSE", "mc": 21535}, {"t": "GDDY", "n": "GoDaddy", "s": "Tecnología", "p": 98.14, "a": 216.0, "fa": "2025-01-30", "da": -54.6, "m": 120.49, "dm": -18.6, "r": -28.5, "sg": "c", "x": "NYSE", "mc": 12632}, {"t": "ROL", "n": "Rollins, Inc.", "s": "Industria", "p": 30.23, "a": 66.14, "fa": "2026-02-11", "da": -54.3, "m": 47.34, "dm": -36.2, "r": -48.2, "sg": "c", "x": "NYSE", "mc": 14285}, {"t": "BIIB", "n": "Biogen", "s": "Salud", "p": 221.29, "a": 480.18, "fa": "2015-03-20", "da": -53.9, "m": 205.85, "dm": 7.5, "r": 43.6, "sg": null, "x": "NASDAQ", "mc": 33036}, {"t": "TROW", "n": "T. Rowe Price", "s": "Finanzas", "p": 103.65, "a": 224.56, "fa": "2021-08-30", "da": -53.8, "m": 107.09, "dm": -3.2, "r": -1.9, "sg": null, "x": "NASDAQ", "mc": 22170}, {"t": "EFX", "n": "Equifax", "s": "Industria", "p": 143.55, "a": 309.63, "fa": "2024-09-16", "da": -53.6, "m": 224.8, "dm": -36.1, "r": -39.5, "sg": null, "x": "NYSE", "mc": 16753}, {"t": "ACN", "n": "Accenture", "s": "Tecnología", "p": 194.22, "a": 417.37, "fa": "2021-12-29", "da": -53.5, "m": 285.86, "dm": -32.1, "r": -21.7, "sg": null, "x": "NYSE", "mc": 130198}, {"t": "PNR", "n": "Pentair", "s": "Industria", "p": 53.03, "a": 113.95, "fa": "2025-10-03", "da": -53.5, "m": 81.3, "dm": -34.8, "r": -52.7, "sg": "c", "x": "NYSE", "mc": 8426}, {"t": "DG", "n": "Dollar General", "s": "Consumo básico", "p": 122.25, "a": 262.21, "fa": "2022-04-21", "da": -53.4, "m": 130.67, "dm": -6.4, "r": 24.6, "sg": null, "x": "NYSE", "mc": 26324}, {"t": "AXON", "n": "Axon Enterprise", "s": "Industria", "p": 420.56, "a": 885.92, "fa": "2025-08-05", "da": -52.5, "m": 424.58, "dm": -0.9, "r": -41.7, "sg": "c", "x": "NASDAQ", "mc": 33454}, {"t": "COO", "n": "Cooper Companies (The)", "s": "Salud", "p": 56.05, "a": 115.9, "fa": "2021-09-03", "da": -51.6, "m": 84.45, "dm": -33.6, "r": -20.1, "sg": null, "x": "NASDAQ", "mc": 10795}, {"t": "BRO", "n": "Brown & Brown", "s": "Finanzas", "p": 60.9, "a": 125.68, "fa": "2025-04-01", "da": -51.5, "m": 82.46, "dm": -26.2, "r": -35.5, "sg": "c", "x": "NYSE", "mc": 20388}, {"t": "LYB", "n": "LyondellBasell", "s": "Materiales", "p": 59.17, "a": 121.95, "fa": "2018-01-29", "da": -51.5, "m": 78.18, "dm": -24.3, "r": 21.6, "sg": null, "x": "NYSE", "mc": 19130}, {"t": "HBAN", "n": "Huntington Bancshares", "s": "Finanzas", "p": 15.28, "a": 30.89, "fa": "1999-06-04", "da": -50.5, "m": 14.63, "dm": 4.5, "r": -8.5, "sg": null, "x": "NASDAQ", "mc": 30892}, {"t": "TYL", "n": "Tyler Technologies", "s": "Tecnología", "p": 331.98, "a": 661.31, "fa": "2025-02-13", "da": -49.8, "m": 449.1, "dm": -26.1, "r": -33.1, "sg": null, "x": "NYSE", "mc": 13445}, {"t": "TSCO", "n": "Tractor Supply", "s": "Consumo discrecional", "p": 32.43, "a": 63.99, "fa": "2025-07-24", "da": -49.3, "m": 48.09, "dm": -32.6, "r": -40.7, "sg": null, "x": "NASDAQ", "mc": 16371}, {"t": "DXCM", "n": "Dexcom", "s": "Salud", "p": 83.79, "a": 164.86, "fa": "2021-11-18", "da": -49.2, "m": 92.03, "dm": -9.0, "r": 26.3, "sg": null, "x": "NASDAQ", "mc": 32793}, {"t": "MAA", "n": "Mid-America Apartment Communities", "s": "Inmobiliario", "p": 117.71, "a": 231.63, "fa": "2021-12-31", "da": -49.2, "m": 142.57, "dm": -17.4, "r": -13.5, "sg": null, "x": "NYSE", "mc": 13513}, {"t": "NFLX", "n": "Netflix", "s": "Comunicaciones", "p": 68.07, "a": 134.12, "fa": "2025-06-30", "da": -49.2, "m": 73.56, "dm": -7.5, "r": -41.5, "sg": "c", "x": "NASDAQ", "mc": 281066}, {"t": "ILMN", "n": "Illumina, Inc.", "s": "Salud", "p": 275.31, "a": 540.63, "fa": "2021-02-12", "da": -49.1, "m": 141.34, "dm": 94.8, "r": 172.5, "sg": null, "x": "NASDAQ", "mc": 44347}, {"t": "IP", "n": "International Paper", "s": "Materiales", "p": 32.24, "a": 63.39, "fa": "2018-01-29", "da": -49.1, "m": 41.36, "dm": -22.0, "r": -29.7, "sg": null, "x": "NYSE", "mc": 16973}, {"t": "VRSK", "n": "Verisk Analytics", "s": "Industria", "p": 164.75, "a": 322.92, "fa": "2025-06-05", "da": -49.0, "m": 235.64, "dm": -30.1, "r": -32.8, "sg": "c", "x": "NASDAQ", "mc": 21252}, {"t": "DIS", "n": "Walt Disney Company (The)", "s": "Comunicaciones", "p": 103.82, "a": 203.02, "fa": "2021-03-08", "da": -48.9, "m": 101.69, "dm": 2.1, "r": -7.9, "sg": null, "x": "NYSE", "mc": 178902}, {"t": "CDW", "n": "CDW Corporation", "s": "Tecnología", "p": 135.42, "a": 263.37, "fa": "2024-04-04", "da": -48.6, "m": 181.42, "dm": -25.4, "r": -13.9, "sg": null, "x": "NASDAQ", "mc": 16742}, {"t": "ZBH", "n": "Zimmer Biomet", "s": "Salud", "p": 90.21, "a": 175.11, "fa": "2021-04-29", "da": -48.5, "m": 108.86, "dm": -17.1, "r": -8.7, "sg": null, "x": "NYSE", "mc": 17466}, {"t": "WDC", "n": "Western Digital", "s": "Tecnología", "p": 412.46, "a": 799.87, "fa": "2026-06-18", "da": -48.4, "m": 126.35, "dm": 226.4, "r": 229.2, "sg": null, "x": "NASDAQ", "mc": 159229}, {"t": "TSN", "n": "Tyson Foods", "s": "Consumo básico", "p": 52.03, "a": 100.72, "fa": "2022-02-08", "da": -48.3, "m": 57.33, "dm": -9.2, "r": -3.9, "sg": null, "x": "NYSE", "mc": 18192}, {"t": "OXY", "n": "Occidental Petroleum", "s": "Energía", "p": 58.82, "a": 112.95, "fa": "2011-05-02", "da": -47.9, "m": 54.78, "dm": 7.4, "r": 29.6, "sg": null, "x": "NYSE", "mc": 58289}, {"t": "FE", "n": "FirstEnergy", "s": "Servicios públicos", "p": 44.04, "a": 84.0, "fa": "2008-07-11", "da": -47.6, "m": 41.76, "dm": 5.4, "r": -5.0, "sg": null, "x": "NYSE", "mc": 25252}, {"t": "RDDT", "n": "Reddit", "s": "Comunicaciones", "p": 148.74, "a": 282.95, "fa": "2025-09-18", "da": -47.4, "m": null, "dm": null, "r": -27.0, "sg": null, "x": "NYSE", "mc": 28940}, {"t": "KKR", "n": "KKR & Co.", "s": "Finanzas", "p": 90.29, "a": 170.4, "fa": "2025-01-31", "da": -47.0, "m": 100.58, "dm": -10.2, "r": -28.8, "sg": "c", "x": "NYSE", "mc": 80751}, {"t": "TECH", "n": "Bio-Techne", "s": "Salud", "p": 72.44, "a": 135.96, "fa": "2021-09-23", "da": -46.7, "m": 67.97, "dm": 6.6, "r": 17.0, "sg": null, "x": "NASDAQ", "mc": 11382}, {"t": "LII", "n": "Lennox International", "s": "Industria", "p": 367.38, "a": 689.44, "fa": "2025-07-23", "da": -46.7, "m": 473.2, "dm": -22.4, "r": -33.6, "sg": "c", "x": "NYSE", "mc": 12482}, {"t": "DPZ", "n": "Domino's", "s": "Consumo discrecional", "p": 302.94, "a": 567.57, "fa": "2021-12-31", "da": -46.6, "m": 402.44, "dm": -24.7, "r": -28.4, "sg": null, "x": "NASDAQ", "mc": 9834}, {"t": "IFF", "n": "International Flavors & Fragrances", "s": "Materiales", "p": 84.11, "a": 157.4, "fa": "2018-01-17", "da": -46.6, "m": 81.61, "dm": 3.1, "r": 36.8, "sg": null, "x": "NYSE", "mc": 21244}, {"t": "T", "n": "AT&T", "s": "Comunicaciones", "p": 24.23, "a": 45.27, "fa": "1999-01-20", "da": -46.5, "m": 21.7, "dm": 11.6, "r": -6.4, "sg": null, "x": "NYSE", "mc": 166102}, {"t": "AMT", "n": "American Tower", "s": "Inmobiliario", "p": 164.39, "a": 303.72, "fa": "2021-09-08", "da": -45.9, "m": 195.41, "dm": -15.9, "r": -11.4, "sg": null, "x": "NYSE", "mc": 75607}, {"t": "CPT", "n": "Camden Property Trust", "s": "Inmobiliario", "p": 97.88, "a": 180.37, "fa": "2021-12-31", "da": -45.7, "m": 108.44, "dm": -9.7, "r": -4.9, "sg": null, "x": "NYSE", "mc": 9790}, {"t": "BEN", "n": "Franklin Resources", "s": "Finanzas", "p": 32.51, "a": 59.43, "fa": "2014-12-08", "da": -45.3, "m": 25.36, "dm": 28.2, "r": 40.3, "sg": null, "x": "NYSE", "mc": 16706}, {"t": "FDS", "n": "FactSet", "s": "Finanzas", "p": 274.14, "a": 499.87, "fa": "2024-11-14", "da": -45.2, "m": 385.01, "dm": -28.8, "r": -0.3, "sg": null, "x": "NYSE", "mc": 9832}, {"t": "FDXF", "n": "FedEx Freight", "s": "Industria", "p": 109.82, "a": 200.0, "fa": "2026-05-28", "da": -45.1, "m": null, "dm": null, "r": null, "sg": null, "x": "NYSE", "mc": 16683}, {"t": "NRG", "n": "NRG Energy", "s": "Servicios públicos", "p": 105.37, "a": 189.96, "fa": "2026-02-25", "da": -44.5, "m": 94.86, "dm": 11.1, "r": -35.7, "sg": null, "x": "NYSE", "mc": 20348}, {"t": "UDR", "n": "UDR, Inc.", "s": "Inmobiliario", "p": 33.99, "a": 61.06, "fa": "2022-01-04", "da": -44.3, "m": 39.26, "dm": -13.4, "r": -5.6, "sg": null, "x": "NYSE", "mc": 10872}, {"t": "BALL", "n": "Ball Corporation", "s": "Materiales", "p": 57.47, "a": 102.76, "fa": "2020-11-09", "da": -44.1, "m": 57.23, "dm": 0.4, "r": 15.8, "sg": null, "x": "NYSE", "mc": 15117}, {"t": "BX", "n": "Blackstone Inc.", "s": "Finanzas", "p": 112.35, "a": 200.96, "fa": "2024-11-25", "da": -44.1, "m": 129.36, "dm": -13.1, "r": -32.7, "sg": "c", "x": "NYSE", "mc": 83807}, {"t": "FSLR", "n": "First Solar", "s": "Tecnología", "p": 180.78, "a": 320.95, "fa": "2026-06-03", "da": -43.7, "m": 195.37, "dm": -7.5, "r": -21.3, "sg": "c", "x": "NASDAQ", "mc": 18932}, {"t": "TGT", "n": "Target Corporation", "s": "Consumo básico", "p": 153.31, "a": 268.98, "fa": "2021-11-15", "da": -43.0, "m": 131.53, "dm": 16.6, "r": 72.3, "sg": null, "x": "NYSE", "mc": 69503}, {"t": "LDOS", "n": "Leidos", "s": "Industria", "p": 117.59, "a": 205.77, "fa": "2025-11-04", "da": -42.9, "m": 135.7, "dm": -13.3, "r": -40.6, "sg": "c", "x": "NYSE", "mc": 14990}, {"t": "BKR", "n": "Baker Hughes", "s": "Energía", "p": 57.46, "a": 100.29, "fa": "2007-10-16", "da": -42.7, "m": 41.44, "dm": 38.7, "r": 17.1, "sg": null, "x": "NASDAQ", "mc": 56960}, {"t": "NOW", "n": "ServiceNow", "s": "Tecnología", "p": 137.57, "a": 239.62, "fa": "2025-01-28", "da": -42.6, "m": 143.92, "dm": -4.4, "r": -24.6, "sg": "c", "x": "NYSE", "mc": 140707}, {"t": "HII", "n": "Huntington Ingalls Industries", "s": "Industria", "p": 264.86, "a": 460.0, "fa": "2026-03-02", "da": -42.4, "m": 260.87, "dm": 1.5, "r": -8.2, "sg": "c", "x": "NYSE", "mc": 10501}, {"t": "HSY", "n": "Hershey Company (The)", "s": "Consumo básico", "p": 159.83, "a": 276.88, "fa": "2023-05-01", "da": -42.3, "m": 196.02, "dm": -18.5, "r": -18.1, "sg": null, "x": "NYSE", "mc": 32351}, {"t": "INVH", "n": "Invitation Homes", "s": "Inmobiliario", "p": 26.49, "a": 45.8, "fa": "2021-12-31", "da": -42.2, "m": 31.8, "dm": -16.7, "r": -6.1, "sg": null, "x": "NYSE", "mc": 15392}, {"t": "PPG", "n": "PPG Industries", "s": "Materiales", "p": 106.5, "a": 182.97, "fa": "2021-06-07", "da": -41.8, "m": 122.78, "dm": -13.3, "r": 2.9, "sg": null, "x": "NYSE", "mc": 23402}, {"t": "BR", "n": "Broadridge Financial Solutions", "s": "Industria", "p": 159.73, "a": 271.91, "fa": "2025-08-07", "da": -41.3, "m": 195.14, "dm": -18.1, "r": -32.1, "sg": "c", "x": "NYSE", "mc": 17960}, {"t": "ARES", "n": "Ares Management", "s": "Finanzas", "p": 117.9, "a": 200.49, "fa": "2025-02-04", "da": -41.2, "m": 132.87, "dm": -11.3, "r": -21.5, "sg": "c", "x": "NYSE", "mc": 38685}, {"t": "EXR", "n": "Extra Space Storage", "s": "Inmobiliario", "p": 134.74, "a": 228.84, "fa": "2021-12-31", "da": -41.1, "m": 146.6, "dm": -8.1, "r": -4.8, "sg": null, "x": "NYSE", "mc": 28080}, {"t": "HST", "n": "Host Hotels & Resorts", "s": "Inmobiliario", "p": 22.57, "a": 38.16, "fa": "1987-03-05", "da": -40.9, "m": 18.09, "dm": 24.7, "r": 35.8, "sg": null, "x": "NASDAQ", "mc": 15374}, {"t": "TMUS", "n": "T-Mobile US", "s": "Comunicaciones", "p": 163.83, "a": 276.49, "fa": "2025-03-03", "da": -40.7, "m": 188.42, "dm": -13.1, "r": -27.2, "sg": "c", "x": "NASDAQ", "mc": 176605}, {"t": "UNH", "n": "UnitedHealth Group", "s": "Salud", "p": 374.32, "a": 630.73, "fa": "2024-11-11", "da": -40.7, "m": 449.3, "dm": -16.7, "r": 4.3, "sg": null, "x": "NYSE", "mc": 339811}, {"t": "IVZ", "n": "Invesco", "s": "Finanzas", "p": 30.34, "a": 51.1, "fa": "2000-11-03", "da": -40.6, "m": 19.46, "dm": 55.9, "r": 25.7, "sg": null, "x": "NYSE", "mc": 13466}, {"t": "WDAY", "n": "Workday, Inc.", "s": "Tecnología", "p": 186.58, "a": 311.28, "fa": "2024-02-26", "da": -40.1, "m": 218.33, "dm": -14.5, "r": -21.7, "sg": null, "x": "NASDAQ", "mc": 45539}, {"t": "KMB", "n": "Kimberly-Clark", "s": "Consumo básico", "p": 96.04, "a": 160.16, "fa": "2020-08-12", "da": -40.0, "m": 124.77, "dm": -23.0, "r": -20.3, "sg": null, "x": "NASDAQ", "mc": 31731}, {"t": "NVR", "n": "NVR, Inc.", "s": "Consumo discrecional", "p": 6011.19, "a": 9964.77, "fa": "2024-10-18", "da": -39.7, "m": 7065.22, "dm": -14.9, "r": -25.5, "sg": "c", "x": "NYSE", "mc": 15910}, {"t": "TPL", "n": "Texas Pacific Land Corporation", "s": "Energía", "p": 355.78, "a": 589.71, "fa": "2024-11-25", "da": -39.7, "m": 300.26, "dm": 18.5, "r": 9.4, "sg": null, "x": "NYSE", "mc": 23774}, {"t": "BBY", "n": "Best Buy", "s": "Consumo discrecional", "p": 85.8, "a": 141.97, "fa": "2021-11-22", "da": -39.6, "m": 77.5, "dm": 10.7, "r": 13.5, "sg": null, "x": "NYSE", "mc": 18328}, {"t": "REGN", "n": "Regeneron Pharmaceuticals", "s": "Salud", "p": 731.72, "a": 1211.2, "fa": "2024-08-27", "da": -39.6, "m": 778.89, "dm": -6.1, "r": 25.0, "sg": null, "x": "NASDAQ", "mc": 74794}, {"t": "EIX", "n": "Edison International", "s": "Servicios públicos", "p": 53.74, "a": 88.77, "fa": "2024-09-04", "da": -39.5, "m": 67.27, "dm": -20.1, "r": -1.9, "sg": null, "x": "NYSE", "mc": 20872}, {"t": "ROP", "n": "Roper Technologies", "s": "Tecnología", "p": 361.43, "a": 595.17, "fa": "2025-03-05", "da": -39.3, "m": 484.51, "dm": -25.4, "r": -28.7, "sg": null, "x": "NASDAQ", "mc": 35939}, {"t": "APO", "n": "Apollo Global Management", "s": "Finanzas", "p": 115.7, "a": 189.49, "fa": "2024-12-09", "da": -38.9, "m": 115.14, "dm": 0.5, "r": -8.7, "sg": "c", "x": "NYSE", "mc": 68119}, {"t": "CRM", "n": "Salesforce", "s": "Tecnología", "p": 225.6, "a": 369.0, "fa": "2024-12-04", "da": -38.9, "m": 239.64, "dm": -5.9, "r": -8.2, "sg": "c", "x": "NYSE", "mc": 189117}, {"t": "CTSH", "n": "Cognizant", "s": "Tecnología", "p": 57.45, "a": 93.47, "fa": "2022-03-22", "da": -38.5, "m": 69.33, "dm": -17.1, "r": -15.3, "sg": null, "x": "NASDAQ", "mc": 26202}, {"t": "AMCR", "n": "Amcor", "s": "Materiales", "p": 41.97, "a": 68.05, "fa": "2022-06-06", "da": -38.3, "m": 47.75, "dm": -12.1, "r": 4.0, "sg": null, "x": "NYSE", "mc": 19326}, {"t": "OTIS", "n": "Otis Worldwide", "s": "Industria", "p": 66.16, "a": 106.83, "fa": "2025-03-10", "da": -38.1, "m": 88.21, "dm": -25.0, "r": -27.2, "sg": null, "x": "NYSE", "mc": 25078}, {"t": "FRT", "n": "Federal Realty Investment Trust", "s": "Inmobiliario", "p": 106.22, "a": 171.08, "fa": "2016-07-29", "da": -37.9, "m": 103.43, "dm": 2.7, "r": 7.6, "sg": null, "x": "NYSE", "mc": 9208}, {"t": "AOS", "n": "A. O. Smith", "s": "Industria", "p": 57.58, "a": 92.45, "fa": "2024-07-18", "da": -37.7, "m": 70.93, "dm": -18.8, "r": -20.5, "sg": null, "x": "NYSE", "mc": 7743}, {"t": "LOW", "n": "Lowe's", "s": "Consumo discrecional", "p": 182.99, "a": 293.06, "fa": "2026-02-12", "da": -37.6, "m": 229.79, "dm": -20.4, "r": -24.3, "sg": "c", "x": "NYSE", "mc": 100709}, {"t": "PAYX", "n": "Paychex", "s": "Industria", "p": 100.62, "a": 161.24, "fa": "2025-06-06", "da": -37.6, "m": 122.21, "dm": -17.7, "r": -19.1, "sg": null, "x": "NASDAQ", "mc": 35520}, {"t": "ZBRA", "n": "Zebra Technologies", "s": "Tecnología", "p": 383.8, "a": 615.0, "fa": "2021-12-10", "da": -37.6, "m": 292.16, "dm": 31.4, "r": 27.1, "sg": null, "x": "NASDAQ", "mc": 17773}, {"t": "GLW", "n": "Corning Inc.", "s": "Tecnología", "p": 170.03, "a": 271.78, "fa": "2026-06-30", "da": -37.4, "m": 66.54, "dm": 155.5, "r": 99.2, "sg": null, "x": "NYSE", "mc": 137279}, {"t": "NOC", "n": "Northrop Grumman", "s": "Industria", "p": 484.6, "a": 774.0, "fa": "2026-03-03", "da": -37.4, "m": 510.73, "dm": -5.1, "r": -21.7, "sg": "c", "x": "NYSE", "mc": 67638}, {"t": "EXC", "n": "Exelon", "s": "Servicios públicos", "p": 41.29, "a": 65.71, "fa": "2008-07-07", "da": -37.2, "m": 41.65, "dm": -0.9, "r": -9.6, "sg": null, "x": "NASDAQ", "mc": 42137}, {"t": "KVUE", "n": "Kenvue", "s": "Consumo básico", "p": 17.48, "a": 27.8, "fa": "2023-05-15", "da": -37.1, "m": null, "dm": null, "r": 11.4, "sg": null, "x": "NYSE", "mc": 33402}, {"t": "LHX", "n": "L3Harris", "s": "Industria", "p": 238.63, "a": 379.23, "fa": "2026-03-02", "da": -37.1, "m": 239.89, "dm": -0.5, "r": -21.2, "sg": "c", "x": "NYSE", "mc": 44111}, {"t": "LUV", "n": "Southwest Airlines", "s": "Industria", "p": 42.11, "a": 66.99, "fa": "2017-12-21", "da": -37.1, "m": 33.63, "dm": 25.2, "r": 29.3, "sg": null, "x": "NYSE", "mc": 20473}, {"t": "TRMB", "n": "Trimble Inc.", "s": "Tecnología", "p": 60.93, "a": 96.49, "fa": "2021-08-30", "da": -36.9, "m": 61.65, "dm": -1.2, "r": -24.6, "sg": null, "x": "NASDAQ", "mc": 13713}, {"t": "PEP", "n": "PepsiCo", "s": "Consumo básico", "p": 125.33, "a": 196.88, "fa": "2023-05-15", "da": -36.3, "m": 160.1, "dm": -21.7, "r": -10.3, "sg": null, "x": "NASDAQ", "mc": 171499}, {"t": "VICI", "n": "Vici Properties", "s": "Inmobiliario", "p": 22.75, "a": 35.69, "fa": "2022-08-15", "da": -36.3, "m": 30.31, "dm": -25.0, "r": -29.5, "sg": null, "x": "NYSE", "mc": 24807}, {"t": "CRH", "n": "CRH plc", "s": "Materiales", "p": 83.96, "a": 131.55, "fa": "2026-01-09", "da": -36.2, "m": 85.38, "dm": -1.7, "r": -28.9, "sg": "c", "x": "NYSE", "mc": 55321}, {"t": "MDT", "n": "Medtronic", "s": "Salud", "p": 86.92, "a": 135.89, "fa": "2021-09-09", "da": -36.0, "m": 86.12, "dm": 0.9, "r": -11.7, "sg": null, "x": "NYSE", "mc": 112526}, {"t": "ON", "n": "ON Semiconductor", "s": "Tecnología", "p": 86.31, "a": 134.92, "fa": "2026-06-03", "da": -36.0, "m": 70.89, "dm": 21.8, "r": 71.4, "sg": null, "x": "NASDAQ", "mc": 33454}, {"t": "VMRK", "n": "Vivmark Residential", "s": "Inmobiliario", "p": 60.37, "a": 94.32, "fa": "2022-04-21", "da": -36.0, "m": 65.04, "dm": -7.2, "r": -3.0, "sg": null, "x": "NYSE", "mc": 47321}, {"t": "CHRW", "n": "C.H. Robinson", "s": "Industria", "p": 134.74, "a": 210.33, "fa": "2026-07-22", "da": -35.9, "m": 114.26, "dm": 17.9, "r": 0.3, "sg": null, "x": "NASDAQ", "mc": 16430}, {"t": "CVNA", "n": "Carvana", "s": "Consumo discrecional", "p": 62.74, "a": 97.38, "fa": "2026-01-23", "da": -35.6, "m": 38.58, "dm": 62.6, "r": -15.1, "sg": null, "x": "NYSE", "mc": 70122}, {"t": "KLAC", "n": "KLA Corporation", "s": "Tecnología", "p": 199.17, "a": 307.37, "fa": "2026-06-30", "da": -35.2, "m": 91.15, "dm": 118.5, "r": 74.8, "sg": null, "x": "NASDAQ", "mc": 269941}, {"t": "HD", "n": "Home Depot (The)", "s": "Consumo discrecional", "p": 284.99, "a": 439.37, "fa": "2024-11-26", "da": -35.1, "m": 348.96, "dm": -18.3, "r": -26.8, "sg": "c", "x": "NYSE", "mc": 280500}, {"t": "CNC", "n": "Centene Corporation", "s": "Salud", "p": 64.06, "a": 98.53, "fa": "2022-08-15", "da": -35.0, "m": 60.85, "dm": 5.3, "r": 70.2, "sg": null, "x": "NYSE", "mc": 31764}, {"t": "ES", "n": "Eversource Energy", "s": "Servicios públicos", "p": 64.68, "a": 99.42, "fa": "2020-02-20", "da": -34.9, "m": 66.25, "dm": -2.4, "r": -11.0, "sg": null, "x": "NYSE", "mc": 24367}, {"t": "AJG", "n": "Arthur J. Gallagher & Co.", "s": "Finanzas", "p": 228.97, "a": 351.23, "fa": "2025-06-03", "da": -34.8, "m": 254.03, "dm": -9.9, "r": -25.9, "sg": "c", "x": "NYSE", "mc": 58242}, {"t": "PPL", "n": "PPL Corporation", "s": "Servicios públicos", "p": 33.58, "a": 51.44, "fa": "2008-01-10", "da": -34.7, "m": 31.65, "dm": 6.1, "r": -9.6, "sg": null, "x": "NYSE", "mc": 24796}, {"t": "DLTR", "n": "Dollar Tree", "s": "Consumo básico", "p": 115.92, "a": 177.19, "fa": "2022-04-21", "da": -34.6, "m": 112.62, "dm": 2.9, "r": 32.2, "sg": null, "x": "NASDAQ", "mc": 21238}, {"t": "ISRG", "n": "Intuitive Surgical", "s": "Salud", "p": 404.95, "a": 616.0, "fa": "2025-01-23", "da": -34.3, "m": 420.4, "dm": -3.7, "r": -9.9, "sg": "c", "x": "NASDAQ", "mc": 143600}, {"t": "O", "n": "Realty Income", "s": "Inmobiliario", "p": 54.04, "a": 82.29, "fa": "2020-02-20", "da": -34.3, "m": 58.45, "dm": -7.5, "r": -9.8, "sg": null, "x": "NYSE", "mc": 50878}, {"t": "EW", "n": "Edwards Lifesciences", "s": "Salud", "p": 86.71, "a": 131.73, "fa": "2021-12-30", "da": -34.2, "m": 79.47, "dm": 9.1, "r": 13.3, "sg": null, "x": "NYSE", "mc": 50279}, {"t": "ADSK", "n": "Autodesk", "s": "Tecnología", "p": 227.34, "a": 344.39, "fa": "2021-08-24", "da": -34.0, "m": 248.16, "dm": -8.4, "r": -29.7, "sg": null, "x": "NASDAQ", "mc": 46306}, {"t": "AON", "n": "Aon plc", "s": "Finanzas", "p": 273.28, "a": 412.97, "fa": "2025-03-03", "da": -33.8, "m": 334.85, "dm": -18.4, "r": -25.3, "sg": "c", "x": "NYSE", "mc": 57709}, {"t": "AZO", "n": "AutoZone", "s": "Consumo discrecional", "p": 2909.32, "a": 4388.11, "fa": "2025-09-11", "da": -33.7, "m": 3116.22, "dm": -6.6, "r": -30.3, "sg": "c", "x": "NYSE", "mc": 45837}, {"t": "GEN", "n": "Gen Digital", "s": "Tecnología", "p": 22.68, "a": 34.2, "fa": "2017-09-20", "da": -33.7, "m": 24.07, "dm": -5.8, "r": -18.3, "sg": null, "x": "NASDAQ", "mc": 13337}, {"t": "CASY", "n": "Casey's", "s": "Consumo básico", "p": 617.82, "a": 927.85, "fa": "2026-06-11", "da": -33.4, "m": 435.14, "dm": 42.0, "r": 10.6, "sg": null, "x": "NASDAQ", "mc": 22817}, {"t": "BKNG", "n": "Booking Holdings", "s": "Consumo discrecional", "p": 155.94, "a": 233.58, "fa": "2025-07-08", "da": -33.2, "m": 162.44, "dm": -4.0, "r": -28.1, "sg": "c", "x": "NASDAQ", "mc": 118966}, {"t": "CRL", "n": "Charles River Laboratories", "s": "Salud", "p": 307.71, "a": 460.21, "fa": "2021-09-24", "da": -33.1, "m": 198.62, "dm": 54.9, "r": 75.9, "sg": null, "x": "NYSE", "mc": 14836}, {"t": "IBM", "n": "IBM", "s": "Tecnología", "p": 222.35, "a": 332.46, "fa": "2026-06-02", "da": -33.1, "m": 209.62, "dm": 6.1, "r": -23.2, "sg": null, "x": "NYSE", "mc": 208758}, {"t": "ECHO", "n": "EchoStar", "s": "Comunicaciones", "p": 98.85, "a": 147.25, "fa": "2026-05-18", "da": -32.9, "m": 43.14, "dm": 129.2, "r": 28.7, "sg": null, "x": "NASDAQ", "mc": 28561}, {"t": "IDXX", "n": "Idexx Laboratories", "s": "Salud", "p": 517.02, "a": 769.98, "fa": "2025-11-26", "da": -32.9, "m": 521.24, "dm": -0.8, "r": -17.6, "sg": "c", "x": "NASDAQ", "mc": 41523}, {"t": "TFC", "n": "Truist Financial", "s": "Finanzas", "p": 46.24, "a": 68.95, "fa": "2022-01-18", "da": -32.9, "m": 41.59, "dm": 11.2, "r": 2.0, "sg": null, "x": "NYSE", "mc": 56598}, {"t": "AWK", "n": "American Water Works", "s": "Servicios públicos", "p": 127.44, "a": 189.65, "fa": "2021-12-31", "da": -32.8, "m": 135.97, "dm": -6.3, "r": -8.3, "sg": null, "x": "NYSE", "mc": 25406}, {"t": "VRT", "n": "Vertiv", "s": "Industria", "p": 255.41, "a": 379.93, "fa": "2026-05-14", "da": -32.8, "m": 118.8, "dm": 115.0, "r": 56.9, "sg": null, "x": "NYSE", "mc": 97641}, {"t": "DASH", "n": "DoorDash", "s": "Consumo discrecional", "p": 192.34, "a": 285.5, "fa": "2025-10-16", "da": -32.6, "m": 148.57, "dm": 29.5, "r": -31.7, "sg": null, "x": "NASDAQ", "mc": 83094}, {"t": "D", "n": "Dominion Energy", "s": "Servicios públicos", "p": 61.48, "a": 90.89, "fa": "2020-02-24", "da": -32.4, "m": 56.17, "dm": 9.4, "r": -0.0, "sg": null, "x": "NYSE", "mc": 53669}, {"t": "UBER", "n": "Uber", "s": "Industria", "p": 68.92, "a": 101.99, "fa": "2025-09-22", "da": -32.4, "m": 66.83, "dm": 3.1, "r": -31.1, "sg": "c", "x": "NYSE", "mc": 141917}, {"t": "XYL", "n": "Xylem Inc.", "s": "Industria", "p": 104.65, "a": 154.27, "fa": "2025-10-30", "da": -32.2, "m": 121.01, "dm": -13.5, "r": -30.2, "sg": "c", "x": "NYSE", "mc": 23914}, {"t": "CARR", "n": "Carrier Global", "s": "Industria", "p": 56.53, "a": 83.32, "fa": "2024-10-15", "da": -32.1, "m": 60.06, "dm": -5.9, "r": -5.5, "sg": "c", "x": "NYSE", "mc": 45940}, {"t": "JKHY", "n": "Jack Henry & Associates", "s": "Finanzas", "p": 144.48, "a": 212.62, "fa": "2022-08-10", "da": -32.0, "m": 165.06, "dm": -12.5, "r": -2.2, "sg": null, "x": "NASDAQ", "mc": 10175}, {"t": "MCD", "n": "McDonald's", "s": "Consumo discrecional", "p": 232.32, "a": 341.75, "fa": "2026-03-02", "da": -32.0, "m": 288.11, "dm": -19.4, "r": -21.5, "sg": "c", "x": "NYSE", "mc": 164909}, {"t": "PSA", "n": "Public Storage", "s": "Inmobiliario", "p": 286.65, "a": 421.76, "fa": "2022-04-21", "da": -32.0, "m": 294.54, "dm": -2.7, "r": -1.4, "sg": null, "x": "NYSE", "mc": 52629}, {"t": "GPC", "n": "Genuine Parts Company", "s": "Consumo discrecional", "p": 127.89, "a": 187.73, "fa": "2022-12-02", "da": -31.9, "m": 136.93, "dm": -6.6, "r": -7.6, "sg": null, "x": "NYSE", "mc": 17403}, {"t": "TDG", "n": "TransDigm Group", "s": "Industria", "p": 1106.93, "a": 1623.83, "fa": "2025-07-30", "da": -31.8, "m": 1161.98, "dm": -4.7, "r": -14.3, "sg": "c", "x": "NYSE", "mc": 60398}, {"t": "DHI", "n": "D. R. Horton", "s": "Consumo discrecional", "p": 136.44, "a": 199.85, "fa": "2024-09-19", "da": -31.7, "m": 139.58, "dm": -2.2, "r": -20.5, "sg": null, "x": "NYSE", "mc": 37265}, {"t": "GEHC", "n": "GE HealthCare", "s": "Salud", "p": 65.01, "a": 94.8, "fa": "2025-02-13", "da": -31.4, "m": 76.13, "dm": -14.6, "r": -14.9, "sg": null, "x": "NASDAQ", "mc": 29694}, {"t": "SYK", "n": "Stryker Corporation", "s": "Salud", "p": 279.9, "a": 406.19, "fa": "2025-01-28", "da": -31.1, "m": 332.21, "dm": -15.7, "r": -23.6, "sg": "c", "x": "NYSE", "mc": 109403}, {"t": "MLM", "n": "Martin Marietta Materials", "s": "Materiales", "p": 490.52, "a": 710.97, "fa": "2026-02-10", "da": -31.0, "m": 524.33, "dm": -6.4, "r": -22.9, "sg": "c", "x": "NYSE", "mc": 34480}, {"t": "ABT", "n": "Abbott Laboratories", "s": "Salud", "p": 98.6, "a": 142.6, "fa": "2021-12-27", "da": -30.9, "m": 112.52, "dm": -12.4, "r": -26.3, "sg": null, "x": "NYSE", "mc": 173211}, {"t": "RF", "n": "Regions Financial Corporation", "s": "Finanzas", "p": 27.07, "a": 39.15, "fa": "2006-10-13", "da": -30.9, "m": 22.85, "dm": 18.5, "r": 4.7, "sg": null, "x": "NYSE", "mc": 23062}, {"t": "MRSH", "n": "Marsh McLennan", "s": "Finanzas", "p": 171.58, "a": 248.0, "fa": "2025-04-04", "da": -30.8, "m": 196.25, "dm": -12.6, "r": -14.8, "sg": "c", "x": "NYSE", "mc": 81331}, {"t": "EXE", "n": "Expand Energy", "s": "Energía", "p": 88.11, "a": 126.62, "fa": "2025-12-05", "da": -30.4, "m": 92.59, "dm": -4.8, "r": -18.2, "sg": null, "x": "NASDAQ", "mc": 20009}, {"t": "QCOM", "n": "Qualcomm", "s": "Tecnología", "p": 181.22, "a": 259.92, "fa": "2026-05-29", "da": -30.3, "m": 153.72, "dm": 17.9, "r": 7.5, "sg": null, "x": "NASDAQ", "mc": 189872}, {"t": "OMC", "n": "Omnicom Group", "s": "Comunicaciones", "p": 74.74, "a": 107.0, "fa": "2024-11-06", "da": -30.2, "m": 84.12, "dm": -11.2, "r": -4.8, "sg": "c", "x": "NYSE", "mc": 20645}, {"t": "HUM", "n": "Humana", "s": "Salud", "p": 399.74, "a": 571.3, "fa": "2022-11-03", "da": -30.0, "m": 350.92, "dm": 13.9, "r": 35.4, "sg": null, "x": "NYSE", "mc": 48521}, {"t": "ELV", "n": "Elevance Health", "s": "Salud", "p": 397.63, "a": 567.26, "fa": "2024-09-03", "da": -29.9, "m": 426.36, "dm": -6.7, "r": 13.6, "sg": null, "x": "NYSE", "mc": 85557}, {"t": "TPR", "n": "Tapestry, Inc.", "s": "Consumo discrecional", "p": 115.72, "a": 164.8, "fa": "2026-08-10", "da": -29.8, "m": 74.54, "dm": 55.2, "r": 0.2, "sg": null, "x": "NYSE", "mc": 23361}, {"t": "STX", "n": "Seagate Technology", "s": "Tecnología", "p": 807.42, "a": 1145.0, "fa": "2026-06-18", "da": -29.5, "m": 221.27, "dm": 264.9, "r": 232.5, "sg": null, "x": "NASDAQ", "mc": 202894}, {"t": "SW", "n": "Smurfit Westrock", "s": "Materiales", "p": 42.6, "a": 60.07, "fa": "2021-08-18", "da": -29.1, "m": 42.52, "dm": 0.2, "r": 5.7, "sg": null, "x": "NYSE", "mc": 22245}, {"t": "JBL", "n": "Jabil", "s": "Tecnología", "p": 305.04, "a": 428.93, "fa": "2026-06-17", "da": -28.9, "m": 170.7, "dm": 78.7, "r": 50.9, "sg": null, "x": "NYSE", "mc": 31535}, {"t": "SNDK", "n": "Sandisk", "s": "Tecnología", "p": 1672.97, "a": 2354.39, "fa": "2026-06-22", "da": -28.9, "m": null, "dm": null, "r": 1280.7, "sg": null, "x": "NASDAQ", "mc": 249521}, {"t": "ODFL", "n": "Old Dominion", "s": "Industria", "p": 179.49, "a": 252.03, "fa": "2026-06-09", "da": -28.8, "m": 183.86, "dm": -2.4, "r": 25.7, "sg": "c", "x": "NASDAQ", "mc": 37194}, {"t": "FLEX", "n": "Flex Ltd.", "s": "Tecnología", "p": 119.05, "a": 166.86, "fa": "2026-06-03", "da": -28.7, "m": 46.65, "dm": 155.2, "r": 107.8, "sg": null, "x": "NASDAQ", "mc": 43131}, {"t": "UHS", "n": "Universal Health Services", "s": "Salud", "p": 175.62, "a": 246.33, "fa": "2025-11-26", "da": -28.7, "m": 173.51, "dm": 1.2, "r": -15.1, "sg": "c", "x": "NYSE", "mc": 10376}, {"t": "SJM", "n": "J.M. Smucker Company (The)", "s": "Consumo básico", "p": 116.49, "a": 163.07, "fa": "2023-01-06", "da": -28.6, "m": 120.02, "dm": -2.9, "r": 8.8, "sg": null, "x": "NYSE", "mc": 12416}, {"t": "NXPI", "n": "NXP Semiconductors", "s": "Tecnología", "p": 243.48, "a": 339.95, "fa": "2026-05-27", "da": -28.4, "m": 220.35, "dm": 10.5, "r": 5.2, "sg": null, "x": "NASDAQ", "mc": 61016}, {"t": "HAS", "n": "Hasbro", "s": "Consumo discrecional", "p": 91.13, "a": 126.87, "fa": "2019-07-30", "da": -28.2, "m": 68.35, "dm": 33.3, "r": 21.9, "sg": null, "x": "NASDAQ", "mc": 13030}, {"t": "KMI", "n": "Kinder Morgan", "s": "Energía", "p": 32.19, "a": 44.71, "fa": "2015-04-24", "da": -28.0, "m": 23.87, "dm": 34.9, "r": 15.3, "sg": null, "x": "NYSE", "mc": 69944}, {"t": "AMAT", "n": "Applied Materials", "s": "Tecnología", "p": 533.67, "a": 739.67, "fa": "2026-06-30", "da": -27.8, "m": 225.37, "dm": 136.8, "r": 138.3, "sg": null, "x": "NASDAQ", "mc": 430352}, {"t": "CMI", "n": "Cummins", "s": "Industria", "p": 533.39, "a": 737.76, "fa": "2026-06-18", "da": -27.7, "m": 364.08, "dm": 46.5, "r": 21.5, "sg": null, "x": "NYSE", "mc": 72049}, {"t": "PGR", "n": "Progressive Corporation", "s": "Finanzas", "p": 212.13, "a": 292.99, "fa": "2025-03-17", "da": -27.6, "m": 203.87, "dm": 4.1, "r": -11.8, "sg": "c", "x": "NYSE", "mc": 123611}, {"t": "SPGI", "n": "S&P Global", "s": "Finanzas", "p": 397.16, "a": 547.82, "fa": "2025-08-14", "da": -27.5, "m": 423.84, "dm": -6.3, "r": -12.2, "sg": "c", "x": "NYSE", "mc": 115243}, {"t": "ABNB", "n": "Airbnb", "s": "Consumo discrecional", "p": 159.62, "a": 219.94, "fa": "2021-02-11", "da": -27.4, "m": 133.67, "dm": 19.4, "r": 32.6, "sg": null, "x": "NASDAQ", "mc": 98243}, {"t": "VZ", "n": "Verizon", "s": "Comunicaciones", "p": 45.4, "a": 62.5, "fa": "1999-10-04", "da": -27.4, "m": 41.31, "dm": 9.9, "r": 9.5, "sg": null, "x": "NYSE", "mc": 190496}, {"t": "BMY", "n": "Bristol Myers Squibb", "s": "Salud", "p": 59.19, "a": 81.44, "fa": "2022-12-01", "da": -27.3, "m": 55.64, "dm": 6.4, "r": 31.1, "sg": null, "x": "NYSE", "mc": 120132}, {"t": "FITB", "n": "Fifth Third Bancorp", "s": "Finanzas", "p": 50.72, "a": 69.7, "fa": "2002-04-15", "da": -27.2, "m": 39.63, "dm": 28.0, "r": 15.8, "sg": null, "x": "NYSE", "mc": 46070}, {"t": "AVY", "n": "Avery Dennison", "s": "Materiales", "p": 170.11, "a": 233.48, "fa": "2024-07-23", "da": -27.1, "m": 186.01, "dm": -8.5, "r": 4.5, "sg": null, "x": "NYSE", "mc": 12884}, {"t": "CI", "n": "Cigna", "s": "Salud", "p": 270.7, "a": 370.83, "fa": "2024-09-16", "da": -27.0, "m": 300.36, "dm": -9.9, "r": -10.7, "sg": null, "x": "NYSE", "mc": 71686}, {"t": "DVA", "n": "DaVita", "s": "Salud", "p": 181.0, "a": 247.49, "fa": "2026-08-03", "da": -26.9, "m": 133.34, "dm": 35.7, "r": 41.3, "sg": null, "x": "NYSE", "mc": 11402}, {"t": "HOOD", "n": "Robinhood Markets", "s": "Finanzas", "p": 112.74, "a": 153.86, "fa": "2025-10-06", "da": -26.7, "m": 50.1, "dm": 125.0, "r": -21.8, "sg": null, "x": "NASDAQ", "mc": 102594}, {"t": "DHR", "n": "Danaher Corporation", "s": "Salud", "p": 217.31, "a": 296.06, "fa": "2021-09-10", "da": -26.6, "m": 220.99, "dm": -1.7, "r": 2.6, "sg": null, "x": "NYSE", "mc": 155508}, {"t": "RMD", "n": "ResMed|", "s": "Salud", "p": 221.16, "a": 301.34, "fa": "2021-09-09", "da": -26.6, "m": 219.78, "dm": 0.6, "r": -21.4, "sg": null, "x": "NYSE", "mc": 31343}, {"t": "LMT", "n": "Lockheed Martin", "s": "Industria", "p": 509.24, "a": 692.0, "fa": "2026-03-02", "da": -26.4, "m": 491.59, "dm": 3.6, "r": -1.0, "sg": "c", "x": "NYSE", "mc": 116926}, {"t": "VST", "n": "Vistra Corp.", "s": "Servicios públicos", "p": 162.09, "a": 219.82, "fa": "2025-09-22", "da": -26.3, "m": 107.05, "dm": 51.4, "r": -19.1, "sg": null, "x": "NYSE", "mc": 48630}, {"t": "INCY", "n": "Incyte", "s": "Salud", "p": 113.09, "a": 153.15, "fa": "2017-03-15", "da": -26.2, "m": 76.82, "dm": 47.2, "r": 29.6, "sg": null, "x": "NASDAQ", "mc": 23134}, {"t": "PLD", "n": "Prologis", "s": "Inmobiliario", "p": 129.06, "a": 174.54, "fa": "2022-04-21", "da": -26.1, "m": 122.14, "dm": 5.7, "r": 10.2, "sg": null, "x": "NYSE", "mc": 121430}, {"t": "HWM", "n": "Howmet Aerospace", "s": "Industria", "p": 229.84, "a": 310.0, "fa": "2026-08-06", "da": -25.9, "m": 128.84, "dm": 78.4, "r": 20.7, "sg": null, "x": "NYSE", "mc": 91553}, {"t": "TXT", "n": "Textron", "s": "Industria", "p": 75.38, "a": 101.57, "fa": "2026-02-18", "da": -25.8, "m": 81.1, "dm": -7.0, "r": -13.7, "sg": "c", "x": "NYSE", "mc": 13028}, {"t": "CBOE", "n": "Cboe Global Markets", "s": "Finanzas", "p": 277.31, "a": 371.18, "fa": "2026-05-19", "da": -25.3, "m": 208.37, "dm": 33.1, "r": 17.1, "sg": null, "x": "CBOE", "mc": 31026}, {"t": "CEG", "n": "Constellation Energy", "s": "Servicios públicos", "p": 308.33, "a": 412.7, "fa": "2025-10-15", "da": -25.3, "m": 216.13, "dm": 42.7, "r": -15.3, "sg": null, "x": "NASDAQ", "mc": 94820}, {"t": "Q", "n": "Qnity Electronics", "s": "Tecnología", "p": 132.35, "a": 177.28, "fa": "2026-06-22", "da": -25.3, "m": null, "dm": null, "r": null, "sg": null, "x": "NYSE", "mc": 27517}, {"t": "EXPE", "n": "Expedia Group", "s": "Consumo discrecional", "p": 256.36, "a": 342.0, "fa": "2026-08-26", "da": -25.0, "m": 171.34, "dm": 49.6, "r": 14.5, "sg": null, "x": "NASDAQ", "mc": 29788}, {"t": "PEG", "n": "Public Service Enterprise Group", "s": "Servicios públicos", "p": 71.46, "a": 95.22, "fa": "2024-11-27", "da": -25.0, "m": 74.08, "dm": -3.5, "r": -12.7, "sg": "c", "x": "NYSE", "mc": 34231}, {"t": "MMM", "n": "3M", "s": "Industria", "p": 163.32, "a": 217.2, "fa": "2018-01-26", "da": -24.8, "m": 124.65, "dm": 31.0, "r": 4.7, "sg": null, "x": "NYSE", "mc": 84161}, {"t": "MDLZ", "n": "Mondelez International", "s": "Consumo básico", "p": 59.1, "a": 78.59, "fa": "2023-04-28", "da": -24.8, "m": 65.9, "dm": -10.3, "r": -4.3, "sg": null, "x": "NASDAQ", "mc": 74651}, {"t": "VMC", "n": "Vulcan Materials Company", "s": "Materiales", "p": 249.07, "a": 331.09, "fa": "2026-02-10", "da": -24.8, "m": 250.24, "dm": -0.5, "r": -18.3, "sg": "c", "x": "NYSE", "mc": 31821}, {"t": "COF", "n": "Capital One", "s": "Finanzas", "p": 196.0, "a": 259.64, "fa": "2026-01-06", "da": -24.5, "m": 162.08, "dm": 20.9, "r": -8.3, "sg": null, "x": "NYSE", "mc": 119715}, {"t": "CBRE", "n": "CBRE Group", "s": "Inmobiliario", "p": 131.51, "a": 174.27, "fa": "2026-02-10", "da": -24.5, "m": 115.98, "dm": 13.4, "r": -14.3, "sg": null, "x": "NYSE", "mc": 37471}, {"t": "ESS", "n": "Essex Property Trust", "s": "Inmobiliario", "p": 274.43, "a": 363.36, "fa": "2022-04-21", "da": -24.5, "m": 258.47, "dm": 6.2, "r": 5.0, "sg": null, "x": "NYSE", "mc": 17477}, {"t": "CVS", "n": "CVS Health", "s": "Salud", "p": 85.97, "a": 113.65, "fa": "2015-07-29", "da": -24.4, "m": 72.92, "dm": 17.9, "r": 11.9, "sg": null, "x": "NYSE", "mc": 111283}, {"t": "IR", "n": "Ingersoll Rand", "s": "Industria", "p": 80.15, "a": 106.03, "fa": "2024-11-25", "da": -24.4, "m": 79.11, "dm": 1.3, "r": -3.9, "sg": "c", "x": "NYSE", "mc": 30477}, {"t": "KR", "n": "Kroger", "s": "Consumo básico", "p": 57.89, "a": 76.58, "fa": "2026-03-12", "da": -24.4, "m": 57.14, "dm": 1.3, "r": -10.7, "sg": "c", "x": "NYSE", "mc": 34715}, {"t": "MO", "n": "Altria", "s": "Consumo básico", "p": 68.47, "a": 90.5, "fa": "2007-01-11", "da": -24.3, "m": 53.89, "dm": 27.1, "r": 4.7, "sg": null, "x": "NYSE", "mc": 113342}, {"t": "JBHT", "n": "J.B. Hunt", "s": "Industria", "p": 226.77, "a": 299.76, "fa": "2026-07-16", "da": -24.3, "m": 187.3, "dm": 21.1, "r": 60.1, "sg": null, "x": "NASDAQ", "mc": 21576}, {"t": "SBUX", "n": "Starbucks", "s": "Consumo discrecional", "p": 95.76, "a": 126.32, "fa": "2021-07-23", "da": -24.2, "m": 94.86, "dm": 0.9, "r": 16.6, "sg": null, "x": "NASDAQ", "mc": 107650}, {"t": "RVTY", "n": "Revvity", "s": "Salud", "p": 154.12, "a": 203.16, "fa": "2021-12-31", "da": -24.1, "m": 109.53, "dm": 40.7, "r": 65.0, "sg": null, "x": "NYSE", "mc": 17559}, {"t": "LRCX", "n": "Lam Research", "s": "Tecnología", "p": 333.59, "a": 438.5, "fa": "2026-06-30", "da": -23.9, "m": 123.65, "dm": 169.8, "r": 123.7, "sg": null, "x": "NASDAQ", "mc": 432743}, {"t": "COHR", "n": "Coherent Corp.", "s": "Tecnología", "p": 335.2, "a": 440.0, "fa": "2026-06-03", "da": -23.8, "m": 116.25, "dm": 188.3, "r": 192.1, "sg": null, "x": "NYSE", "mc": 65337}, {"t": "OKE", "n": "Oneok", "s": "Energía", "p": 89.94, "a": 118.07, "fa": "2024-11-22", "da": -23.8, "m": 79.7, "dm": 12.8, "r": 23.7, "sg": null, "x": "NYSE", "mc": 55838}, {"t": "REG", "n": "Regency Centers", "s": "Inmobiliario", "p": 71.32, "a": 93.49, "fa": "2007-02-08", "da": -23.7, "m": 68.46, "dm": 4.2, "r": 0.3, "sg": null, "x": "NASDAQ", "mc": 13062}, {"t": "TSLA", "n": "Tesla, Inc.", "s": "Consumo discrecional", "p": 380.53, "a": 498.83, "fa": "2025-12-22", "da": -23.7, "m": 290.68, "dm": 30.9, "r": -16.0, "sg": null, "x": "NASDAQ", "mc": 1495812}, {"t": "EQT", "n": "EQT Corporation", "s": "Energía", "p": 52.17, "a": 68.24, "fa": "2026-03-27", "da": -23.6, "m": 45.36, "dm": 15.0, "r": -8.8, "sg": null, "x": "NYSE", "mc": 31976}, {"t": "TTWO", "n": "Take-Two Interactive", "s": "Comunicaciones", "p": 203.09, "a": 265.94, "fa": "2026-07-07", "da": -23.6, "m": 182.02, "dm": 11.6, "r": -21.0, "sg": null, "x": "NASDAQ", "mc": 38043}, {"t": "ULTA", "n": "Ulta Beauty", "s": "Consumo discrecional", "p": 547.83, "a": 714.97, "fa": "2026-02-18", "da": -23.4, "m": 471.23, "dm": 16.3, "r": -3.4, "sg": null, "x": "NASDAQ", "mc": 23205}, {"t": "AVGO", "n": "Broadcom", "s": "Tecnología", "p": 379.8, "a": 495.0, "fa": "2026-06-03", "da": -23.3, "m": 207.63, "dm": 82.9, "r": 13.2, "sg": null, "x": "NASDAQ", "mc": 1730489}, {"t": "MCHP", "n": "Microchip Technology", "s": "Tecnología", "p": 81.41, "a": 105.91, "fa": "2026-05-08", "da": -23.1, "m": 75.27, "dm": 8.2, "r": 22.3, "sg": null, "x": "NASDAQ", "mc": 44250}, {"t": "HPQ", "n": "HP Inc.", "s": "Tecnología", "p": 31.93, "a": 41.47, "fa": "2022-04-07", "da": -23.0, "m": 28.69, "dm": 11.3, "r": 20.0, "sg": null, "x": "NYSE", "mc": 28379}, {"t": "SNPS", "n": "Synopsys", "s": "Tecnología", "p": 503.15, "a": 651.73, "fa": "2025-07-30", "da": -22.8, "m": 476.63, "dm": 5.6, "r": 5.2, "sg": null, "x": "NASDAQ", "mc": 93609}, {"t": "PHM", "n": "PulteGroup", "s": "Consumo discrecional", "p": 115.93, "a": 149.47, "fa": "2024-10-21", "da": -22.4, "m": 105.82, "dm": 9.6, "r": -14.4, "sg": null, "x": "NYSE", "mc": 21366}, {"t": "GS", "n": "Goldman Sachs", "s": "Finanzas", "p": 897.54, "a": 1153.99, "fa": "2026-07-15", "da": -22.2, "m": 589.38, "dm": 52.3, "r": 12.6, "sg": null, "x": "NYSE", "mc": 260150}, {"t": "HCA", "n": "HCA Healthcare", "s": "Salud", "p": 433.49, "a": 556.52, "fa": "2026-03-12", "da": -22.1, "m": 350.26, "dm": 23.8, "r": -0.0, "sg": null, "x": "NYSE", "mc": 94161}, {"t": "STE", "n": "Steris", "s": "Salud", "p": 209.85, "a": 269.44, "fa": "2026-01-16", "da": -22.1, "m": 222.98, "dm": -5.9, "r": -12.8, "sg": "c", "x": "NYSE", "mc": 20579}, {"t": "TKO", "n": "TKO Group Holdings", "s": "Comunicaciones", "p": 176.68, "a": 226.94, "fa": "2026-02-26", "da": -22.1, "m": 138.03, "dm": 28.0, "r": -10.8, "sg": null, "x": "NYSE", "mc": 33508}, {"t": "RCL", "n": "Royal Caribbean Group", "s": "Consumo discrecional", "p": 286.42, "a": 366.5, "fa": "2025-08-29", "da": -21.8, "m": 195.62, "dm": 46.4, "r": -9.7, "sg": null, "x": "NYSE", "mc": 73557}, {"t": "NEE", "n": "NextEra Energy", "s": "Servicios públicos", "p": 77.28, "a": 98.75, "fa": "2026-05-01", "da": -21.7, "m": 75.2, "dm": 2.8, "r": -5.9, "sg": "c", "x": "NYSE", "mc": 159118}, {"t": "ORLY", "n": "O'Reilly Automotive", "s": "Consumo discrecional", "p": 85.09, "a": 108.72, "fa": "2025-09-30", "da": -21.7, "m": 78.69, "dm": 8.1, "r": -17.6, "sg": null, "x": "NASDAQ", "mc": 67872}, {"t": "PCAR", "n": "Paccar", "s": "Industria", "p": 109.03, "a": 139.24, "fa": "2026-07-28", "da": -21.7, "m": 100.18, "dm": 8.8, "r": 10.7, "sg": null, "x": "NASDAQ", "mc": 57563}, {"t": "WST", "n": "West Pharmaceutical Services", "s": "Salud", "p": 372.48, "a": 475.35, "fa": "2021-09-09", "da": -21.6, "m": 309.03, "dm": 20.5, "r": 38.9, "sg": null, "x": "NYSE", "mc": 26515}, {"t": "AXP", "n": "American Express", "s": "Finanzas", "p": 304.2, "a": 387.49, "fa": "2025-12-12", "da": -21.5, "m": 257.26, "dm": 18.2, "r": -8.4, "sg": null, "x": "NYSE", "mc": 205308}, {"t": "SRE", "n": "Sempra", "s": "Servicios públicos", "p": 79.34, "a": 101.04, "fa": "2026-04-09", "da": -21.5, "m": 80.35, "dm": -1.3, "r": -14.2, "sg": "c", "x": "NYSE", "mc": 51109}, {"t": "WMT", "n": "Walmart", "s": "Consumo básico", "p": 106.79, "a": 135.16, "fa": "2026-05-19", "da": -21.0, "m": 82.18, "dm": 30.0, "r": 4.0, "sg": null, "x": "NASDAQ", "mc": 833599}, {"t": "ADP", "n": "Automatic Data Processing", "s": "Industria", "p": 262.68, "a": 329.93, "fa": "2025-06-06", "da": -20.4, "m": 256.56, "dm": 2.4, "r": -9.6, "sg": "c", "x": "NASDAQ", "mc": 103128}, {"t": "GE", "n": "GE Aerospace", "s": "Industria", "p": 309.43, "a": 388.84, "fa": "2026-08-06", "da": -20.4, "m": 193.79, "dm": 59.7, "r": 3.8, "sg": null, "x": "NYSE", "mc": 317847}, {"t": "BG", "n": "Bunge Global", "s": "Consumo básico", "p": 107.68, "a": 135.0, "fa": "2008-01-15", "da": -20.2, "m": 98.19, "dm": 9.7, "r": 28.0, "sg": null, "x": "NYSE", "mc": 20618}, {"t": "CL", "n": "Colgate-Palmolive", "s": "Consumo básico", "p": 87.31, "a": 109.3, "fa": "2024-09-05", "da": -20.1, "m": 85.86, "dm": 1.7, "r": 12.7, "sg": null, "x": "NYSE", "mc": 68708}, {"t": "BDX", "n": "Becton Dickinson", "s": "Salud", "p": 180.87, "a": 225.88, "fa": "2023-07-24", "da": -19.9, "m": 176.85, "dm": 2.3, "r": 19.8, "sg": null, "x": "NYSE", "mc": 49212}, {"t": "TJX", "n": "TJX Companies", "s": "Consumo discrecional", "p": 136.16, "a": 170.0, "fa": "2026-06-11", "da": -19.9, "m": 116.65, "dm": 16.7, "r": -4.9, "sg": null, "x": "NYSE", "mc": 147848}, {"t": "ALL", "n": "Allstate", "s": "Finanzas", "p": 222.68, "a": 277.22, "fa": "2026-07-29", "da": -19.7, "m": 176.78, "dm": 26.0, "r": 6.6, "sg": null, "x": "NYSE", "mc": 56820}, {"t": "INTC", "n": "Intel", "s": "Tecnología", "p": 114.33, "a": 142.35, "fa": "2026-06-30", "da": -19.7, "m": 41.39, "dm": 176.2, "r": 212.5, "sg": null, "x": "NASDAQ", "mc": 614072}, {"t": "MAS", "n": "Masco", "s": "Industria", "p": 69.61, "a": 86.7, "fa": "2024-10-15", "da": -19.7, "m": 66.61, "dm": 4.5, "r": 1.2, "sg": "c", "x": "NYSE", "mc": 13499}, {"t": "SHW", "n": "Sherwin-Williams", "s": "Materiales", "p": 321.51, "a": 400.42, "fa": "2024-11-27", "da": -19.7, "m": 315.07, "dm": 2.0, "r": -4.6, "sg": "c", "x": "NYSE", "mc": 77309}, {"t": "UAL", "n": "United Airlines Holdings", "s": "Industria", "p": 111.41, "a": 138.77, "fa": "2026-06-30", "da": -19.7, "m": 73.35, "dm": 51.9, "r": 14.8, "sg": null, "x": "NASDAQ", "mc": 35704}, {"t": "VTR", "n": "Ventas", "s": "Inmobiliario", "p": 81.55, "a": 101.6, "fa": "2026-07-28", "da": -19.7, "m": 61.83, "dm": 31.9, "r": 17.8, "sg": null, "x": "NYSE", "mc": 41733}, {"t": "CMS", "n": "CMS Energy", "s": "Servicios públicos", "p": 64.67, "a": 80.36, "fa": "2026-04-09", "da": -19.5, "m": 66.22, "dm": -2.3, "r": -11.7, "sg": "c", "x": "NYSE", "mc": 20078}, {"t": "CAT", "n": "Caterpillar Inc.", "s": "Industria", "p": 865.91, "a": 1073.46, "fa": "2026-06-30", "da": -19.3, "m": 433.53, "dm": 99.7, "r": 74.8, "sg": null, "x": "NYSE", "mc": 389869}, {"t": "FOXA", "n": "Fox Corporation (Class A)", "s": "Comunicaciones", "p": 61.82, "a": 76.39, "fa": "2026-01-09", "da": -19.1, "m": 46.14, "dm": 34.0, "r": 0.7, "sg": null, "x": "NASDAQ", "mc": 26705}, {"t": "RTX", "n": "RTX Corporation", "s": "Industria", "p": 183.88, "a": 226.88, "fa": "2026-08-10", "da": -19.0, "m": 131.1, "dm": 40.3, "r": 8.9, "sg": null, "x": "NYSE", "mc": 248432}, {"t": "SYF", "n": "Synchrony Financial", "s": "Finanzas", "p": 71.86, "a": 88.77, "fa": "2026-01-09", "da": -19.0, "m": 54.06, "dm": 32.9, "r": 0.7, "sg": null, "x": "NYSE", "mc": 26743}, {"t": "ACGL", "n": "Arch Capital Group", "s": "Finanzas", "p": 94.5, "a": 116.47, "fa": "2024-10-07", "da": -18.9, "m": 89.01, "dm": 6.2, "r": 3.5, "sg": null, "x": "NASDAQ", "mc": 32198}, {"t": "DOV", "n": "Dover Corporation", "s": "Industria", "p": 193.23, "a": 237.54, "fa": "2026-02-12", "da": -18.7, "m": 176.41, "dm": 9.5, "r": 16.0, "sg": null, "x": "NYSE", "mc": 25764}, {"t": "FOX", "n": "Fox Corporation (Class B)", "s": "Comunicaciones", "p": 55.45, "a": 68.18, "fa": "2026-01-06", "da": -18.7, "m": 42.28, "dm": 31.2, "r": 0.7, "sg": null, "x": "NASDAQ", "mc": 23909}, {"t": "ICE", "n": "Intercontinental Exchange", "s": "Finanzas", "p": 153.96, "a": 189.35, "fa": "2025-08-08", "da": -18.7, "m": 143.26, "dm": 7.5, "r": -3.2, "sg": null, "x": "NYSE", "mc": 85416}, {"t": "DTE", "n": "DTE Energy", "s": "Servicios públicos", "p": 126.96, "a": 155.75, "fa": "2026-07-07", "da": -18.5, "m": 123.89, "dm": 2.5, "r": -10.4, "sg": "c", "x": "NYSE", "mc": 26019}, {"t": "HON", "n": "Honeywell Technologies", "s": "Industria", "p": 212.35, "a": 260.28, "fa": "2026-03-02", "da": -18.4, "m": 209.22, "dm": 1.5, "r": 2.8, "sg": "c", "x": "NASDAQ", "mc": 67870}, {"t": "YUM", "n": "Yum! Brands", "s": "Consumo discrecional", "p": 139.24, "a": 170.14, "fa": "2026-07-07", "da": -18.2, "m": 140.44, "dm": -0.9, "r": -6.4, "sg": "c", "x": "NYSE", "mc": 37379}, {"t": "CME", "n": "CME Group", "s": "Finanzas", "p": 269.75, "a": 329.16, "fa": "2026-03-03", "da": -18.0, "m": 234.93, "dm": 14.8, "r": 2.9, "sg": null, "x": "NASDAQ", "mc": 97097}, {"t": "MSCI", "n": "MSCI", "s": "Finanzas", "p": 557.52, "a": 679.85, "fa": "2021-11-16", "da": -18.0, "m": 548.06, "dm": 1.7, "r": -1.3, "sg": null, "x": "NYSE", "mc": 40156}, {"t": "MS", "n": "Morgan Stanley", "s": "Finanzas", "p": 190.99, "a": 232.25, "fa": "2026-07-15", "da": -17.8, "m": 126.94, "dm": 50.5, "r": 20.8, "sg": null, "x": "NYSE", "mc": 298706}, {"t": "NI", "n": "NiSource", "s": "Servicios públicos", "p": 40.46, "a": 49.21, "fa": "2026-06-29", "da": -17.8, "m": 35.13, "dm": 15.2, "r": -8.4, "sg": null, "x": "NYSE", "mc": 18967}, {"t": "CF", "n": "CF Industries", "s": "Materiales", "p": 116.77, "a": 141.96, "fa": "2026-03-30", "da": -17.7, "m": 87.89, "dm": 32.9, "r": 26.8, "sg": null, "x": "NYSE", "mc": 17558}, {"t": "PG", "n": "Procter & Gamble", "s": "Consumo básico", "p": 148.58, "a": 180.43, "fa": "2024-11-27", "da": -17.7, "m": 155.57, "dm": -4.5, "r": -1.2, "sg": "c", "x": "NYSE", "mc": 339228}, {"t": "VEEV", "n": "Veeva Systems", "s": "Salud", "p": 282.97, "a": 343.96, "fa": "2021-08-05", "da": -17.7, "m": 212.97, "dm": 32.9, "r": -5.6, "sg": null, "x": "NYSE", "mc": 45893}, {"t": "WTW", "n": "Willis Towers Watson", "s": "Finanzas", "p": 290.53, "a": 352.79, "fa": "2025-10-07", "da": -17.6, "m": 280.02, "dm": 3.8, "r": -16.8, "sg": "c", "x": "NASDAQ", "mc": 26757}, {"t": "LNT", "n": "Alliant Energy", "s": "Servicios públicos", "p": 64.98, "a": 78.81, "fa": "2026-07-07", "da": -17.5, "m": 59.44, "dm": 9.3, "r": -4.6, "sg": null, "x": "NASDAQ", "mc": 16669}, {"t": "ATO", "n": "Atmos Energy", "s": "Servicios públicos", "p": 159.04, "a": 192.51, "fa": "2026-04-09", "da": -17.4, "m": 141.19, "dm": 12.6, "r": -8.2, "sg": null, "x": "NYSE", "mc": 26709}, {"t": "APD", "n": "Air Products", "s": "Materiales", "p": 282.02, "a": 341.14, "fa": "2025-02-04", "da": -17.3, "m": 281.98, "dm": 0.0, "r": 4.1, "sg": "c", "x": "NYSE", "mc": 62229}, {"t": "STLD", "n": "Steel Dynamics", "s": "Materiales", "p": 239.21, "a": 288.74, "fa": "2026-06-15", "da": -17.2, "m": 143.27, "dm": 67.0, "r": 68.9, "sg": null, "x": "NASDAQ", "mc": 34548}, {"t": "BAC", "n": "Bank of America", "s": "Finanzas", "p": 54.05, "a": 65.23, "fa": "2026-08-17", "da": -17.1, "m": 42.09, "dm": 28.4, "r": 7.3, "sg": null, "x": "NYSE", "mc": 377608}, {"t": "COR", "n": "Cencora", "s": "Salud", "p": 313.52, "a": 377.54, "fa": "2025-11-25", "da": -17.0, "m": 250.7, "dm": 25.1, "r": 2.7, "sg": null, "x": "NYSE", "mc": 60097}, {"t": "CHD", "n": "Church & Dwight", "s": "Consumo básico", "p": 96.61, "a": 116.46, "fa": "2025-03-10", "da": -17.0, "m": 96.72, "dm": -0.1, "r": 8.7, "sg": "c", "x": "NYSE", "mc": 22691}, {"t": "GD", "n": "General Dynamics", "s": "Industria", "p": 332.14, "a": 400.0, "fa": "2026-07-29", "da": -17.0, "m": 287.53, "dm": 15.5, "r": -4.1, "sg": null, "x": "NYSE", "mc": 89749}, {"t": "J", "n": "Jacobs Solutions", "s": "Industria", "p": 139.88, "a": 168.44, "fa": "2025-10-24", "da": -17.0, "m": 122.86, "dm": 13.8, "r": -9.8, "sg": null, "x": "NYSE", "mc": 16230}, {"t": "MCO", "n": "Moody's Corporation", "s": "Finanzas", "p": 453.78, "a": 546.88, "fa": "2026-01-15", "da": -17.0, "m": 423.48, "dm": 7.2, "r": -6.1, "sg": null, "x": "NYSE", "mc": 77620}, {"t": "FDX", "n": "FedEx", "s": "Industria", "p": 287.45, "a": 345.37, "fa": "2026-06-15", "da": -16.8, "m": 221.37, "dm": 29.8, "r": 44.4, "sg": null, "x": "NYSE", "mc": 68429}, {"t": "RSG", "n": "Republic Services", "s": "Industria", "p": 215.37, "a": 258.75, "fa": "2025-06-03", "da": -16.8, "m": 193.9, "dm": 11.1, "r": -3.5, "sg": null, "x": "NYSE", "mc": 65171}, {"t": "CINF", "n": "Cincinnati Financial", "s": "Finanzas", "p": 162.28, "a": 194.81, "fa": "2026-07-07", "da": -16.7, "m": 135.12, "dm": 20.1, "r": -1.8, "sg": null, "x": "NASDAQ", "mc": 24885}, {"t": "WFC", "n": "Wells Fargo", "s": "Finanzas", "p": 81.41, "a": 97.76, "fa": "2026-01-05", "da": -16.7, "m": 64.79, "dm": 25.6, "r": 0.9, "sg": null, "x": "NYSE", "mc": 246275}, {"t": "FERG", "n": "Ferguson Enterprises", "s": "Industria", "p": 226.52, "a": 271.64, "fa": "2026-02-12", "da": -16.6, "m": 196.5, "dm": 15.3, "r": -3.4, "sg": null, "x": "NYSE", "mc": 43126}, {"t": "ADM", "n": "Archer Daniels Midland", "s": "Consumo básico", "p": 82.74, "a": 98.88, "fa": "2022-04-21", "da": -16.3, "m": 66.38, "dm": 24.6, "r": 32.5, "sg": null, "x": "NYSE", "mc": 39747}, {"t": "SYY", "n": "Sysco", "s": "Consumo básico", "p": 77.04, "a": 91.85, "fa": "2026-02-17", "da": -16.1, "m": 76.08, "dm": 1.3, "r": -4.7, "sg": null, "x": "NYSE", "mc": 37573}, {"t": "WM", "n": "Waste Management", "s": "Industria", "p": 208.26, "a": 248.13, "fa": "2026-03-06", "da": -16.1, "m": 202.48, "dm": 2.9, "r": -4.3, "sg": "c", "x": "NYSE", "mc": 82605}, {"t": "VLTO", "n": "Veralto", "s": "Industria", "p": 96.61, "a": 115.0, "fa": "2024-10-24", "da": -16.0, "m": null, "dm": null, "r": -8.9, "sg": null, "x": "NYSE", "mc": 23543}, {"t": "SO", "n": "Southern Company", "s": "Servicios públicos", "p": 84.87, "a": 100.84, "fa": "2025-10-16", "da": -15.8, "m": 82.2, "dm": 3.3, "r": -11.1, "sg": "c", "x": "NYSE", "mc": 96389}, {"t": "AMP", "n": "Ameriprise Financial", "s": "Finanzas", "p": 492.24, "a": 582.05, "fa": "2025-01-30", "da": -15.4, "m": 438.82, "dm": 12.2, "r": -0.3, "sg": null, "x": "NYSE", "mc": 44494}, {"t": "DD", "n": "DuPont", "s": "Industria", "p": 133.71, "a": 157.98, "fa": "2026-02-12", "da": -15.4, "m": 103.83, "dm": 28.8, "r": 31.8, "sg": null, "x": "NYSE", "mc": 17649}, {"t": "SPG", "n": "Simon Property Group", "s": "Inmobiliario", "p": 201.76, "a": 238.5, "fa": "2026-07-29", "da": -15.4, "m": 159.62, "dm": 26.4, "r": 12.6, "sg": null, "x": "NYSE", "mc": 65163}, {"t": "ALLE", "n": "Allegion", "s": "Industria", "p": 155.09, "a": 183.11, "fa": "2026-02-12", "da": -15.3, "m": 134.13, "dm": 15.6, "r": -12.6, "sg": null, "x": "NYSE", "mc": 13068}, {"t": "SCHW", "n": "Charles Schwab Corporation", "s": "Finanzas", "p": 97.02, "a": 114.53, "fa": "2026-08-24", "da": -15.3, "m": 78.26, "dm": 24.0, "r": 3.2, "sg": null, "x": "NYSE", "mc": 169406}, {"t": "CFG", "n": "Citizens Financial Group", "s": "Finanzas", "p": 63.89, "a": 75.33, "fa": "2026-08-17", "da": -15.2, "m": 44.08, "dm": 44.9, "r": 18.3, "sg": null, "x": "NYSE", "mc": 27086}, {"t": "MU", "n": "Micron Technology", "s": "Tecnología", "p": 1063.7, "a": 1255.0, "fa": "2026-06-25", "da": -15.2, "m": 226.85, "dm": 368.9, "r": 457.0, "sg": null, "x": "NASDAQ", "mc": 1201629}, {"t": "PNC", "n": "PNC Financial Services", "s": "Finanzas", "p": 219.63, "a": 258.96, "fa": "2026-08-17", "da": -15.2, "m": 176.38, "dm": 24.5, "r": 12.3, "sg": null, "x": "NYSE", "mc": 87879}, {"t": "GOOGL", "n": "Alphabet Inc. (Class A)", "s": "Comunicaciones", "p": 346.89, "a": 408.61, "fa": "2026-05-18", "da": -15.1, "m": 199.27, "dm": 74.1, "r": 38.5, "sg": null, "x": "NASDAQ", "mc": 4237328}, {"t": "GOOG", "n": "Alphabet Inc. (Class C)", "s": "Comunicaciones", "p": 343.57, "a": 404.47, "fa": "2026-05-18", "da": -15.1, "m": 199.81, "dm": 71.9, "r": 36.6, "sg": null, "x": "NASDAQ", "mc": 4205041}, {"t": "CNP", "n": "CenterPoint Energy", "s": "Servicios públicos", "p": 38.44, "a": 45.26, "fa": "2026-07-28", "da": -15.1, "m": 33.63, "dm": 14.3, "r": -2.6, "sg": null, "x": "NYSE", "mc": 24867}, {"t": "COST", "n": "Costco", "s": "Consumo básico", "p": 931.97, "a": 1096.5, "fa": "2026-05-19", "da": -15.0, "m": 807.54, "dm": 15.4, "r": 2.3, "sg": null, "x": "NASDAQ", "mc": 409562}, {"t": "AEE", "n": "Ameren", "s": "Servicios públicos", "p": 100.85, "a": 118.32, "fa": "2026-06-26", "da": -14.8, "m": 91.02, "dm": 10.8, "r": -3.8, "sg": null, "x": "NYSE", "mc": 27601}, {"t": "BE", "n": "Bloom Energy", "s": "Industria", "p": 299.38, "a": 351.28, "fa": "2026-06-25", "da": -14.8, "m": 64.56, "dm": 363.7, "r": 244.2, "sg": null, "x": "NYSE", "mc": 84426}, {"t": "DUK", "n": "Duke Energy", "s": "Servicios públicos", "p": 114.69, "a": 134.49, "fa": "2026-03-17", "da": -14.7, "m": 109.65, "dm": 4.6, "r": -7.8, "sg": "c", "x": "NYSE", "mc": 88761}, {"t": "MTB", "n": "M&T Bank", "s": "Finanzas", "p": 218.43, "a": 255.95, "fa": "2026-08-17", "da": -14.7, "m": 173.51, "dm": 25.9, "r": 15.0, "sg": null, "x": "NYSE", "mc": 31520}, {"t": "XEL", "n": "Xcel Energy", "s": "Servicios públicos", "p": 71.94, "a": 84.23, "fa": "2026-02-26", "da": -14.6, "m": 67.85, "dm": 6.0, "r": -11.2, "sg": null, "x": "NASDAQ", "mc": 44655}, {"t": "FANG", "n": "Diamondback Energy", "s": "Energía", "p": 185.43, "a": 216.9, "fa": "2026-08-20", "da": -14.5, "m": 164.08, "dm": 13.0, "r": 24.4, "sg": null, "x": "NASDAQ", "mc": 51547}, {"t": "WEC", "n": "WEC Energy Group", "s": "Servicios públicos", "p": 102.56, "a": 119.91, "fa": "2026-07-07", "da": -14.5, "m": 97.68, "dm": 5.0, "r": -10.5, "sg": "c", "x": "NYSE", "mc": 33009}, {"t": "CTAS", "n": "Cintas", "s": "Industria", "p": 196.35, "a": 229.24, "fa": "2025-06-06", "da": -14.3, "m": 172.42, "dm": 13.9, "r": -1.3, "sg": null, "x": "NASDAQ", "mc": 78066}, {"t": "MNST", "n": "Monster Beverage", "s": "Consumo básico", "p": 43.0, "a": 50.17, "fa": "2026-07-17", "da": -14.3, "m": 31.19, "dm": 37.9, "r": 28.2, "sg": null, "x": "NASDAQ", "mc": 127858}, {"t": "AEP", "n": "American Electric Power", "s": "Servicios públicos", "p": 120.84, "a": 140.58, "fa": "2026-07-07", "da": -14.0, "m": 101.37, "dm": 19.2, "r": 4.5, "sg": null, "x": "NASDAQ", "mc": 65181}, {"t": "MPWR", "n": "Monolithic Power Systems", "s": "Tecnología", "p": 1478.75, "a": 1714.09, "fa": "2026-05-26", "da": -13.7, "m": 791.55, "dm": 86.8, "r": 52.7, "sg": null, "x": "NASDAQ", "mc": 72726}, {"t": "NEM", "n": "Newmont", "s": "Materiales", "p": 116.82, "a": 135.29, "fa": "2026-08-25", "da": -13.7, "m": 62.77, "dm": 86.1, "r": 32.0, "sg": null, "x": "NYSE", "mc": 122039}, {"t": "HUBB", "n": "Hubbell Incorporated", "s": "Industria", "p": 488.35, "a": 565.5, "fa": "2026-04-23", "da": -13.6, "m": 387.18, "dm": 26.1, "r": 18.2, "sg": null, "x": "NYSE", "mc": 25394}, {"t": "USB", "n": "U.S. Bancorp", "s": "Finanzas", "p": 57.08, "a": 66.08, "fa": "2026-08-17", "da": -13.6, "m": 45.72, "dm": 24.8, "r": 19.6, "sg": null, "x": "NYSE", "mc": 89230}, {"t": "ETR", "n": "Entergy", "s": "Servicios públicos", "p": 102.51, "a": 118.45, "fa": "2026-05-01", "da": -13.5, "m": 73.92, "dm": 38.7, "r": 5.2, "sg": null, "x": "NYSE", "mc": 47046}, {"t": "CDNS", "n": "Cadence Design Systems", "s": "Tecnología", "p": 360.79, "a": 416.69, "fa": "2026-06-02", "da": -13.4, "m": 283.88, "dm": 27.1, "r": 2.1, "sg": null, "x": "NASDAQ", "mc": 97346}, {"t": "HIG", "n": "Hartford (The)", "s": "Finanzas", "p": 126.55, "a": 146.07, "fa": "2026-07-30", "da": -13.4, "m": 107.51, "dm": 17.7, "r": -4.5, "sg": null, "x": "NYSE", "mc": 34187}, {"t": "RL", "n": "Ralph Lauren Corporation", "s": "Consumo discrecional", "p": 365.21, "a": 421.6, "fa": "2026-06-15", "da": -13.4, "m": 228.65, "dm": 59.7, "r": 13.7, "sg": null, "x": "NYSE", "mc": 21780}, {"t": "BNY", "n": "BNY Mellon", "s": "Finanzas", "p": 143.82, "a": 165.84, "fa": "2026-09-04", "da": -13.3, "m": 82.2, "dm": 75.0, "r": 35.1, "sg": null, "x": "NYSE", "mc": 97535}, {"t": "NTRS", "n": "Northern Trust", "s": "Finanzas", "p": 169.76, "a": 195.78, "fa": "2026-08-13", "da": -13.3, "m": 109.25, "dm": 55.4, "r": 28.4, "sg": null, "x": "NASDAQ", "mc": 31225}, {"t": "IRM", "n": "Iron Mountain", "s": "Inmobiliario", "p": 116.86, "a": 134.68, "fa": "2026-06-24", "da": -13.2, "m": 88.6, "dm": 31.9, "r": 9.9, "sg": null, "x": "NYSE", "mc": 33441}, {"t": "ROST", "n": "Ross Stores", "s": "Consumo discrecional", "p": 223.16, "a": 257.0, "fa": "2026-08-03", "da": -13.2, "m": 152.44, "dm": 46.4, "r": 46.6, "sg": null, "x": "NASDAQ", "mc": 72315}, {"t": "AFL", "n": "Aflac", "s": "Finanzas", "p": 113.46, "a": 130.22, "fa": "2026-07-29", "da": -12.9, "m": 95.96, "dm": 18.2, "r": 0.3, "sg": null, "x": "NYSE", "mc": 56341}, {"t": "MRVL", "n": "Marvell Technology", "s": "Tecnología", "p": 287.24, "a": 329.88, "fa": "2026-06-18", "da": -12.9, "m": 90.02, "dm": 219.1, "r": 223.0, "sg": null, "x": "NASDAQ", "mc": 237859}, {"t": "EME", "n": "Emcor", "s": "Industria", "p": 831.19, "a": 951.96, "fa": "2026-05-06", "da": -12.7, "m": 446.28, "dm": 86.3, "r": 24.1, "sg": null, "x": "NYSE", "mc": 34370}, {"t": "GL", "n": "Globe Life", "s": "Finanzas", "p": 167.26, "a": 191.55, "fa": "2026-07-17", "da": -12.7, "m": 123.62, "dm": 35.3, "r": 24.8, "sg": null, "x": "NYSE", "mc": 12751}, {"t": "PRU", "n": "Prudential Financial", "s": "Finanzas", "p": 114.0, "a": 130.55, "fa": "2024-11-27", "da": -12.7, "m": 106.01, "dm": 7.5, "r": 10.4, "sg": null, "x": "NYSE", "mc": 39151}, {"t": "UNP", "n": "Union Pacific Corporation", "s": "Industria", "p": 275.95, "a": 315.99, "fa": "2026-07-23", "da": -12.7, "m": 234.38, "dm": 17.7, "r": 16.2, "sg": null, "x": "NYSE", "mc": 164595}, {"t": "GEV", "n": "GE Vernova", "s": "Industria", "p": 1045.35, "a": 1195.94, "fa": "2026-07-06", "da": -12.6, "m": null, "dm": null, "r": 73.3, "sg": null, "x": "NYSE", "mc": 263670}, {"t": "DAL", "n": "Delta Air Lines", "s": "Industria", "p": 83.68, "a": 95.68, "fa": "2026-07-02", "da": -12.5, "m": 53.36, "dm": 56.8, "r": 43.6, "sg": null, "x": "NYSE", "mc": 54635}, {"t": "SNA", "n": "Snap-on", "s": "Industria", "p": 370.32, "a": 423.02, "fa": "2026-08-06", "da": -12.5, "m": 311.77, "dm": 18.8, "r": 8.7, "sg": null, "x": "NYSE", "mc": 19005}, {"t": "MAR", "n": "Marriott International", "s": "Consumo discrecional", "p": 360.59, "a": 410.98, "fa": "2026-06-15", "da": -12.3, "m": 257.16, "dm": 40.2, "r": 32.6, "sg": null, "x": "NASDAQ", "mc": 92804}, {"t": "RJF", "n": "Raymond James Financial", "s": "Finanzas", "p": 160.19, "a": 182.73, "fa": "2026-08-06", "da": -12.3, "m": 134.77, "dm": 18.9, "r": -4.4, "sg": null, "x": "NYSE", "mc": 30932}, {"t": "DRI", "n": "Darden Restaurants", "s": "Consumo discrecional", "p": 201.76, "a": 229.76, "fa": "2026-08-13", "da": -12.2, "m": 176.75, "dm": 14.2, "r": 4.4, "sg": null, "x": "NYSE", "mc": 22597}, {"t": "L", "n": "Loews Corporation", "s": "Finanzas", "p": 106.27, "a": 121.01, "fa": "2026-07-28", "da": -12.2, "m": 83.55, "dm": 27.2, "r": 3.8, "sg": null, "x": "NYSE", "mc": 21602}, {"t": "NSC", "n": "Norfolk Southern", "s": "Industria", "p": 315.27, "a": 358.6, "fa": "2026-07-23", "da": -12.1, "m": 255.8, "dm": 23.2, "r": 5.2, "sg": null, "x": "NYSE", "mc": 71028}, {"t": "PNW", "n": "Pinnacle West Capital", "s": "Servicios públicos", "p": 97.73, "a": 111.16, "fa": "2026-07-17", "da": -12.1, "m": 85.88, "dm": 13.8, "r": 7.6, "sg": null, "x": "NYSE", "mc": 11630}, {"t": "TEL", "n": "TE Connectivity", "s": "Tecnología", "p": 221.93, "a": 252.56, "fa": "2026-04-21", "da": -12.1, "m": 164.73, "dm": 34.7, "r": -0.5, "sg": null, "x": "NYSE", "mc": 63383}, {"t": "EG", "n": "Everest Group", "s": "Finanzas", "p": 367.86, "a": 417.92, "fa": "2023-11-24", "da": -12.0, "m": 358.95, "dm": 2.5, "r": 1.7, "sg": null, "x": "NYSE", "mc": 14064}, {"t": "PTC", "n": "PTC Inc.", "s": "Tecnología", "p": 193.24, "a": 219.69, "fa": "2025-07-31", "da": -12.0, "m": 161.85, "dm": 19.4, "r": -5.7, "sg": null, "x": "NASDAQ", "mc": 20861}, {"t": "NWS", "n": "News Corp (Class B)", "s": "Comunicaciones", "p": 31.5, "a": 35.76, "fa": "2026-08-27", "da": -11.9, "m": 27.2, "dm": 15.8, "r": -1.0, "sg": null, "x": "NASDAQ", "mc": 17294}, {"t": "FIX", "n": "Comfort Systems USA", "s": "Industria", "p": 1828.57, "a": 2073.99, "fa": "2026-05-14", "da": -11.8, "m": 615.87, "dm": 196.9, "r": 121.5, "sg": null, "x": "NYSE", "mc": 60290}, {"t": "WELL", "n": "Welltower", "s": "Inmobiliario", "p": 224.99, "a": 255.2, "fa": "2026-07-28", "da": -11.8, "m": 136.14, "dm": 65.3, "r": 29.2, "sg": null, "x": "NYSE", "mc": 161562}, {"t": "FTV", "n": "Fortive", "s": "Industria", "p": 57.98, "a": 65.64, "fa": "2024-03-22", "da": -11.7, "m": 55.22, "dm": 5.0, "r": 15.9, "sg": null, "x": "NYSE", "mc": 17330}, {"t": "TER", "n": "Teradyne", "s": "Tecnología", "p": 431.03, "a": 487.91, "fa": "2026-06-30", "da": -11.7, "m": 160.22, "dm": 169.0, "r": 191.5, "sg": null, "x": "NASDAQ", "mc": 69498}, {"t": "AIZ", "n": "Assurant", "s": "Finanzas", "p": 268.75, "a": 303.94, "fa": "2026-08-06", "da": -11.6, "m": 191.03, "dm": 40.7, "r": 21.2, "sg": null, "x": "NYSE", "mc": 13140}, {"t": "BLK", "n": "BlackRock", "s": "Finanzas", "p": 1079.87, "a": 1219.94, "fa": "2025-10-15", "da": -11.5, "m": 903.15, "dm": 19.6, "r": -8.4, "sg": null, "x": "NYSE", "mc": 165160}, {"t": "CSX", "n": "CSX Corporation", "s": "Industria", "p": 47.51, "a": 53.6, "fa": "2026-07-27", "da": -11.4, "m": 35.45, "dm": 34.0, "r": 31.1, "sg": null, "x": "NASDAQ", "mc": 87863}, {"t": "DLR", "n": "Digital Realty", "s": "Inmobiliario", "p": 184.33, "a": 208.14, "fa": "2026-04-24", "da": -11.4, "m": 151.92, "dm": 21.3, "r": 4.2, "sg": null, "x": "NYSE", "mc": 66558}, {"t": "PKG", "n": "Packaging Corporation of America", "s": "Materiales", "p": 230.45, "a": 259.98, "fa": "2026-08-13", "da": -11.4, "m": 190.06, "dm": 21.2, "r": 8.2, "sg": null, "x": "NYSE", "mc": 20431}, {"t": "WRB", "n": "W. R. Berkley Corporation", "s": "Finanzas", "p": 69.96, "a": 78.96, "fa": "2025-11-21", "da": -11.4, "m": 58.6, "dm": 19.4, "r": -9.1, "sg": null, "x": "NYSE", "mc": 25901}, {"t": "ITW", "n": "Illinois Tool Works", "s": "Industria", "p": 268.88, "a": 303.16, "fa": "2026-02-12", "da": -11.3, "m": 252.21, "dm": 6.6, "r": 3.9, "sg": null, "x": "NYSE", "mc": 75241}, {"t": "EBAY", "n": "eBay Inc.", "s": "Consumo discrecional", "p": 105.93, "a": 119.31, "fa": "2026-05-20", "da": -11.2, "m": 67.53, "dm": 56.9, "r": 15.4, "sg": null, "x": "NASDAQ", "mc": 47677}, {"t": "GRMN", "n": "Garmin", "s": "Consumo discrecional", "p": 279.53, "a": 314.28, "fa": "2026-08-10", "da": -11.1, "m": 178.68, "dm": 56.4, "r": 8.5, "sg": null, "x": "NYSE", "mc": 55063}, {"t": "GM", "n": "General Motors", "s": "Consumo discrecional", "p": 81.64, "a": 91.85, "fa": "2026-07-29", "da": -11.1, "m": 52.46, "dm": 55.6, "r": 40.3, "sg": null, "x": "NYSE", "mc": 70398}, {"t": "AMZN", "n": "Amazon", "s": "Consumo discrecional", "p": 255.58, "a": 287.2, "fa": "2026-08-03", "da": -11.0, "m": 187.26, "dm": 36.5, "r": 15.7, "sg": null, "x": "NASDAQ", "mc": 2711679}, {"t": "CSCO", "n": "Cisco", "s": "Tecnología", "p": 116.14, "a": 130.37, "fa": "2026-06-04", "da": -10.9, "m": 64.73, "dm": 79.4, "r": 68.5, "sg": null, "x": "NASDAQ", "mc": 444803}, {"t": "TXN", "n": "Texas Instruments", "s": "Tecnología", "p": 298.29, "a": 334.03, "fa": "2026-06-22", "da": -10.7, "m": 194.75, "dm": 53.2, "r": 64.1, "sg": null, "x": "NASDAQ", "mc": 269317}, {"t": "MTD", "n": "Mettler Toledo", "s": "Salud", "p": 1535.35, "a": 1714.75, "fa": "2021-12-30", "da": -10.5, "m": 1303.03, "dm": 17.8, "r": 14.1, "sg": null, "x": "NYSE", "mc": 30889}, {"t": "TDY", "n": "Teledyne Technologies", "s": "Tecnología", "p": 624.09, "a": 697.67, "fa": "2026-08-10", "da": -10.5, "m": 485.63, "dm": 28.5, "r": 5.1, "sg": null, "x": "NYSE", "mc": 28724}, {"t": "VRTX", "n": "Vertex Pharmaceuticals", "s": "Salud", "p": 501.19, "a": 560.25, "fa": "2026-09-03", "da": -10.5, "m": 422.34, "dm": 18.7, "r": 24.4, "sg": null, "x": "NASDAQ", "mc": 127618}, {"t": "AMGN", "n": "Amgen", "s": "Salud", "p": 400.54, "a": 447.03, "fa": "2026-08-25", "da": -10.4, "m": 300.13, "dm": 33.5, "r": 36.2, "sg": null, "x": "NASDAQ", "mc": 217864}, {"t": "LLY", "n": "Lilly (Eli)", "s": "Salud", "p": 1159.02, "a": 1292.65, "fa": "2026-08-19", "da": -10.3, "m": 772.84, "dm": 50.0, "r": 37.2, "sg": null, "x": "NYSE", "mc": 1076084}, {"t": "LIN", "n": "Linde plc", "s": "Materiales", "p": 491.55, "a": 548.2, "fa": "2026-07-07", "da": -10.3, "m": 434.97, "dm": 13.0, "r": 4.9, "sg": null, "x": "NASDAQ", "mc": 222368}, {"t": "STT", "n": "State Street Corporation", "s": "Finanzas", "p": 175.71, "a": 195.93, "fa": "2026-08-27", "da": -10.3, "m": 100.98, "dm": 74.0, "r": 50.3, "sg": null, "x": "NYSE", "mc": 48449}, {"t": "MSI", "n": "Motorola Solutions", "s": "Tecnología", "p": 455.85, "a": 507.82, "fa": "2024-11-11", "da": -10.2, "m": 381.48, "dm": 19.5, "r": -0.3, "sg": null, "x": "NYSE", "mc": 75361}, {"t": "ED", "n": "Consolidated Edison", "s": "Servicios públicos", "p": 104.52, "a": 116.23, "fa": "2026-03-17", "da": -10.1, "m": 98.61, "dm": 6.0, "r": 5.2, "sg": null, "x": "NYSE", "mc": 38233}, {"t": "MRK", "n": "Merck & Co.", "s": "Salud", "p": 141.02, "a": 156.92, "fa": "2026-08-25", "da": -10.1, "m": 108.94, "dm": 29.4, "r": 58.8, "sg": null, "x": "NYSE", "mc": 344269}, {"t": "NWSA", "n": "News Corp (Class A)", "s": "Comunicaciones", "p": 28.46, "a": 31.66, "fa": "2026-08-27", "da": -10.1, "m": 24.99, "dm": 13.9, "r": 1.4, "sg": null, "x": "NASDAQ", "mc": 15646}, {"t": "NUE", "n": "Nucor", "s": "Materiales", "p": 251.85, "a": 280.11, "fa": "2026-08-05", "da": -10.1, "m": 164.66, "dm": 53.0, "r": 85.7, "sg": null, "x": "NYSE", "mc": 57039}, {"t": "CAH", "n": "Cardinal Health", "s": "Salud", "p": 232.58, "a": 258.3, "fa": "2026-08-11", "da": -10.0, "m": 137.26, "dm": 69.4, "r": 49.9, "sg": null, "x": "NYSE", "mc": 53981}, {"t": "PH", "n": "Parker Hannifin", "s": "Industria", "p": 989.43, "a": 1099.94, "fa": "2026-08-06", "da": -10.0, "m": 628.94, "dm": 57.3, "r": 29.6, "sg": null, "x": "NYSE", "mc": 123045}, {"t": "HLT", "n": "Hilton Worldwide", "s": "Consumo discrecional", "p": 322.42, "a": 358.0, "fa": "2026-06-17", "da": -9.9, "m": 229.16, "dm": 40.7, "r": 23.9, "sg": null, "x": "NYSE", "mc": 71148}, {"t": "LH", "n": "Labcorp", "s": "Salud", "p": 308.14, "a": 341.8, "fa": "2026-08-27", "da": -9.8, "m": 237.27, "dm": 29.9, "r": 12.0, "sg": null, "x": "NYSE", "mc": 25032}, {"t": "EVRG", "n": "Evergy", "s": "Servicios públicos", "p": 79.99, "a": 88.62, "fa": "2026-07-07", "da": -9.7, "m": 65.25, "dm": 22.6, "r": 3.2, "sg": null, "x": "NASDAQ", "mc": 18236}, {"t": "GWW", "n": "W. W. Grainger", "s": "Industria", "p": 1281.57, "a": 1419.91, "fa": "2026-07-17", "da": -9.7, "m": 964.14, "dm": 32.9, "r": 33.7, "sg": null, "x": "NYSE", "mc": 60611}, {"t": "JPM", "n": "JPMorgan Chase", "s": "Finanzas", "p": 331.37, "a": 366.5, "fa": "2026-08-13", "da": -9.6, "m": 231.58, "dm": 43.1, "r": 7.2, "sg": null, "x": "NYSE", "mc": 883528}, {"t": "TRV", "n": "Travelers Companies (The)", "s": "Finanzas", "p": 360.32, "a": 398.7, "fa": "2026-07-28", "da": -9.6, "m": 242.0, "dm": 48.9, "r": 27.4, "sg": null, "x": "NYSE", "mc": 75233}, {"t": "JNJ", "n": "Johnson & Johnson", "s": "Salud", "p": 254.5, "a": 281.07, "fa": "2026-09-02", "da": -9.5, "m": 178.93, "dm": 42.2, "r": 35.3, "sg": null, "x": "NYSE", "mc": 609536}, {"t": "SOLV", "n": "Solventum", "s": "Salud", "p": 87.03, "a": 96.05, "fa": "2024-03-26", "da": -9.4, "m": null, "dm": null, "r": 18.0, "sg": null, "x": "NYSE", "mc": 14985}, {"t": "WMB", "n": "Williams Companies", "s": "Energía", "p": 72.53, "a": 80.08, "fa": "2026-05-20", "da": -9.4, "m": 50.33, "dm": 44.1, "r": 14.1, "sg": null, "x": "NYSE", "mc": 86612}, {"t": "ECL", "n": "Ecolab", "s": "Materiales", "p": 280.76, "a": 309.27, "fa": "2026-02-24", "da": -9.2, "m": 232.21, "dm": 20.9, "r": 0.4, "sg": null, "x": "NYSE", "mc": 77671}, {"t": "FCX", "n": "Freeport-McMoRan", "s": "Materiales", "p": 72.97, "a": 80.24, "fa": "2026-08-26", "da": -9.1, "m": 46.27, "dm": 57.7, "r": 81.0, "sg": "g", "x": "NYSE", "mc": 104255}, {"t": "PFG", "n": "Principal Financial Group", "s": "Finanzas", "p": 110.38, "a": 121.18, "fa": "2026-09-03", "da": -8.9, "m": 84.51, "dm": 30.6, "r": 31.1, "sg": null, "x": "NASDAQ", "mc": 23772}, {"t": "GILD", "n": "Gilead Sciences", "s": "Salud", "p": 143.5, "a": 157.29, "fa": "2026-02-11", "da": -8.8, "m": 99.14, "dm": 44.7, "r": 26.3, "sg": null, "x": "NASDAQ", "mc": 179335}, {"t": "HSIC", "n": "Henry Schein", "s": "Salud", "p": 84.64, "a": 92.68, "fa": "2022-04-14", "da": -8.7, "m": 74.69, "dm": 13.3, "r": 28.2, "sg": null, "x": "NASDAQ", "mc": 9387}, {"t": "PWR", "n": "Quanta Services", "s": "Industria", "p": 720.07, "a": 788.75, "fa": "2026-05-06", "da": -8.7, "m": 338.89, "dm": 112.5, "r": 68.3, "sg": "g", "x": "NYSE", "mc": 100688}, {"t": "CB", "n": "Chubb Limited", "s": "Finanzas", "p": 334.27, "a": 365.91, "fa": "2026-07-29", "da": -8.6, "m": 267.51, "dm": 25.0, "r": 16.7, "sg": null, "x": "NYSE", "mc": 127503}, {"t": "LYV", "n": "Live Nation Entertainment", "s": "Comunicaciones", "p": 172.99, "a": 189.25, "fa": "2026-08-14", "da": -8.6, "m": 120.22, "dm": 43.9, "r": 10.9, "sg": null, "x": "NYSE", "mc": 40216}, {"t": "PM", "n": "Philip Morris International", "s": "Consumo básico", "p": 190.4, "a": 207.76, "fa": "2026-07-28", "da": -8.4, "m": 132.71, "dm": 43.5, "r": 24.0, "sg": null, "x": "NYSE", "mc": 295404}, {"t": "DGX", "n": "Quest Diagnostics", "s": "Salud", "p": 227.86, "a": 248.84, "fa": "2026-09-21", "da": -8.4, "m": 162.95, "dm": 39.8, "r": 27.7, "sg": null, "x": "NYSE", "mc": 25631}, {"t": "COP", "n": "ConocoPhillips", "s": "Energía", "p": 129.93, "a": 141.62, "fa": "2026-09-15", "da": -8.3, "m": 108.54, "dm": 19.7, "r": 36.9, "sg": null, "x": "NYSE", "mc": 154252}, {"t": "NDAQ", "n": "Nasdaq, Inc.", "s": "Finanzas", "p": 93.32, "a": 101.79, "fa": "2026-01-16", "da": -8.3, "m": 72.85, "dm": 28.1, "r": 5.8, "sg": null, "x": "NASDAQ", "mc": 51532}, {"t": "MCK", "n": "McKesson Corporation", "s": "Salud", "p": 918.57, "a": 999.0, "fa": "2026-03-03", "da": -8.1, "m": 612.54, "dm": 50.0, "r": 23.9, "sg": null, "x": "NYSE", "mc": 106733}, {"t": "ROK", "n": "Rockwell Automation", "s": "Industria", "p": 457.46, "a": 497.36, "fa": "2026-06-30", "da": -8.0, "m": 322.52, "dm": 41.8, "r": 31.2, "sg": null, "x": "NYSE", "mc": 50650}, {"t": "IQV", "n": "IQVIA", "s": "Salud", "p": 263.19, "a": 285.61, "fa": "2021-12-30", "da": -7.8, "m": 206.98, "dm": 27.2, "r": 28.4, "sg": null, "x": "NYSE", "mc": 43798}, {"t": "EQIX", "n": "Equinix", "s": "Inmobiliario", "p": 1042.68, "a": 1128.68, "fa": "2026-04-24", "da": -7.6, "m": 841.72, "dm": 23.9, "r": 32.0, "sg": null, "x": "NASDAQ", "mc": 100985}, {"t": "URI", "n": "United Rentals", "s": "Industria", "p": 1091.05, "a": 1179.18, "fa": "2026-08-07", "da": -7.5, "m": 702.37, "dm": 55.3, "r": 10.5, "sg": null, "x": "NYSE", "mc": 66866}, {"t": "IBKR", "n": "Interactive Brokers", "s": "Finanzas", "p": 91.46, "a": 98.75, "fa": "2026-08-25", "da": -7.4, "m": 45.59, "dm": 100.6, "r": 31.4, "sg": null, "x": "NASDAQ", "mc": 40347}, {"t": "PLTR", "n": "Palantir Technologies", "s": "Tecnología", "p": 192.8, "a": 207.52, "fa": "2025-11-03", "da": -7.1, "m": 78.84, "dm": 144.6, "r": 7.4, "sg": null, "x": "NASDAQ", "mc": 454949}, {"t": "TRGP", "n": "Targa Resources", "s": "Energía", "p": 286.65, "a": 307.94, "fa": "2026-08-21", "da": -6.9, "m": 153.64, "dm": 86.6, "r": 76.3, "sg": "g", "x": "NYSE", "mc": 61627}, {"t": "BRK-B", "n": "Berkshire Hathaway", "s": "Finanzas", "p": 505.08, "a": 542.07, "fa": "2025-05-02", "da": -6.8, "m": 432.43, "dm": 16.8, "r": 1.0, "sg": null, "x": "NYSE", "mc": 1112555}, {"t": "ETN", "n": "Eaton Corporation", "s": "Industria", "p": 446.08, "a": 478.0, "fa": "2026-08-12", "da": -6.7, "m": 302.79, "dm": 47.3, "r": 17.4, "sg": null, "x": "NYSE", "mc": 168022}, {"t": "META", "n": "Meta Platforms", "s": "Comunicaciones", "p": 743.33, "a": 796.25, "fa": "2025-08-15", "da": -6.6, "m": 504.72, "dm": 47.3, "r": 3.9, "sg": null, "x": "NASDAQ", "mc": 1889995}, {"t": "VRSN", "n": "Verisign", "s": "Tecnología", "p": 292.12, "a": 312.48, "fa": "2026-05-22", "da": -6.5, "m": 228.03, "dm": 28.1, "r": 7.9, "sg": null, "x": "NASDAQ", "mc": 26391}, {"t": "KO", "n": "Coca-Cola Company (The)", "s": "Consumo básico", "p": 86.85, "a": 92.49, "fa": "2026-08-24", "da": -6.1, "m": 67.69, "dm": 28.3, "r": 31.4, "sg": null, "x": "NYSE", "mc": 372214}, {"t": "MA", "n": "Mastercard", "s": "Finanzas", "p": 564.85, "a": 601.77, "fa": "2025-08-22", "da": -6.1, "m": 482.46, "dm": 17.1, "r": -2.4, "sg": null, "x": "NYSE", "mc": 494586}, {"t": "CPAY", "n": "Corpay", "s": "Finanzas", "p": 401.94, "a": 427.46, "fa": "2026-09-03", "da": -6.0, "m": 298.86, "dm": 34.5, "r": 39.2, "sg": null, "x": "NYSE", "mc": 26377}, {"t": "XOM", "n": "ExxonMobil", "s": "Energía", "p": 165.77, "a": 176.41, "fa": "2026-03-30", "da": -6.0, "m": 119.13, "dm": 39.1, "r": 45.2, "sg": null, "x": "NYSE", "mc": 674354}, {"t": "EOG", "n": "EOG Resources", "s": "Energía", "p": 145.01, "a": 154.16, "fa": "2026-09-15", "da": -5.9, "m": 123.87, "dm": 17.1, "r": 31.3, "sg": null, "x": "NYSE", "mc": 75574}, {"t": "A", "n": "Agilent Technologies", "s": "Salud", "p": 169.52, "a": 179.57, "fa": "2021-09-03", "da": -5.6, "m": 131.94, "dm": 28.5, "r": 19.7, "sg": null, "x": "NYSE", "mc": 48292}, {"t": "ADI", "n": "Analog Devices", "s": "Tecnología", "p": 421.27, "a": 445.91, "fa": "2026-06-22", "da": -5.5, "m": 239.53, "dm": 75.9, "r": 73.7, "sg": "g", "x": "NASDAQ", "mc": 203081}, {"t": "DE", "n": "Deere & Company", "s": "Industria", "p": 681.47, "a": 721.22, "fa": "2026-09-23", "da": -5.5, "m": 458.63, "dm": 48.6, "r": 49.0, "sg": null, "x": "NYSE", "mc": 183938}, {"t": "TT", "n": "Trane Technologies", "s": "Industria", "p": 478.43, "a": 505.87, "fa": "2026-06-25", "da": -5.4, "m": 336.74, "dm": 42.1, "r": 12.6, "sg": null, "x": "NYSE", "mc": 103578}, {"t": "DDOG", "n": "Datadog", "s": "Tecnología", "p": 277.78, "a": 292.72, "fa": "2026-08-05", "da": -5.1, "m": 130.64, "dm": 112.6, "r": 76.5, "sg": "g", "x": "NASDAQ", "mc": 99254}, {"t": "TMO", "n": "Thermo Fisher Scientific", "s": "Salud", "p": 661.17, "a": 694.33, "fa": "2026-10-06", "da": -4.8, "m": 534.82, "dm": 23.6, "r": 21.6, "sg": null, "x": "NYSE", "mc": 250230}, {"t": "WSM", "n": "Williams-Sonoma, Inc.", "s": "Consumo discrecional", "p": 243.24, "a": 254.89, "fa": "2026-08-11", "da": -4.6, "m": 146.49, "dm": 66.0, "r": 24.0, "sg": null, "x": "NYSE", "mc": 28114}, {"t": "CVX", "n": "Chevron Corporation", "s": "Energía", "p": 208.36, "a": 217.78, "fa": "2026-09-15", "da": -4.3, "m": 162.14, "dm": 28.5, "r": 35.3, "sg": null, "x": "NYSE", "mc": 407937}, {"t": "WAT", "n": "Waters Corporation", "s": "Salud", "p": 434.97, "a": 454.49, "fa": "2026-10-06", "da": -4.3, "m": 333.37, "dm": 30.5, "r": 32.8, "sg": null, "x": "NYSE", "mc": 43241}, {"t": "MSFT", "n": "Microsoft", "s": "Tecnología", "p": 532.07, "a": 555.45, "fa": "2025-07-31", "da": -4.2, "m": 404.27, "dm": 31.6, "r": 0.7, "sg": null, "x": "NASDAQ", "mc": 3899748}, {"t": "V", "n": "Visa Inc.", "s": "Finanzas", "p": 369.94, "a": 385.57, "fa": "2026-08-26", "da": -4.1, "m": 295.5, "dm": 25.2, "r": 5.9, "sg": null, "x": "NYSE", "mc": 660581}, {"t": "WAB", "n": "Wabtec", "s": "Industria", "p": 294.18, "a": 306.64, "fa": "2026-07-29", "da": -4.1, "m": 177.03, "dm": 66.2, "r": 46.2, "sg": null, "x": "NYSE", "mc": 49298}, {"t": "AAPL", "n": "Apple Inc.", "s": "Tecnología", "p": 332.85, "a": 345.34, "fa": "2026-09-22", "da": -3.6, "m": 220.88, "dm": 50.7, "r": 29.7, "sg": null, "x": "NASDAQ", "mc": 4858257}, {"t": "DELL", "n": "Dell Technologies", "s": "Tecnología", "p": 574.2, "a": 595.51, "fa": "2026-09-18", "da": -3.6, "m": 140.5, "dm": 308.7, "r": 293.9, "sg": "g", "x": "NYSE", "mc": 351153}, {"t": "FAST", "n": "Fastenal", "s": "Industria", "p": 51.19, "a": 52.92, "fa": "2026-08-11", "da": -3.3, "m": 37.35, "dm": 37.1, "r": 7.1, "sg": null, "x": "NASDAQ", "mc": 58167}, {"t": "PANW", "n": "Palo Alto Networks", "s": "Tecnología", "p": 417.86, "a": 432.33, "fa": "2026-10-06", "da": -3.3, "m": 175.42, "dm": 138.2, "r": 96.6, "sg": "g", "x": "NASDAQ", "mc": 332730}, {"t": "IEX", "n": "IDEX Corporation", "s": "Industria", "p": 238.7, "a": 246.36, "fa": "2024-03-22", "da": -3.1, "m": 205.51, "dm": 16.1, "r": 42.9, "sg": null, "x": "NYSE", "mc": 17346}, {"t": "MET", "n": "MetLife", "s": "Finanzas", "p": 97.76, "a": 100.93, "fa": "2026-08-06", "da": -3.1, "m": 74.61, "dm": 31.0, "r": 18.7, "sg": null, "x": "NYSE", "mc": 61565}, {"t": "CRWD", "n": "CrowdStrike", "s": "Tecnología", "p": 279.26, "a": 286.99, "fa": "2026-10-06", "da": -2.7, "m": 92.22, "dm": 202.8, "r": 125.2, "sg": "g", "x": "NASDAQ", "mc": 279196}, {"t": "AME", "n": "Ametek", "s": "Industria", "p": 254.71, "a": 261.16, "fa": "2026-08-13", "da": -2.5, "m": 181.22, "dm": 40.6, "r": 39.2, "sg": null, "x": "NYSE", "mc": 57755}, {"t": "PSX", "n": "Phillips 66", "s": "Energía", "p": 270.94, "a": 277.12, "fa": "2026-09-18", "da": -2.2, "m": 136.85, "dm": 98.0, "r": 103.8, "sg": "g", "x": "NYSE", "mc": 107624}, {"t": "EMR", "n": "Emerson Electric", "s": "Industria", "p": 162.99, "a": 166.35, "fa": "2026-08-12", "da": -2.0, "m": 116.21, "dm": 40.3, "r": 20.9, "sg": null, "x": "NYSE", "mc": 90548}, {"t": "EXPD", "n": "Expeditors International", "s": "Industria", "p": 191.5, "a": 195.32, "fa": "2026-10-05", "da": -2.0, "m": 128.06, "dm": 49.5, "r": 54.8, "sg": "g", "x": "NYSE", "mc": 25234}, {"t": "FTNT", "n": "Fortinet", "s": "Tecnología", "p": 189.41, "a": 192.41, "fa": "2026-10-06", "da": -1.6, "m": 84.64, "dm": 123.8, "r": 119.3, "sg": "g", "x": "NASDAQ", "mc": 135099}, {"t": "NVDA", "n": "Nvidia", "s": "Tecnología", "p": 239.79, "a": 243.37, "fa": "2026-10-06", "da": -1.5, "m": 119.15, "dm": 101.3, "r": 29.2, "sg": null, "x": "NASDAQ", "mc": 5757490}, {"t": "NTAP", "n": "NetApp", "s": "Tecnología", "p": 228.69, "a": 231.9, "fa": "2026-10-02", "da": -1.4, "m": 106.65, "dm": 114.4, "r": 89.9, "sg": "g", "x": "NASDAQ", "mc": 43953}, {"t": "FFIV", "n": "F5, Inc.", "s": "Tecnología", "p": 466.33, "a": 472.0, "fa": "2026-10-06", "da": -1.2, "m": 238.87, "dm": 95.2, "r": 41.7, "sg": null, "x": "NASDAQ", "mc": 25965}, {"t": "KEYS", "n": "Keysight Technologies", "s": "Tecnología", "p": 385.38, "a": 389.93, "fa": "2026-10-06", "da": -1.2, "m": 188.13, "dm": 104.8, "r": 122.3, "sg": "g", "x": "NYSE", "mc": 65403}, {"t": "ANET", "n": "Arista Networks", "s": "Tecnología", "p": 213.27, "a": 214.89, "fa": "2026-08-05", "da": -0.8, "m": 95.89, "dm": 122.4, "r": 42.7, "sg": null, "x": "NYSE", "mc": 260947}, {"t": "P", "n": "Everpure", "s": "Tecnología", "p": 147.54, "a": 148.69, "fa": "2026-10-06", "da": -0.8, "m": 56.24, "dm": 162.4, "r": 63.3, "sg": "g", "x": "NYSE", "mc": 47945}, {"t": "MPC", "n": "Marathon Petroleum", "s": "Energía", "p": 434.17, "a": 437.67, "fa": "2026-10-05", "da": -0.8, "m": 178.87, "dm": 142.7, "r": 124.4, "sg": "g", "x": "NYSE", "mc": 121729}, {"t": "ABBV", "n": "AbbVie", "s": "Salud", "p": 267.48, "a": 269.39, "fa": "2026-09-23", "da": -0.7, "m": 187.52, "dm": 42.6, "r": 16.2, "sg": null, "x": "NYSE", "mc": 469629}, {"t": "AMD", "n": "Advanced Micro Devices", "s": "Tecnología", "p": 654.75, "a": 658.52, "fa": "2026-10-06", "da": -0.6, "m": 188.56, "dm": 247.2, "r": 221.4, "sg": "g", "x": "NASDAQ", "mc": 1031316}, {"t": "NDSN", "n": "Nordson Corporation", "s": "Industria", "p": 336.92, "a": 339.12, "fa": "2026-08-26", "da": -0.6, "m": 244.91, "dm": 37.6, "r": 43.9, "sg": null, "x": "NASDAQ", "mc": 18628}, {"t": "JCI", "n": "Johnson Controls", "s": "Industria", "p": 159.41, "a": 160.18, "fa": "2026-10-06", "da": -0.5, "m": 88.83, "dm": 79.5, "r": 45.5, "sg": null, "x": "NYSE", "mc": 95011}, {"t": "APH", "n": "Amphenol", "s": "Tecnología", "p": 89.6, "a": 89.93, "fa": "2026-10-06", "da": -0.4, "m": 41.97, "dm": 113.5, "r": 45.2, "sg": null, "x": "NYSE", "mc": 215205}, {"t": "HPE", "n": "Hewlett Packard Enterprise", "s": "Tecnología", "p": 70.77, "a": 71.08, "fa": "2026-10-06", "da": -0.4, "m": 22.57, "dm": 213.6, "r": 185.5, "sg": "g", "x": "NYSE", "mc": 90745}, {"t": "VLO", "n": "Valero Energy", "s": "Energía", "p": 420.83, "a": 422.4, "fa": "2026-10-06", "da": -0.4, "m": 165.57, "dm": 154.2, "r": 157.5, "sg": "g", "x": "NYSE", "mc": 120737}, {"t": "LITE", "n": "Lumentum", "s": "Tecnología", "p": 1126.47, "a": 1129.49, "fa": "2026-10-06", "da": -0.3, "m": 221.43, "dm": 408.7, "r": 601.4, "sg": "g", "x": "NASDAQ", "mc": 97923}];
+const IDX = {"p": 7826.52, "a": 7844.52, "fa": "2026-10-06", "da": -0.2, "m": 5686.75, "dm": 37.6, "r": 16.1, "sg": null};
+const R = {"cb": 5, "ca": 2, "cs": 26, "g12": 50, "gc": 10};
+const HOY = new Date();
+
+const $ = id => document.getElementById(id);
+const PATRON = {c: "En su promedio o debajo", g: "Subió fuerte"};
+const BANDAS = ["Muy frío", "Frío", "Fresco", "Templado", "Cálido", "Caluroso", "Muy caluroso"];
+const ICO = {
+  c: '<svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 12.5h13"/><circle cx="8" cy="8.6" r="3.1"/></svg>',
+  g: '<svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 2.5h11M8 14V6.2M4.8 9.4 8 6.2l3.2 3.2"/></svg>',
+  graf: '<svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 2.5v11h11M5 10.5l2.5-3 2.2 1.8 3.3-4.3"/></svg>',
+  ext: '<svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 7.5 8.5M11.5 9.5v4h-9v-9h4"/></svg>',
+};
+
+// La banda templada es la misma de la regla "En su promedio o debajo"
+function banda(v) {
+  if (v === null) return -1;
+  if (v < -50) return 0;
+  if (v < -20) return 1;
+  if (v < -R.cb) return 2;
+  if (v <= R.cb) return 3;
+  if (v <= 20) return 4;
+  if (v <= 50) return 5;
+  return 6;
+}
+const RANGOS = ["Más de 50% debajo", "Entre 20% y 50% debajo", "Entre " + R.cb + "% y 20% debajo",
+  "A menos de " + R.cb + "%", "Entre " + R.cb + "% y 20% arriba", "Entre 20% y 50% arriba", "Más de 50% arriba"];
+
+D.forEach((r, i) => {
+  r.i = i;
+  r.an = (HOY - new Date(r.fa)) / 31557600000;
+  r.b = banda(r.dm);
+  r.k = Math.max(0, Math.min(19, Math.floor((100 + r.da) / 5)));
+});
+
+// Nombres y sectores vienen de Wikipedia, que edita cualquiera
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => "&#" + c.charCodeAt(0) + ";");
+}
+function num(v, dec) {
+  const x = Number(v.toFixed(dec));
+  return (x === 0 ? 0 : x).toLocaleString("es-AR", {minimumFractionDigits: dec, maximumFractionDigits: dec})
+    .replace("-", "−");
+}
+function pct(v, dec) {
+  return (Number(v.toFixed(dec)) > 0 ? "+" : "") + num(v, dec) + "%";
+}
+function abs(v, dec) {
+  return num(Math.abs(v), dec) + "%";
+}
+function hace(an) {
+  if (an >= 1) {
+    const a = Math.floor(an);
+    return "hace " + a + (a === 1 ? " año" : " años");
+  }
+  const m = Math.floor(an * 12);
+  return m < 1 ? "este mes" : "hace " + m + (m === 1 ? " mes" : " meses");
+}
+function fechaLarga(iso) {
+  const [a, m, d] = iso.split("-");
+  return d + "/" + m + "/" + a;
+}
+
+/* ---------- reglas ---------- */
+const reglaC = "hasta " + R.cb + "% arriba de su promedio de 200 semanas o por debajo, con máximo hace " +
+  R.ca + " años o menos y el promedio subiendo";
+const reglaG = "subió " + R.g12 + "% o más en 12 meses y sigue a menos de " + R.gc + "% de su máximo";
+$("def-c").textContent = "El precio no está más de " + R.cb + "% arriba de su promedio de 200 semanas " +
+  "(puede estar por debajo, sin límite), marcó su " +
+  "máximo histórico hace " + R.ca + " años o menos y ese promedio es más alto que hace " +
+  Math.round(R.cs / 4.345) + " meses.";
+$("def-g").textContent = "El precio subió " + R.g12 + "% o más en los últimos 12 meses y está a menos de " +
+  R.gc + "% de su máximo histórico.";
+
+/* ---------- lecturas ---------- */
+const conMA = D.filter(r => r.dm !== null);
+const arriba = conMA.filter(r => r.dm >= 0).length;
+const parte = conMA.length ? Math.round(arriba / conMA.length * 100) : 0;
+$("k-amp-val").textContent = parte + "%";
+$("k-amp-sub").textContent = arriba + " de " + conMA.length + " empresas" +
+  (D.length > conMA.length ? " · " + (D.length - conMA.length) + " sin 200 semanas de historia" : "");
+
+const caidas = D.map(r => r.da).sort((a, b) => a - b);
+const mediana = caidas[Math.floor(caidas.length / 2)];
+$("resumen").innerHTML = "La mitad de las " + D.length + " empresas está <b>" + abs(mediana, 0) +
+  "</b> o más debajo de su máximo histórico.";
+
+if (IDX) {
+  $("k-idx-val").textContent = pct(IDX.da, 1);
+  let sub = num(IDX.p, 0) + " puntos";
+  if (IDX.dm !== null) {
+    const b = banda(IDX.dm);
+    $("k-idx-cond").innerHTML = "<span class='sw b" + b + "'></span>" + BANDAS[b];
+    sub += " · " + abs(IDX.dm, 0) + (IDX.dm >= 0 ? " arriba" : " debajo") + " de su promedio de 200 semanas";
+  }
+  if (IDX.r !== null) sub += " · " + pct(IDX.r, 0) + " en 12 meses";
+  $("k-idx-sub").innerHTML = sub;
+} else {
+  $("k-idx").hidden = true;
+}
+
+function prueba(filas) {
+  if (!filas.length) return "Hoy ninguna empresa cumple este patrón.";
+  const tk = filas.slice(0, 3).map(r => r.t).join(", ");
+  return filas.length > 3 ? tk + " y " + (filas.length - 3) + " más" : tk;
+}
+const listaC = D.filter(r => r.sg === "c").sort((a, b) => a.da - b.da);
+const listaG = D.filter(r => r.sg === "g").sort((a, b) => b.r - a.r);
+$("k-c-nom").insertAdjacentHTML("afterbegin", ICO.c);
+$("k-g-nom").insertAdjacentHTML("afterbegin", ICO.g);
+$("k-c-val").textContent = listaC.length;
+$("k-g-val").textContent = listaG.length;
+$("k-c-sub").textContent = prueba(listaC);
+$("k-g-sub").textContent = prueba(listaG);
+
+/* ---------- leyenda y escala ---------- */
+const porBanda = new Array(7).fill(0);
+conMA.forEach(r => porBanda[r.b]++);
+const RANGOS_CORTOS = ["< −50%", "−50 a −20%", "−20 a −" + R.cb + "%", "±" + R.cb + "%", "+" + R.cb + " a +20%", "+20 a +50%", "> +50%"];
+$("leyenda").innerHTML = BANDAS.map((n, b) =>
+  "<li><span class='sw b" + b + "'></span>" + n + " <small>" + RANGOS_CORTOS[b] + "</small></li>").join("");
+$("escala").innerHTML = BANDAS.map((n, b) =>
+  "<li><span class='sw b" + b + "'></span><span>" + n + "</span><small>" + RANGOS[b] +
+  "</small><span class='n'>" + porBanda[b] + " hoy</span></li>").join("") +
+  "<li><span class='sw bx'></span><span>Sin dato</span><small>Menos de 200 semanas de historia</small><span class='n'>" +
+  (D.length - conMA.length) + " hoy</span></li>";
+
+/* ---------- franja térmica ---------- */
+const franjaOrden = conMA.slice().sort((a, b) => a.dm - b.dm);
+const N = franjaOrden.length;
+const franjaSvg = $("franja-svg");
+const zona = $("franja");
+const lectura = $("lectura");
+const LECTURA_INICIAL = lectura.textContent;
+franjaSvg.setAttribute("viewBox", "0 0 " + N + " 1");
+franjaSvg.innerHTML = franjaOrden.map((r, j) =>
+  "<rect x='" + j + "' width='1.08' height='1' class='b" + r.b + "'/>").join("");
+const marcasFranja = [];
+[...franjaSvg.children].forEach((el, j) => { marcasFranja[franjaOrden[j].i] = el; });
+
+const corte = N ? (N - arriba) / N * 100 : 50;
+$("franja-prom").style.left = corte + "%";
+$("eje-prom").style.left = corte + "%";
+// las puntas del eje se esconden si chocan con la marca del promedio
+function acomodarEje() {
+  const p = $("eje-prom").getBoundingClientRect();
+  ["eje-izq", "eje-der"].forEach(id => {
+    const e = $(id);
+    e.style.visibility = "";
+    const c = e.getBoundingClientRect();
+    if (c.right > p.left - 10 && c.left < p.right + 10) e.style.visibility = "hidden";
+  });
+}
+acomodarEje();
+addEventListener("resize", acomodarEje);
+const dfranja = $("dfranja");
+const paneles = document.querySelector(".paneles");
+function plegar() {
+  if (paneles) paneles.hidden = !dfranja.open;
+  if (dfranja.open) acomodarEje();
+}
+dfranja.addEventListener("toggle", plegar);
+plegar();
+if (document.fonts) document.fonts.ready.then(acomodarEje);
+zona.setAttribute("aria-valuemax", N);
+
+let cursor = -1;
+function leer(j) {
+  if (!N) return;
+  cursor = Math.max(0, Math.min(N - 1, j));
+  const r = franjaOrden[cursor];
+  $("franja-cursor").style.left = ((cursor + 0.5) / N * 100) + "%";
+  zona.parentNode.classList.add("leyendo-ya");
+  const texto = abs(r.dm, 0) + (r.dm >= 0 ? " arriba" : " debajo") + " de su promedio · " + BANDAS[r.b].toLowerCase();
+  lectura.innerHTML = "<b>" + esc(r.t) + "</b> " + esc(r.n) + " · " + texto;
+  const ancho = zona.clientWidth, w = lectura.offsetWidth;
+  const x = (cursor + 0.5) / N * ancho - w / 2;
+  lectura.style.left = Math.max(0, Math.min(ancho - w, x)) + "px";
+  zona.setAttribute("aria-valuenow", cursor + 1);
+  zona.setAttribute("aria-valuetext", r.t + ", " + r.n + ": " + texto);
+}
+function soltar() {
+  zona.parentNode.classList.remove("leyendo-ya");
+  lectura.textContent = LECTURA_INICIAL;
+  lectura.style.left = "0px";
+}
+function posicion(e) {
+  const caja = zona.getBoundingClientRect();
+  leer(Math.floor((e.clientX - caja.left) / caja.width * N));
+}
+zona.addEventListener("pointerdown", e => {
+  if (e.pointerType !== "mouse") zona.setPointerCapture(e.pointerId);
+  posicion(e);
+});
+zona.addEventListener("pointermove", e => {
+  if (e.pointerType === "mouse" || zona.hasPointerCapture(e.pointerId)) posicion(e);
+});
+zona.addEventListener("pointerleave", e => { if (e.pointerType === "mouse") soltar(); });
+zona.addEventListener("blur", soltar);
+zona.addEventListener("keydown", e => {
+  const pasos = {ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1, PageUp: 10, PageDown: -10};
+  let j = cursor < 0 ? N - arriba : cursor;
+  if (e.key in pasos) j += pasos[e.key];
+  else if (e.key === "Home") j = 0;
+  else if (e.key === "End") j = N - 1;
+  else return;
+  e.preventDefault();
+  leer(j);
+});
+
+/* ---------- sectores ---------- */
+const sel = $("sec");
+const sectores = [...new Set(D.map(r => r.s))].sort((a, b) => a.localeCompare(b, "es"));
+const infoSec = sectores.map(s => {
+  const filas = D.filter(r => r.s === s);
+  const cm = filas.filter(r => r.dm !== null).sort((a, b) => a.dm - b.dm);
+  const ar = cm.filter(r => r.dm >= 0).length;
+  return {s, n: filas.length, cm, parte: cm.length ? ar / cm.length : 0};
+});
+infoSec.forEach(x => {
+  const o = document.createElement("option");
+  o.value = x.s; o.textContent = x.s + " (" + x.n + ")";
+  sel.appendChild(o);
+});
+infoSec.sort((a, b) => b.parte - a.parte);
+$("sectores").innerHTML = infoSec.map(x => {
+  const p = Math.round(x.parte * 100);
+  return "<li><button type='button' class='sector' data-s='" + esc(x.s) + "' aria-pressed='false'" +
+    " aria-label='" + esc(x.s) + ": " + x.n + " empresas, " + p + "% arriba de su promedio. Filtrar la lista por este sector.'>" +
+    "<span class='sector-nom'>" + esc(x.s) + "<span class='sector-n'>" + x.n + "</span></span>" +
+    "<svg class='sector-franja' viewBox='0 0 " + Math.max(1, x.cm.length) + " 1' preserveAspectRatio='none' aria-hidden='true'>" +
+    x.cm.map((r, j) => "<rect x='" + j + "' width='1.08' height='1' class='b" + r.b + "'/>").join("") + "</svg>" +
+    "<span class='sector-pct'>" + p + "%<span class='sector-arr'> arriba</span></span></button></li>";
+}).join("");
+const marcasSector = [];
+document.querySelectorAll(".sector").forEach((b, n) => {
+  [...b.querySelector("svg").children].forEach((el, j) => { marcasSector[infoSec[n].cm[j].i] = el; });
+  b.addEventListener("click", () => {
+    sel.value = sel.value === b.dataset.s ? "" : b.dataset.s;
+    pintar();
+  });
+});
+
+/* ---------- histograma de caídas ---------- */
+const CUBOS = 20;
+const totalCubo = new Array(CUBOS).fill(0);
+D.forEach(r => totalCubo[r.k]++);
+const topeCubo = Math.max(...totalCubo);
+const histo = $("histo");
+histo.innerHTML = totalCubo.map((c, k) => {
+  const desde = -100 + k * 5, hasta = desde + 5;
+  const etiqueta = c + (c === 1 ? " empresa" : " empresas") + " con una caída de entre " + Math.abs(hasta) +
+    "% y " + Math.abs(desde) + "% desde su máximo. " +
+    (hasta === 0 ? "Mostrar todas." : "Mostrar las que cayeron al menos " + Math.abs(hasta) + "%.");
+  return "<button type='button' class='barra' data-k='" + k + "' aria-label='" + etiqueta + "'>" +
+    "<span class='barra-total' style='height:" + (c / topeCubo * 100) + "%'></span>" +
+    "<span class='barra-pila'></span></button>";
+}).join("");
+const barras = [...histo.children];
+const tip = $("tip");
+let filtradoCubo = totalCubo.slice();
+function verTip(b) {
+  const k = +b.dataset.k, desde = -100 + k * 5, hasta = desde + 5;
+  const c = totalCubo[k];
+  tip.textContent = c + (c === 1 ? " empresa" : " empresas") + " entre " + num(desde, 0) + "% y " + num(hasta, 0) +
+    "% de su máximo" + (filtradoCubo[k] !== c ? " · " + filtradoCubo[k] + " con los filtros actuales" : "");
+  tip.classList.add("ver");
+  const panel = histo.parentNode.getBoundingClientRect();
+  const caja = b.getBoundingClientRect();
+  const x = caja.left - panel.left + caja.width / 2 - tip.offsetWidth / 2;
+  tip.style.left = Math.max(8, Math.min(panel.width - tip.offsetWidth - 8, x)) + "px";
+  tip.style.top = (histo.offsetTop - tip.offsetHeight - 6) + "px";
+}
+barras.forEach(b => {
+  b.addEventListener("pointerenter", () => verTip(b));
+  b.addEventListener("pointerleave", () => tip.classList.remove("ver"));
+  b.addEventListener("focus", () => verTip(b));
+  b.addEventListener("blur", () => tip.classList.remove("ver"));
+  b.addEventListener("click", () => {
+    const v = String(Math.abs(-100 + (+b.dataset.k + 1) * 5));
+    $("mincaida").value = $("mincaida").value === v ? "" : v;
+    pintar();
+    verTip(b);
+  });
+});
+
+/* ---------- orden ---------- */
+// Si no llegó la capitalización, la tabla arranca por caída como antes
+const HAY_TAMANO = D.some(r => r.mc);
+D.filter(r => r.mc).sort((a, b) => b.mc - a.mc).forEach((r, i) => { r.rk = i + 1; });
+const ORDEN_INICIAL = HAY_TAMANO ? ["mc", false] : ["da", true];
+const ORDENES = [
+  ...(HAY_TAMANO ? [["mc", false, "Más grandes primero"]] : []),
+  ["da", true, "Más lejos de su máximo"],
+  ["da", false, "Más cerca de su máximo"],
+  ["dm", true, "Más debajo de su 200 semanal"],
+  ["dm", false, "Más arriba de su 200 semanal"],
+  ["r", false, "Lo que más subió en 12 meses"],
+  ["r", true, "Lo que más bajó en 12 meses"],
+  ["fa", false, "Máximo más reciente"],
+  ["fa", true, "Máximo más antiguo"],
+  ["t", true, "Ticker, de la A a la Z"],
+  ["s", true, "Sector, de la A a la Z"],
+  ["p", false, "Precio más alto"],
+  ["sg", true, "Con patrón primero"],
+];
+const selOrden = $("orden");
+selOrden.innerHTML = ORDENES.map(o => "<option value='" + o[0] + ":" + (o[1] ? "a" : "d") + "'>" + o[2] + "</option>").join("");
+const PRIMERO_ASC = {t: true, s: true, da: true, dm: true, sg: true, p: false, r: false, fa: false, mc: false};
+let [orden, asc] = ORDEN_INICIAL, preset = "", patron = "";
+const abiertas = new Set();
+
+// La lista se muestra de a tramos; vuelve al primero cuando cambia un filtro o el orden
+const PAGINA = 25;
+let visibles = PAGINA, firmaLista = "";
+
+/* ---------- lista ---------- */
+function filtrar() {
+  const q = $("q").value.trim().toUpperCase();
+  const s = sel.value;
+  const minc = parseFloat($("mincaida").value);
+  const maxm = parseFloat($("maxma").value);
+  const maxa = parseFloat($("maxanios").value);
+  return D.filter(r => {
+    if (q && !(r.t.includes(q) || r.n.toUpperCase().includes(q))) return false;
+    if (s && r.s !== s) return false;
+    if (patron && r.sg !== patron) return false;
+    if (!isNaN(minc) && r.da > -Math.abs(minc)) return false;
+    if (!isNaN(maxa) && r.an > maxa) return false;
+    if (!isNaN(maxm)) {
+      if (r.dm === null) return false;
+      if (Math.abs(r.dm) > Math.abs(maxm)) return false;
+    }
+    return true;
+  });
+}
+
+// mc viene en millones de dólares; un billón son un millón de millones
+function valorBolsa(mc) {
+  return mc >= 1e6 ? "US$ " + num(mc / 1e6, 2) + " billones" : "US$ " + num(mc, 0) + " millones";
+}
+
+function detalle(r) {
+  const p = [];
+  let t = "<b>" + esc(r.t) + "</b> (" + esc(r.n) + ") cotiza a US$ " + num(r.p, 2) + ". ";
+  t += r.da > -0.5
+    ? "Está en su máximo histórico o muy cerca: US$ " + num(r.a, 2) + ", del " + fechaLarga(r.fa) + "."
+    : "Está " + abs(r.da, 1) + " debajo de su máximo histórico de US$ " + num(r.a, 2) + ", que marcó el " +
+      fechaLarga(r.fa) + " (" + hace(r.an) + ").";
+  if (r.rk) t += " Es la número " + r.rk + " del índice por tamaño: vale " + valorBolsa(r.mc) + " en bolsa.";
+  p.push(t);
+  let u = r.dm === null
+    ? "No tiene 200 semanas de historia para calcular su promedio."
+    : "Cotiza " + abs(r.dm, 1) + (r.dm >= 0 ? " arriba" : " debajo") + " de su promedio de 200 semanas (US$ " +
+      num(r.m, 2) + "): " + BANDAS[r.b].toLowerCase() + ".";
+  u += r.r === null ? " No tiene un año de historia." : " En 12 meses " + (r.r >= 0 ? "subió " : "bajó ") + abs(r.r, 1) + ".";
+  p.push(u);
+  if (r.sg) p.push("Cumple el patrón <b>" + PATRON[r.sg] + "</b>: " + (r.sg === "c" ? reglaC : reglaG) +
+    ". Es un dato sobre el precio, no una recomendación.");
+  const acc = "<div class='det-acc'>" +
+    "<button type='button' class='boton' data-graf='" + esc(r.t) + "'>" + ICO.graf + "Ver gráfico con indicadores</button>" +
+    "<a class='boton' href='" + esc(urlTV(r)) + "' target='_blank' rel='noopener'>Abrir en TradingView" + ICO.ext + "</a></div>";
+  return "<tr class='detalle'><td colspan='8'>" + p.map(x => "<p>" + x + "</p>").join("") + acc + "</td></tr>";
+}
+
+// Gráfico de TradingView: se pide recién cuando alguien lo abre
+function ma(n) {
+  return {id: "MASimple@tv-basicstudies", inputs: {length: n}};
+}
+const VELAS = {
+  D: {texto: "Velas diarias con promedios de 20, 50 y 200 días, volumen, RSI y MACD.",
+      estudios: [ma(20), ma(50), ma(200), {id: "RSI@tv-basicstudies"}, {id: "MACD@tv-basicstudies"}]},
+  W: {texto: "Velas semanales con promedios de 50 y 200 semanas (el de la tabla), volumen, RSI y MACD.",
+      estudios: [ma(50), ma(200), {id: "RSI@tv-basicstudies"}, {id: "MACD@tv-basicstudies"}]},
+};
+function simboloTV(r) {
+  const s = r.t.replace(/-/g, ".");
+  return r.x ? r.x + ":" + s : s;
+}
+function urlTV(r) {
+  return "https://www.tradingview.com/chart/?symbol=" + encodeURIComponent(simboloTV(r));
+}
+
+const dlg = $("grafico");
+let grafR = null;
+function cargarGrafico(velas) {
+  dlg.querySelectorAll("[data-int]").forEach(b => b.setAttribute("aria-pressed", b.dataset.int === velas));
+  $("graf-ind").textContent = VELAS[velas].texto + " Podés sumar otros desde «Indicadores».";
+  const caja = $("graf-caja");
+  caja.innerHTML = "<div class='tradingview-widget-container'><div class='tradingview-widget-container__widget'></div></div>";
+  const oscuro = Mercadito.oscuroAhora();
+  const s = document.createElement("script");
+  s.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
+  s.async = true;
+  s.textContent = JSON.stringify({
+    autosize: true, symbol: simboloTV(grafR), interval: velas, timezone: "America/New_York",
+    theme: oscuro ? "dark" : "light", backgroundColor: oscuro ? "#171B21" : "#FFFFFF",
+    style: "1", locale: "es", allow_symbol_change: false, hide_side_toolbar: innerWidth < 900,
+    studies: VELAS[velas].estudios, support_host: "https://www.tradingview.com",
+  });
+  caja.firstChild.appendChild(s);
+}
+function abrirGrafico(r) {
+  grafR = r;
+  $("graf-tit").innerHTML = esc(r.t) + "<small>" + esc(r.n) + "</small>";
+  $("graf-tv").href = urlTV(r);
+  dlg.showModal();
+  cargarGrafico("D");
+}
+dlg.querySelectorAll("[data-int]").forEach(b => b.addEventListener("click", () => cargarGrafico(b.dataset.int)));
+$("graf-cerrar").addEventListener("click", () => dlg.close());
+dlg.addEventListener("click", e => { if (e.target === dlg) dlg.close(); });
+dlg.addEventListener("close", () => { $("graf-caja").innerHTML = ""; });
+
+function fila(r) {
+  const abierta = abiertas.has(r.t);
+  return "<tr class='fila' data-t='" + esc(r.t) + "'>" +
+    "<td class='c-emp'><button type='button' class='abrir' aria-expanded='" + abierta + "'>" +
+      "<span class='tk'>" + esc(r.t) + "</span><span class='nom'>" + esc(r.n) + "</span></button></td>" +
+    "<td class='c-sec'>" + esc(r.s) + "</td>" +
+    "<td class='c-num c-pre'>" + num(r.p, 2) + "</td>" +
+    "<td class='c-num c-da'>" + pct(r.da, 1) + "</td>" +
+    "<td class='c-num c-dm'>" + (r.dm === null ? "<span class='nd'>sin dato</span>"
+      : "<span class='sw b" + r.b + "' aria-hidden='true'></span><span class='m-et'>prom. </span>" + pct(r.dm, 0) + "<span class='oculto'>, " + BANDAS[r.b].toLowerCase() + "</span>") + "</td>" +
+    "<td class='c-num c-r'>" + (r.r === null ? "<span class='nd'>sin dato</span>" : "<span class='m-et'>12m </span>" + pct(r.r, 0)) + "</td>" +
+    "<td class='c-fa'><span class='m-et'>máx. </span>" + r.fa.slice(0, 4) + "<span class='fa-hace'> · " + hace(r.an) + "</span></td>" +
+    "<td class='c-sg'>" + (r.sg ? "<span class='patron' title='" + PATRON[r.sg] + "'>" + ICO[r.sg] + "<span class='patron-txt'>" + PATRON[r.sg] + "</span></span>" : "") + "</td>" +
+    "</tr>" + (abierta ? detalle(r) : "");
+}
+
+function hayFiltros() {
+  return !!($("q").value.trim() || sel.value || patron || preset ||
+    $("mincaida").value || $("maxma").value || $("maxanios").value);
+}
+
+function pintar() {
+  const f = filtrar();
+  f.sort((a, b) => {
+    const x = a[orden], y = b[orden];
+    if (x === y) return 0;
+    if (x === null) return 1;
+    if (y === null) return -1;
+    if (typeof x === "string") return asc ? x.localeCompare(y) : y.localeCompare(x);
+    return asc ? x - y : y - x;
+  });
+
+  const nombreOrden = ORDENES.find(o => o[0] === orden && o[1] === asc);
+  $("cuenta").innerHTML = (f.length === D.length ? "<b>" + f.length + "</b> empresas"
+    : "<b>" + f.length + "</b> de " + D.length + " empresas") +
+    (nombreOrden ? " · " + nombreOrden[2].toLowerCase() : "");
+
+  const firma = [$("q").value.trim().toUpperCase(), sel.value, patron, $("mincaida").value,
+    $("maxma").value, $("maxanios").value, orden, asc].join("|");
+  if (firma !== firmaLista) {
+    firmaLista = firma;
+    visibles = PAGINA;
+  }
+  const muestra = f.slice(0, visibles);
+  $("cuerpo").innerHTML = f.length === 0
+    ? "<tr class='vacio'><td colspan='8'>Ninguna empresa cumple con estos filtros.<br>" +
+      "<button type='button' class='boton' id='limpiar-vacio'>Limpiar filtros</button></td></tr>"
+    : muestra.map(fila).join("");
+  const resto = f.length - muestra.length;
+  $("ver-mas").hidden = resto <= 0;
+  if (resto > 0) {
+    $("ver-mas-txt").textContent = "Mostrando " + muestra.length + " de " + f.length + " empresas";
+    $("ver-mas-btn").textContent = "Mostrar " + Math.min(PAGINA, resto) + " más";
+  }
+  const lv = $("limpiar-vacio");
+  if (lv) lv.addEventListener("click", () => aplicarPreset("limpiar"));
+
+  // la franja, los sectores y el histograma muestran qué parte del mercado queda en la lista
+  const filtrando = hayFiltros();
+  const dentro = new Uint8Array(D.length);
+  f.forEach(r => { dentro[r.i] = 1; });
+  conMA.forEach(r => {
+    const off = filtrando && !dentro[r.i];
+    marcasFranja[r.i].classList.toggle("off", off);
+    if (marcasSector[r.i]) marcasSector[r.i].classList.toggle("off", off);
+  });
+  filtradoCubo = new Array(CUBOS).fill(0);
+  const pilas = Array.from({length: CUBOS}, () => new Array(8).fill(0));
+  f.forEach(r => { filtradoCubo[r.k]++; pilas[r.k][r.b + 1]++; });
+  barras.forEach((b, k) => {
+    const pila = b.lastChild;
+    pila.style.height = (filtradoCubo[k] / topeCubo * 100) + "%";
+    pila.innerHTML = pilas[k].map((c, j) => c ? "<i class='" + (j ? "b" + (j - 1) : "bx") + "' style='flex:" + c + "'></i>" : "").join("");
+  });
+
+  document.querySelectorAll(".sector").forEach(b => b.setAttribute("aria-pressed", b.dataset.s === sel.value));
+  const nNum = ["mincaida", "maxma", "maxanios"].filter(id => $(id).value !== "").length;
+  $("mas-n").textContent = nNum || "";
+  $("limpiar").disabled = !filtrando;
+  selOrden.value = orden + ":" + (asc ? "a" : "d");
+
+  const ra = $("regla-activa");
+  const textos = {
+    promedio: ICO.c + "<span><b>En su promedio o debajo:</b> " + reglaC + ". Es un dato sobre el precio, no una recomendación.</span>",
+    suba: ICO.g + "<span><b>Subió fuerte:</b> " + reglaG + ". Ordenadas de la que más subió a la que menos.</span>",
+    recientes: "<span><b>Cayeron fuerte hace poco:</b> cayeron 30% o más desde un máximo que marcaron hace menos de 2 años.</span>",
+    maximos: "<span><b>En zona de máximos:</b> todas las empresas, de la más cerca de su máximo a la más lejos.</span>",
+  };
+  ra.hidden = !preset;
+  ra.innerHTML = preset ? textos[preset] : "";
+}
+
+function marcarOrden() {
+  document.querySelectorAll(".tabla th").forEach(th => {
+    if (th.dataset.k === orden) th.setAttribute("aria-sort", asc ? "ascending" : "descending");
+    else th.removeAttribute("aria-sort");
+  });
+}
+
+document.querySelectorAll(".tabla th").forEach(th => {
+  th.querySelector("button").addEventListener("click", () => {
+    const k = th.dataset.k;
+    asc = orden === k ? !asc : PRIMERO_ASC[k];
+    orden = k;
+    marcarOrden();
+    pintar();
+  });
+});
+selOrden.addEventListener("change", () => {
+  const [k, d] = selOrden.value.split(":");
+  orden = k; asc = d === "a";
+  marcarOrden();
+  pintar();
+});
+
+$("cuerpo").addEventListener("click", e => {
+  const g = e.target.closest("[data-graf]");
+  if (g) {
+    abrirGrafico(D.find(r => r.t === g.dataset.graf));
+    return;
+  }
+  const tr = e.target.closest("tr.fila");
+  if (!tr) return;
+  const t = tr.dataset.t;
+  if (abiertas.has(t)) abiertas.delete(t); else abiertas.add(t);
+  pintar();
+  const b = $("cuerpo").querySelector("tr[data-t='" + t + "'] .abrir");
+  if (b && e.target.closest(".abrir")) b.focus();
+});
+
+const PRESETS = {
+  promedio: {patron: "c"},
+  suba: {patron: "g", orden: "r", asc: false},
+  recientes: {mincaida: 30, maxanios: 2},
+  maximos: {orden: "da", asc: false},
+};
+
+function aplicarPreset(p) {
+  const quitar = p === "limpiar" || p === preset;
+  $("mincaida").value = ""; $("maxma").value = ""; $("maxanios").value = "";
+  preset = ""; patron = ""; [orden, asc] = ORDEN_INICIAL;
+  if (quitar) {
+    $("q").value = ""; sel.value = "";
+  } else {
+    const c = PRESETS[p];
+    preset = p;
+    patron = c.patron || "";
+    if (c.mincaida) $("mincaida").value = c.mincaida;
+    if (c.maxanios) $("maxanios").value = c.maxanios;
+    if (c.orden) { orden = c.orden; asc = c.asc; }
+  }
+  document.querySelectorAll("[data-p]").forEach(b => b.setAttribute("aria-pressed", b.dataset.p === preset));
+  marcarOrden();
+  pintar();
+}
+
+document.querySelectorAll("[data-p]").forEach(b => {
+  b.addEventListener("click", () => {
+    aplicarPreset(b.dataset.p);
+    if (b.classList.contains("lect-boton") && preset) {
+      $("empresas").scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start"});
+    }
+  });
+});
+$("limpiar").addEventListener("click", () => aplicarPreset("limpiar"));
+
+// Al cargar más, el foco va a la primera empresa nueva para seguir con el teclado
+function mostrarMas(todas) {
+  const desde = visibles;
+  visibles = todas ? D.length : visibles + PAGINA;
+  pintar();
+  const nueva = $("cuerpo").querySelectorAll("tr.fila .abrir")[desde];
+  if (nueva) nueva.focus({preventScroll: true});
+}
+$("ver-mas-btn").addEventListener("click", () => mostrarMas(false));
+$("ver-todas").addEventListener("click", () => mostrarMas(true));
+
+["q", "sec", "mincaida", "maxma", "maxanios"].forEach(id => {
+  $(id).addEventListener("input", pintar);
+  $(id).addEventListener("change", pintar);
+});
+
+function medirTabla() {
+  const caja = document.querySelector(".tabla-caja");
+  caja.classList.remove("desborda");
+  caja.classList.toggle("desborda", document.querySelector(".tabla").offsetWidth > caja.clientWidth + 1);
+}
+addEventListener("resize", medirTabla);
+if (document.fonts) document.fonts.ready.then(medirTabla);
+
+if (matchMedia("(min-width: 900px)").matches) $("mas").open = true;
+marcarOrden();
+pintar();
+medirTabla();
+
+</script>
+</body>
+</html>

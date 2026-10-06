@@ -1,17 +1,23 @@
-name: pagina-sp500
+name: mercadito
 
 on:
   schedule:
-    # lunes a viernes, 18:30 ARG (despues del cierre de Nueva York)
+    # cada 30 minutos de 10:00 a 17:30 ARG, de lunes a viernes: todo menos el S&P 500
+    - cron: "0,30 13-20 * * 1-5"
+    # 18:30 ARG, despues del cierre de Nueva York: todo, incluido el S&P 500
     - cron: "30 21 * * 1-5"
   workflow_dispatch:
+    inputs:
+      secciones:
+        description: "Que generar: todo, rapido o secciones separadas por espacios (dolar gastos tasas merval sp500 bonos)"
+        default: "todo"
 
 permissions:
   contents: write
 
-# si una corrida manual se cruza con la programada, la segunda espera a la primera
+# si una corrida se cruza con otra, la segunda espera a la primera
 concurrency:
-  group: pagina-sp500
+  group: mercadito
   cancel-in-progress: false
 
 jobs:
@@ -30,16 +36,32 @@ jobs:
       - name: Instalar dependencias
         run: pip install -r requirements.txt
 
-      # si faltan demasiadas empresas el script sale con error, este paso falla
-      # y no se publica nada: queda online la ultima pagina buena
-      - name: Generar pagina
-        run: python generar_pagina.py
+      # Cada seccion es independiente: si una falla, las demas se generan igual
+      # y la que fallo queda con su version anterior. El aviso va al final.
+      - name: Generar
+        id: generar
+        env:
+          EVENTO: ${{ github.event_name }}
+          HORARIO: ${{ github.event.schedule }}
+          PEDIDO: ${{ github.event.inputs.secciones }}
+        run: |
+          if [ "$EVENTO" = "workflow_dispatch" ]; then QUE="$PEDIDO"
+          elif [ "$HORARIO" = "30 21 * * 1-5" ]; then QUE="todo"
+          else QUE="rapido"; fi
+          echo "Secciones: $QUE"
+          python generar.py $QUE || echo "fallo=1" >> "$GITHUB_OUTPUT"
 
       - name: Publicar
         run: |
           git config user.name "bot-mercado"
           git config user.email "bot@users.noreply.github.com"
-          git add index.html
+          git add index.html datos */index.html
           git diff --staged --quiet || git commit -m "actualizar datos"
           git pull --rebase
           git push
+
+      - name: Avisar si alguna seccion fallo
+        if: steps.generar.outputs.fallo == '1'
+        run: |
+          echo "::error::Alguna seccion fallo y quedo publicada su version anterior. El detalle esta en el paso Generar."
+          exit 1

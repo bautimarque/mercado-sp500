@@ -199,7 +199,7 @@ La escala térmica. Cada banda tiene su palabra fija, que siempre la acompaña. 
 - **Azul Polar Profundo**, «Muy frío» (#1E4D8F; oscuro #93BEF5): más de 50% debajo del promedio.
 - **Azul Frente Frío**, «Frío» (#3F7DC9; oscuro #4F8BD8): entre 20% y 50% debajo.
 - **Celeste Brisa**, «Fresco» (#86AEDD; oscuro #2F5C93): entre la banda de la regla y 20% debajo.
-- **Gris Templado**, «Templado» (#D3D2CD; oscuro #3A3A37): a menos de la banda de la regla «Posible compra» (hoy ±5%) del promedio. Es un gris apenas cálido, casi sin croma: la ausencia de temperatura, el centro silencioso de la escala.
+- **Gris Templado**, «Templado» (#D3D2CD; oscuro #3A3A37): a menos de 5% del promedio, para los dos lados. Es un gris apenas cálido, casi sin croma: la ausencia de temperatura, el centro silencioso de la escala.
 - **Naranja Tibio**, «Cálido» (#E89650; oscuro #8E4A17): entre la banda de la regla y 20% arriba.
 - **Naranja Ola de Calor**, «Caluroso» (#CF6420; oscuro #D9762D): entre 20% y 50% arriba.
 - **Ladrillo Tórrido**, «Muy caluroso» (#9E3F0F; oscuro #FFA466): más de 50% arriba.
@@ -220,7 +220,7 @@ Cada brazo es una rampa ordinal: la luminosidad cambia en un solo sentido desde 
 
 ### Named Rules
 
-**La Regla de las Siete Isotermas.** La temperatura se dibuja con exactamente siete bandas escalonadas: tres azules, un gris templado y tres naranjas, con cortes en ±(banda de «Posible compra»), ±20% y ±50% de la distancia al promedio de 200 semanas. Nunca un degradado continuo, nunca tonos intermedios, nunca verde ni rojo. La escala solo codifica temperatura; su única aparición fuera de los datos es la marca, que es la escala misma.
+**La Regla de las Siete Isotermas.** La temperatura se dibuja con exactamente siete bandas escalonadas: tres azules, un gris templado y tres naranjas, con cortes en ±(banda de «En su promedio o debajo»), ±20% y ±50% de la distancia al promedio de 200 semanas. Nunca un degradado continuo, nunca tonos intermedios, nunca verde ni rojo. La escala solo codifica temperatura; su única aparición fuera de los datos es la marca, que es la escala misma.
 
 **La Regla de la Tinta.** El texto nunca se viste de color térmico. El color lo lleva una muestra cuadrada o una franja; la palabra y la cifra que la acompañan van siempre en tinta.
 
@@ -335,7 +335,7 @@ Al lado de la cifra grande, una lista con filete superior marcado y filetes entr
 Caja blanca con filete y esquinas de 6px; encabezados en Label que quedan fijos al desplazarse y ordenan al tocarlos (flecha de 12px). Filas de 14px con 10px 12px de relleno y filete entre filas; ticker en peso 700, nombre en tinta media, cifras a la derecha con cifras tabulares, la temperatura como muestra más cifra con signo. En hover la fila pasa al gris hundido; al tocarla se despliega un párrafo explicativo sobre gris hundido.
 
 ### Señales
-**La Regla de la Señal Dibujada.** Una señal es un ícono SVG de trazo de 16px más su palabra, en tinta, a 13px peso 600: «Posible compra» es un sol sobre la línea del horizonte, «Tomar ganancias» una flecha que sube hasta un techo. Nunca una píldora, una etiqueta de color ni una insignia.
+**La Regla de la Señal Dibujada.** Una señal es un ícono SVG de trazo de 16px más su palabra, en tinta, a 13px peso 600: «En su promedio o debajo» es un sol sobre la línea del horizonte, «Subió fuerte» una flecha que sube hasta un techo. Nunca una píldora, una etiqueta de color ni una insignia.
 
 **La Regla del Activo en Tinta.** Lo seleccionado se invierte a tinta llena (fondo en tinta, texto en color de fondo). La única excepción es la fila de sector, que usa gris hundido con anillo interior de tinta para no tapar su franja de colores.
 
@@ -347,7 +347,7 @@ Caja blanca con filete y esquinas de 6px; encabezados en Label que quedan fijos 
 
 ### Do:
 - **Do** usar siempre las variables del sistema (`--fondo`, `--superficie`, `--hundido`, `--tinta`, `--tinta-2`, `--tinta-3`, `--linea`, `--linea-2`, `--t0` a `--t6`, `--sin`) y definir cada valor nuevo en los tres bloques: claro, oscuro por preferencia del sistema y oscuro forzado con `data-tema="oscuro"`.
-- **Do** asignar la banda con los cortes de la escala: ±(banda de «Posible compra», hoy 5%), ±20% y ±50% de la distancia al promedio de 200 semanas, para que Templado sea siempre la misma banda de la regla.
+- **Do** asignar la banda con los cortes de la escala: ±5%, ±20% y ±50% de la distancia al promedio de 200 semanas, para que Templado sea siempre la misma banda de la regla.
 - **Do** acompañar cada color térmico con su palabra (Muy frío, Frío, Fresco, Templado, Cálido, Caluroso, Muy caluroso) y cada cifra con su unidad dicha en palabras («desde su máximo», «empresas», «arriba»).
 - **Do** reservar Archivo condensado (72–78%) y pesado (750–800) para las cifras que se leen de lejos; la interfaz va a ancho normal, entre 400 y 650.
 - **Do** alinear toda columna numérica con cifras tabulares, formato es-AR y signo menos tipográfico (−).

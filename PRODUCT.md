@@ -8,50 +8,55 @@ web
 
 ## Users
 
-Personas de Argentina que invierten por su cuenta en acciones de EE.UU., en general a través de CEDEARs. Entran un par de veces por semana, mayormente desde el celular, para ver qué está barato, qué está muy estirado y cómo viene el mercado en general. No son profesionales ni buscan una plataforma de trading: buscan una referencia rápida.
+Personas de Argentina que invierten por su cuenta (plazo fijo, fondos, dólar, acciones argentinas, CEDEARs, bonos) y que siguen el dólar para sus gastos de todos los días. Entran seguido y por poco tiempo, mayormente desde el celular, para ver cómo vienen el dólar, las tasas y los mercados, y para hacer cuentas rápidas (cuánto sale en pesos una suscripción, cuánto rinde un plazo fijo). No son profesionales ni buscan una plataforma de trading: buscan una referencia rápida y confiable.
 
 ## Product Purpose
 
-Un tablero en castellano con las ~500 empresas del S&P 500. Para cada una muestra cuánto le falta para volver a su máximo histórico, qué tan lejos está de su promedio de 200 semanas, cuánto subió o bajó en 12 meses, y dos señales basadas en reglas fijas sobre el precio: "Posible compra" y "Tomar ganancias".
+Mercadito reúne en un solo lugar, en castellano, los datos del mercado argentino y de Estados Unidos: dólar, gastos en dólares, tasas e inflación, Merval, S&P 500 y bonos. Cada sección muestra los números con su fecha y su fuente, los explica en palabras simples y suma herramientas para hacer cuentas.
 
-En 5 segundos tiene que resolver: cómo está el índice, qué tan sano está el mercado (% de empresas arriba de su promedio de 200 semanas) y cuántas empresas entran en cada señal. Después, explorar la tabla con filtros.
+Páginas: Inicio (un panel por sección con sus números clave), Dólar, Gastos en US$, Tasas, Merval, S&P 500, Bonos, Cómo se calcula y Aviso legal.
 
-Éxito: alguien abre la página, entiende en un vistazo cómo vienen las cosas y encuentra en segundos las empresas que le interesan mirar más a fondo.
+Éxito: alguien abre cualquier página y en 5 segundos entiende el número más importante; después encuentra el detalle o hace la cuenta que vino a hacer, sin salir del celular.
 
 ## Positioning
 
-Es una herramienta para entrar y ver cómo vienen las cosas, para usar de guía. No ofrece nada: ni trading, ni recomendaciones, ni asesoramiento. Quienes la hacen no se presentan como expertos. Ordena precios con reglas públicas y explicadas; no mide calidad de empresas.
+Es una herramienta para entrar y ver cómo vienen las cosas, para usar de guía. No ofrece nada: ni trading, ni recomendaciones, ni asesoramiento. Quienes la hacen no se presentan como expertos y no están registrados ante la CNV. Ordena y explica datos públicos de terceros con reglas a la vista; no mide la calidad de ninguna inversión.
 
 ## Operating Context
 
-- Uso breve y recurrente (un par de veces por semana), casi siempre en el celular.
-- Los datos se actualizan solos de lunes a viernes a las 18:30 de Argentina, después del cierre de Nueva York; si se corre con el mercado abierto, la fecha lo aclara.
-- El público opera vía CEDEARs, pero la página muestra precios en dólares del mercado de EE.UU.
+- Uso breve y recurrente, casi siempre en el celular.
+- Actualización automática (GitHub Actions): Dólar, Gastos, Tasas, Merval y Bonos cada 30 minutos de lunes a viernes entre las 10 y las 17:30 de Argentina; todo, incluido el S&P 500, a las 18:30, después del cierre de Nueva York.
+- Cada sección es independiente: si una fuente falla, esa sección queda con su última versión y las demás se publican igual.
+- El público opera en pesos y en dólares (oficial, MEP, CCL); las acciones de EE.UU. se muestran en dólares de su mercado.
 
 ## Capabilities and Constraints
 
-- Función que tiene que existir: 4 indicadores (índice vs. su máximo, % de empresas arriba de su 200 semanal, cantidad en "Posible compra", cantidad en "Tomar ganancias"), tabla ordenable, búsqueda, filtro por sector, filtros numéricos (caída mínima, distancia a la 200 semanal, antigüedad del máximo), atajos (Posible compra, Tomar ganancias, Cayeron fuerte hace poco, En zona de máximos), una vista de la distribución de caídas (hoy un histograma), modo claro/oscuro, el texto de cada regla y el aviso de que no es recomendación de inversión.
-- Los datos y las reglas de las señales no se tocan. Los umbrales viven en `generar_pagina.py` y la página los recibe en `__REGLAS__`.
-- `index.html` se genera y lo pisa un bot todos los días: el HTML/CSS/JS real está en la variable `PLANTILLA` de `generar_pagina.py`. Los marcadores `__FECHA__`, `__DATOS__`, `__INDICE__` y `__REGLAS__` se reemplazan con datos reales.
-- Un solo archivo estático, sin frameworks ni build, publicado en GitHub Pages. Ningún pedido externo al abrir la página, salvo fuentes de Google Fonts.
-- Nombres y sectores vienen de Wikipedia y se escapan antes de mostrarse.
-- Abierto: el nombre propio de la página. El usuario pidió una propuesta; hasta que se decida, el título es "S&P 500".
+- Funciones que tienen que seguir existiendo: los filtros, órdenes, calculadoras y gráficos de cada página; «Mostrar 25 más»; la ficha de cada empresa del S&P 500; el gráfico de TradingView (se carga solo al abrirlo); el plegable del termómetro; el modo claro/oscuro.
+- Los datos, los cálculos, las reglas de los patrones y los textos legales no se tocan desde el diseño.
+- Las páginas se generan con Python (`generar.py`) y se publican como archivos estáticos en GitHub Pages: sin frameworks ni build. El marco común (cabecera, menú, pie) está en `mercadito/comun.py`; los estilos y funciones compartidos en `assets/base.css` y `assets/base.js`; cada sección tiene sus bloques CSS, CUERPO y JS en `mercadito/<seccion>.py`. Los `index.html` se pisan en cada corrida.
+- Los marcadores `__DATOS__`, `__ACTUALIZADO__`, `__FECHA__`, `__INDICE__` y `__REGLAS__` los reemplaza el script con datos reales.
+- Ningún pedido externo al abrir una página, salvo Google Fonts. TradingView se pide solo cuando alguien abre el gráfico.
+- Los textos que vienen de fuentes externas (Wikipedia, entidades, fondos) se escapan antes de mostrarse.
+- La paleta de series de los gráficos (`--s1` a `--s7`) está validada para daltonismo: cualquier cambio se valida de nuevo.
+- Decisión abierta: más adelante puede haber una parte paga (premium). Hoy todo es gratis y no se diseña nada pago.
 
 ## Brand Commitments
 
-- Idioma: castellano neutro, sin voseo, directo y sin jerga financiera innecesaria. Explica cada número en palabras simples.
-- Sin promesas, sin urgencia, sin tono de "señales" vendidas. Las señales se presentan como reglas mecánicas sobre el precio.
-- El aviso de que no es recomendación de inversión ni asesoramiento es parte del producto, no letra chica.
+- Nombre: Mercadito.
+- Idioma: castellano rioplatense con voseo, directo y sin jerga financiera innecesaria. Explica cada número en palabras simples. La página del S&P 500 hoy está en castellano neutro y queda como excepción hasta que se ajusten sus textos.
+- Requisito legal: todo se presenta como dato, nunca como recomendación ni acción. Nada de "comprar", "vender", "tomar ganancias", "oportunidad", "barata" ni "conviene". Los patrones del S&P 500 se llaman «En su promedio o debajo» y «Subió fuerte»; la columna es «Patrón». Aplica también a comentarios de código y al README, porque el repositorio es público.
+- El aviso legal del pie va en todas las páginas y a la vista: es parte del producto, no letra chica.
+- Sin promesas, sin urgencia y sin tono de "señales".
 
 ## Evidence on Hand
 
-- Datos reales y diarios: lista del índice desde Wikipedia, precios diarios de Yahoo Finance vía yfinance, sin ajustar por dividendos.
-- No hay testimonios, usuarios, métricas de uso ni historial de aciertos de las señales. No se debe inventar ninguno, ni afirmar rendimiento de las señales.
+- Datos reales de terceros, con su fuente a la vista: dolarapi.com, comparadolar.ar, argentinadatos.com, API del BCRA, Yahoo Finance (yfinance), Wikipedia, Nasdaq, data912.com (proyecto con fines educativos) y TradingView.
+- No hay testimonios, usuarios, métricas de uso ni historial de aciertos de los patrones. No se debe inventar ninguno, ni afirmar rendimiento de ninguna regla.
 
 ## Product Principles
 
-1. Guía, no consejo: la página ordena precios y explica sus reglas; nunca recomienda, promete ni se presenta como experta.
-2. Primero el estado del mercado, después la exploración: lo que se entiende en 5 segundos va arriba; la tabla es para quien quiere seguir mirando.
-3. Cada número se explica donde aparece: quien no sabe qué es una "200 semanal" tiene que poder entenderlo sin salir de la página.
-4. Pensada para el pulgar: lectura y filtros cómodos en un celular, en visitas cortas.
-5. Honestidad sobre los datos: siempre a la vista de cuándo son los precios y de dónde salen.
+1. Guía, no consejo: el sitio ordena y explica datos; nunca recomienda, promete ni se presenta como experto.
+2. Primero el número, después el detalle: en cada página lo que se entiende en 5 segundos va arriba; tablas, gráficos y calculadoras son para quien quiere seguir.
+3. Cada número se explica donde aparece, con su fecha y su fuente a la vista.
+4. Pensado para el pulgar: menú, tablas y calculadoras cómodos en un celular de 375 px y con una mano.
+5. Un solo sitio: las nueve páginas se leen como partes de lo mismo, con el mismo lenguaje visual y los mismos controles.

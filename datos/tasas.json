@@ -1,0 +1,20 @@
+{
+ "actualizado": "06/10/2026 14:41",
+ "plazo_fijo_nacion": 19.25,
+ "plazo_fijo_max": {
+  "n": "Banco CMF",
+  "tna": 23.5
+ },
+ "inflacion_mensual": {
+  "v": 1.7,
+  "f": "2026-08-31"
+ },
+ "inflacion_interanual": {
+  "v": 33.5,
+  "f": "2026-08-31"
+ },
+ "tamar": {
+  "v": 24.5625,
+  "f": "2026-10-02"
+ }
+}
