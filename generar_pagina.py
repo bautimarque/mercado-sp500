@@ -394,12 +394,16 @@ rect.off{opacity:.14}
 .franja-eje>span{position:absolute;top:10px;white-space:nowrap}
 #eje-izq{left:0} #eje-der{right:0}
 #eje-prom{transform:translateX(-50%);color:var(--tinta);font-weight:600}
-.plegable{margin:0 0 6px}
-.plegable>summary{cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--tinta-2);padding:4px 0;user-select:none}
+.plegable{margin:0 0 10px}
+.plegable>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;color:var(--tinta-2);padding:6px 0;user-select:none}
 .plegable>summary::-webkit-details-marker{display:none}
-.plegable>summary::before{content:"▸";display:inline-block;transition:transform .15s}
+.plegable>summary::before{content:"▸";display:inline-block;transition:transform .15s;color:var(--tinta-3)}
 .plegable[open]>summary::before{transform:rotate(90deg)}
+.plegable>summary::after{content:"Mostrar";margin-left:auto;font-size:12.5px;font-weight:500;color:var(--tinta-2);background:var(--superficie);border:1px solid var(--linea-2);border-radius:999px;padding:4px 12px}
+.plegable[open]>summary::after{content:"Ocultar"}
 .plegable>summary:hover{color:var(--tinta)}
+.plegable>summary:hover::after{color:var(--tinta);background:var(--hundido)}
+.plegable>summary:focus-visible{outline:2px solid var(--tinta-3);outline-offset:3px;border-radius:6px}
 .leyenda{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:4px;font-size:12.5px;color:var(--tinta-2)}
 .leyenda li{display:flex;align-items:center;gap:6px;white-space:nowrap}
 .leyenda small{color:var(--tinta-3);font-size:12px;font-variant-numeric:tabular-nums}
@@ -693,7 +697,7 @@ h3{font-size:15px;font-weight:700;margin:14px 0 8px}
 <section class="hoy" aria-labelledby="t-hoy">
   <h2 id="t-hoy" class="oculto">Cómo está el mercado</h2>
   <details class="plegable" id="dfranja" open>
-    <summary class="plegable-tit">Termómetro del índice</summary>
+    <summary class="plegable-tit">Termómetro del índice y gráficos</summary>
   <figure class="franja">
     <div class="franja-lectura" aria-hidden="true"><span id="lectura">Pasar el dedo o el mouse por la franja para ver cada empresa</span></div>
     <div class="franja-zona" id="franja" tabindex="0" role="slider" aria-valuemin="1" aria-valuenow="1"
@@ -1041,7 +1045,14 @@ function acomodarEje() {
 }
 acomodarEje();
 addEventListener("resize", acomodarEje);
-$("dfranja").addEventListener("toggle", acomodarEje);
+const dfranja = $("dfranja");
+const paneles = document.querySelector(".paneles");
+function plegar() {
+  if (paneles) paneles.hidden = !dfranja.open;
+  if (dfranja.open) acomodarEje();
+}
+dfranja.addEventListener("toggle", plegar);
+plegar();
 if (document.fonts) document.fonts.ready.then(acomodarEje);
 zona.setAttribute("aria-valuemax", N);
 
