@@ -93,7 +93,7 @@ try { var t = localStorage.getItem("tema"); if (t === "claro" || t === "oscuro")
   <h1>Gastos en dólares</h1>
   <p class="bajada">Cuánto pagás en pesos un juego, una suscripción o un gasto en el exterior con tarjeta argentina.</p>
 </div>
-<p class="fecha" id="fecha">Actualizado el 09/10/2026 15:43 hs</p>
+<p class="fecha" id="fecha">Actualizado el 09/10/2026 20:08 hs</p>
 
 <section aria-labelledby="t-calc">
   <h2 id="t-calc" class="oculto">Calculadora</h2>
@@ -140,7 +140,7 @@ try { var t = localStorage.getItem("tema"); if (t === "claro" || t === "oscuro")
 <script>
 
 const M = Mercadito;
-const D = {"oficial": 1540.0, "mep": 1540.2, "f": "2026-10-09T15:00:00.000Z", "iva": 21, "percepcion": 30, "iibb": 2, "verificado": "06/10/2026", "tipos": [{"k": "servicio", "n": "Servicio digital", "ej": "Netflix, Spotify, ChatGPT, Apple, Google, apps", "iva": true, "per": true, "iibb": true}, {"k": "juego", "n": "Juego digital", "ej": "PlayStation, Steam, Xbox, Nintendo, Epic", "iva": true, "per": false, "iibb": true}, {"k": "exterior", "n": "Gasto en el exterior", "ej": "Viajes, pasajes, hoteles, compras en tiendas del exterior", "iva": false, "per": true, "iibb": false}], "ejemplos": [{"n": "Juego nuevo de consola", "p": 69.99, "k": "juego"}, {"n": "Suscripción de US$ 9,99", "p": 9.99, "k": "servicio"}, {"n": "Suscripción de US$ 20", "p": 20, "k": "servicio"}, {"n": "Gasto de US$ 100 en un viaje", "p": 100, "k": "exterior"}]};
+const D = {"oficial": 1535.0, "mep": 1542.9, "f": "2026-10-09T18:00:00.000Z", "iva": 21, "percepcion": 30, "iibb": 2, "verificado": "06/10/2026", "tipos": [{"k": "servicio", "n": "Servicio digital", "ej": "Netflix, Spotify, ChatGPT, Apple, Google, apps", "iva": true, "per": true, "iibb": true}, {"k": "juego", "n": "Juego digital", "ej": "PlayStation, Steam, Xbox, Nintendo, Epic", "iva": true, "per": false, "iibb": true}, {"k": "exterior", "n": "Gasto en el exterior", "ej": "Viajes, pasajes, hoteles, compras en tiendas del exterior", "iva": false, "per": true, "iibb": false}], "ejemplos": [{"n": "Juego nuevo de consola", "p": 69.99, "k": "juego"}, {"n": "Suscripción de US$ 9,99", "p": 9.99, "k": "servicio"}, {"n": "Suscripción de US$ 20", "p": 20, "k": "servicio"}, {"n": "Gasto de US$ 100 en un viaje", "p": 100, "k": "exterior"}]};
 const $ = id => document.getElementById(id);
 const porTipo = Object.fromEntries(D.tipos.map(t => [t.k, t]));
 let tipo = "juego";
