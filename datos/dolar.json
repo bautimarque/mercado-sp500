@@ -1,5 +1,5 @@
 {
- "actualizado": "08/10/2026 22:20",
+ "actualizado": "09/10/2026 15:43",
  "tipos": {
   "oficial": {
    "n": "Oficial",
@@ -10,31 +10,31 @@
   },
   "bolsa": {
    "n": "MEP",
-   "c": 1538.4,
-   "v": 1542.7,
-   "var": -0.11,
-   "brecha": 0.2
+   "c": 1537.5,
+   "v": 1540.2,
+   "var": 0.08,
+   "brecha": 0.0
   },
   "contadoconliqui": {
    "n": "Contado con liqui",
-   "c": 1612.7,
-   "v": 1613.6,
-   "var": 0.17,
-   "brecha": 4.8
+   "c": 1607.8,
+   "v": 1608.7,
+   "var": 0.0,
+   "brecha": 4.5
   },
   "blue": {
    "n": "Blue",
    "c": 1520.0,
    "v": 1540.0,
-   "var": -0.65,
+   "var": -0.96,
    "brecha": 0.0
   },
   "cripto": {
    "n": "Cripto",
-   "c": 1605.69,
-   "v": 1608.68,
-   "var": 0.33,
-   "brecha": 4.5
+   "c": 1604.55,
+   "v": 1606.79,
+   "var": -0.09,
+   "brecha": 4.3
   },
   "tarjeta": {
    "n": "Tarjeta",
@@ -45,9 +45,9 @@
   },
   "mayorista": {
    "n": "Mayorista",
-   "c": 1506.5,
-   "v": 1515.5,
-   "var": -0.3,
+   "c": 1507.0,
+   "v": 1516.0,
+   "var": -0.07,
    "brecha": -1.6
   }
  }
