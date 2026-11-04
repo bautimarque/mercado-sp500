@@ -1,17 +1,17 @@
 {
- "actualizado": "03/11/2026 00:01",
+ "actualizado": "03/11/2026 22:35",
  "datos_al": "2026-11-02",
  "indice": {
-  "p": 7541.4,
-  "da": -3.9,
-  "dm": 30.9,
-  "r": 10.3
+  "p": 7568.92,
+  "da": -3.5,
+  "dm": 31.4,
+  "r": 10.7
  },
- "empresas": 502,
+ "empresas": 501,
  "arriba_200s": 74,
  "en_promedio": 50,
  "subio_fuerte": 15,
- "con_cedear": 161,
+ "con_cedear": 162,
  "en_promedio_cedear": 17,
  "subio_fuerte_cedear": 10
 }
