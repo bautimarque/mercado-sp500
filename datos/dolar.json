@@ -1,5 +1,5 @@
 {
- "actualizado": "06/11/2026 22:03",
+ "actualizado": "09/11/2026 19:56",
  "tipos": {
   "oficial": {
    "n": "Oficial",
@@ -12,29 +12,29 @@
    "n": "MEP",
    "c": 1560.2,
    "v": 1587.9,
-   "var": -0.04,
+   "var": 0.0,
    "brecha": 1.1
   },
   "contadoconliqui": {
    "n": "Contado con liqui",
    "c": 1658.4,
    "v": 1664.9,
-   "var": -0.92,
+   "var": 0.0,
    "brecha": 6.0
   },
   "blue": {
    "n": "Blue",
    "c": 1535.0,
    "v": 1555.0,
-   "var": -0.32,
+   "var": 0.0,
    "brecha": -1.0
   },
   "cripto": {
    "n": "Cripto",
-   "c": 1646.97,
-   "v": 1650.09,
-   "var": -1.02,
-   "brecha": 5.1
+   "c": 1661.05,
+   "v": 1666.0,
+   "var": 0.76,
+   "brecha": 6.1
   },
   "tarjeta": {
    "n": "Tarjeta",
@@ -47,7 +47,7 @@
    "n": "Mayorista",
    "c": 1536.5,
    "v": 1545.5,
-   "var": -0.03,
+   "var": 0.0,
    "brecha": -1.6
   }
  }
