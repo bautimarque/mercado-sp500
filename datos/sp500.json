@@ -1,17 +1,17 @@
 {
- "actualizado": "06/11/2026 22:05",
- "datos_al": "2026-11-05",
+ "actualizado": "10/11/2026 00:44",
+ "datos_al": "2026-11-09",
  "indice": {
-  "p": 7376.86,
-  "da": -6.0,
-  "dm": 28.1,
-  "r": 8.5
+  "p": 7549.94,
+  "da": -3.8,
+  "dm": 30.7,
+  "r": 12.2
  },
  "empresas": 502,
  "arriba_200s": 76,
- "en_promedio": 50,
- "subio_fuerte": 7,
+ "en_promedio": 47,
+ "subio_fuerte": 10,
  "con_cedear": 161,
- "en_promedio_cedear": 17,
- "subio_fuerte_cedear": 3
+ "en_promedio_cedear": 15,
+ "subio_fuerte_cedear": 6
 }
