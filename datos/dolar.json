@@ -1,5 +1,5 @@
 {
- "actualizado": "10/11/2026 17:23",
+ "actualizado": "10/11/2026 21:49",
  "tipos": {
   "oficial": {
    "n": "Oficial",
@@ -31,10 +31,10 @@
   },
   "cripto": {
    "n": "Cripto",
-   "c": 1630.83,
-   "v": 1637.0,
-   "var": -1.18,
-   "brecha": 4.3
+   "c": 1620.72,
+   "v": 1623.0,
+   "var": -2.03,
+   "brecha": 3.4
   },
   "tarjeta": {
    "n": "Tarjeta",
