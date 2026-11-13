@@ -1,20 +1,20 @@
 {
- "actualizado": "12/11/2026 17:44",
+ "actualizado": "12/11/2026 23:02",
  "plazo_fijo_nacion": 19.25,
  "plazo_fijo_max": {
   "n": "Banco BICA",
   "tna": 24.0
  },
  "inflacion_mensual": {
-  "v": 1.9,
-  "f": "2026-09-30"
+  "v": 2.2,
+  "f": "2026-10-31"
  },
  "inflacion_interanual": {
-  "v": 33.4,
-  "f": "2026-09-30"
+  "v": 33.1,
+  "f": "2026-10-31"
  },
  "tamar": {
-  "v": 24.125,
-  "f": "2026-11-05"
+  "v": 24.4375,
+  "f": "2026-11-11"
  }
 }
