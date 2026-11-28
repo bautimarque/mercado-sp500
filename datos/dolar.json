@@ -1,18 +1,18 @@
 {
- "actualizado": "27/11/2026 18:52",
+ "actualizado": "28/11/2026 00:27",
  "tipos": {
   "oficial": {
    "n": "Oficial",
    "c": 1575.0,
    "v": 1625.0,
-   "var": -0.31,
+   "var": 0.0,
    "brecha": null
   },
   "bolsa": {
    "n": "MEP",
    "c": 1647.9,
    "v": 1661.9,
-   "var": -1.59,
+   "var": -0.27,
    "brecha": 2.3
   },
   "contadoconliqui": {
@@ -33,21 +33,21 @@
    "n": "Cripto",
    "c": 1734.29,
    "v": 1742.22,
-   "var": -1.15,
+   "var": -0.61,
    "brecha": 7.2
   },
   "tarjeta": {
    "n": "Tarjeta",
    "c": 2047.5,
    "v": 2112.5,
-   "var": -0.31,
+   "var": 0.0,
    "brecha": 30.0
   },
   "mayorista": {
    "n": "Mayorista",
    "c": 1596.0,
    "v": 1605.0,
-   "var": 0.06,
+   "var": 0.22,
    "brecha": -1.2
   }
  }
